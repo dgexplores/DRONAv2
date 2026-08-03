@@ -2,7 +2,7 @@
   'use strict';
 
   // ===== CONFIG: point this at the live Railway app once deployed =====
-  var SRMS_APP_URL = '#'; // e.g. 'https://drona.up.railway.app'
+  var SRMS_APP_URL = 'https://dronav2-production.up.railway.app';
 
   // Apply app URL to all CTA links
   document.querySelectorAll('[data-app-link]').forEach(function (el) {
