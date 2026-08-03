@@ -11,7 +11,7 @@ version = "3.12"
 predeploy = "python manage.py collectstatic --noinput && python manage.py migrate --noinput"
 
 [start]
-cmd = "gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120"
+cmd = "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120"
 
 [healthcheck]
 path = "/health/"
