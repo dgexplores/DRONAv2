@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Certificate Verification | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="verify-box">
+    {% if is_valid %}
+    <div class="verify-icon valid">✓</div>
+    <h2 style="color: var(--srms-green); margin-bottom: 1rem;">{% if is_hindi %}प्रमाणपत्र सत्यापित{% else %}Certificate Validated{% endif %}</h2>
+    <p style="color: var(--muted); margin-bottom: 1.5rem;">
+        {% if is_hindi %}यह प्रमाणपत्र वैध है और SRMS समूह संस्थान द्वारा जारी किया गया है।{% else %}This certificate is valid and was issued by SRMS Group of Institutions.{% endif %}
+    </p>
+
+    <div class="module-block" style="text-align: left;">
+        <div class="module-header">
+            <div class="module-title">{% if is_hindi %}प्रमाणपत्र विवरण{% else %}Certificate Details{% endif %}</div>
+        </div>
+        <div class="lesson-list">
+            <div class="lesson-item">
+                <div class="lesson-icon">👤</div>
+                <div><strong>{{ certificate.staff_user.get_full_name }}</strong></div>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon">🪪</div>
+                <div>{% if is_hindi %}कर्मचारी आईडी:{% else %}Employee ID:{% endif %} <strong>{{ certificate.staff_user.employee_id }}</strong></div>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon">🏢</div>
+                <div>{{ certificate.staff_user.department.name|default:"General" }}</div>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon">📚</div>
+                <div><strong>{{ certificate.course.title }}</strong></div>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon">📅</div>
+                <div>{% if is_hindi %}जारी:{% else %}Issued:{% endif %} {{ certificate.issued_at|date:"d M Y" }}</div>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon">🆔</div>
+                <div class="cert-id">{{ certificate.certificate_id }}</div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="verify-icon invalid">✗</div>
+    <h2 style="color: var(--srms-crimson); margin-bottom: 1rem;">{% if is_hindi %}प्रमाणपत्र नहीं मिला{% else %}Certificate Not Found{% endif %}</h2>
+    <p style="color: var(--muted); margin-bottom: 1.5rem;">
+        {% if is_hindi %}
+        प्रमाणपत्र आईडी "{{ cert_id }}" मान्य नहीं है या अस्तित्व में नहीं है।
+        {% else %}
+        Certificate ID "{{ cert_id }}" is not valid or does not exist.
+        {% endif %}
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

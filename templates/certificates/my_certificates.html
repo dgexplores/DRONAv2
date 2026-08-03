@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}My Certificates | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">🏆 {% if is_hindi %}मेरे प्रमाणपत्र{% else %}My Certificates{% endif %}</div>
+<p class="page-subtitle">
+    {% if is_hindi %}
+    आपके QR-सत्यापित प्रमाणपत्र यहाँ उपलब्ध हैं।
+    {% else %}
+    Your QR-verified certificates are available here.
+    {% endif %}
+</p>
+
+{% if certificates %}
+<div class="certificate-grid">
+    {% for cert in certificates %}
+    <div class="cert-card">
+        <div class="cert-id">QR: {{ cert.certificate_id }}</div>
+        <div class="course-title">{{ cert.course.title }}</div>
+        <div class="course-desc" style="margin-bottom: 0.5rem;">
+            {% if is_hindi %}जारी किया गया:{% else %}Issued on:{% endif %} {{ cert.issued_at|date:"d M Y" }}
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'download_certificate' cert.certificate_id %}" class="btn btn-success btn-sm" target="_blank">📄 {% if is_hindi %}डाउनलोड{% else %}Download{% endif %}</a>
+            <a href="{% url 'verify_certificate' cert.certificate_id %}" class="btn btn-secondary btn-sm" target="_blank">✓ {% if is_hindi %}सत्यापित करें{% else %}Verify{% endif %}</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    {% if is_hindi %}
+    आपके पास अभी कोई प्रमाणपत्र नहीं है। एक अनिवार्य पाठ्यक्रम पूरा करें और अंतिम परीक्षा उत्तीर्ण करें।
+    {% else %}
+    You have no certificates yet. Complete a mandatory course and pass the final assessment.
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

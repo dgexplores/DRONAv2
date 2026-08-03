@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ UI_LANG }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3a8a">
+    <title>{% block title %}SRMS Drona Learning App{% endblock %}</title>
+    <meta name="description" content="Skill Learning & Performance Tracking Platform for SRMS Non-Teaching Staff">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/icon-192.png' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="{% url 'dashboard' %}" class="brand">
+                <div class="brand-icon">S</div>
+                <span>SRMS Drona</span>
+            </a>
+            <div class="topbar-actions">
+                <a href="{% url 'toggle_language' %}?lang={% if is_hindi %}en{% else %}hi{% endif %}" class="lang-toggle">
+                    {% if is_hindi %}English{% else %}हिंदी{% endif %}
+                </a>
+                <div class="topbar-user">
+                    <div class="avatar">{{ user.first_name|first|default:"S" }}{{ user.last_name|first }}</div>
+                    <span>{{ user.get_full_name|default:user.employee_id }}</span>
+                    <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                {% if is_hindi %}डैशबोर्ड{% else %}Dashboard{% endif %}
+            </a>
+            <a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                {% if is_hindi %}प्रोफ़ाइल{% else %}Profile{% endif %}
+            </a>
+            <a href="{% url 'my_certificates' %}" class="{% if request.resolver_match.url_name == 'my_certificates' %}active{% endif %}">
+                {% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}
+            </a>
+            {% if user.role == 'trainer' or user.role == 'admin' or user.is_staff %}
+            <a href="{% url 'generate_ai_quiz' %}" class="{% if request.resolver_match.url_name == 'generate_ai_quiz' %}active{% endif %}">
+                {% if is_hindi %}AI प्रश्नोत्तरी{% else %}AI Quiz Generator{% endif %}
+            </a>
+            <a href="{% url 'hr_dashboard' %}" class="{% if request.resolver_match.url_name == 'hr_dashboard' %}active{% endif %}">
+                {% if is_hindi %}एचआर डैशबोर्ड{% else %}HR Dashboard{% endif %}
+            </a>
+            <a href="/admin/" target="_blank">
+                {% if is_hindi %}एडमिन{% else %}Admin{% endif %}
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="main">
+        <div class="container">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            © 2026 SRMS Drona Learning App &mdash; Shri Ram Murti Smarak Group of Institutions
+        </div>
+    </footer>
+
+    <script src="{% static 'js/app.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

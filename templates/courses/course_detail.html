@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load course_extras %}
+{% block title %}{{ course.title }} | SRMS Drona{% endblock %}
+
+{% block content %}
+<a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom: 1rem;">← {% if is_hindi %}डैशबोर्ड पर वापस{% else %}Back to Dashboard{% endif %}</a>
+
+<div class="page-title">
+    {% if is_hindi and course.title_hi %}{{ course.title_hi }}{% else %}{{ course.title }}{% endif %}
+</div>
+<p class="page-subtitle">
+    {% if is_hindi and course.description_hi %}{{ course.description_hi }}{% else %}{{ course.description }}{% endif %}
+</p>
+
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-icon blue">📊</div>
+        <div>
+            <div class="stat-value">{{ enrollment.progress_percent }}%</div>
+            <div class="stat-label">{% if is_hindi %}प्रगति{% else %}Progress{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">📚</div>
+        <div>
+            <div class="stat-value">{{ course.get_total_lessons }}</div>
+            <div class="stat-label">{% if is_hindi %}पाठ{% else %}Lessons{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon crimson">📝</div>
+        <div>
+            <div class="stat-value">{% if latest_attempt %}{{ latest_attempt.score }}%{% else %}—{% endif %}</div>
+            <div class="stat-label">{% if is_hindi %}नवीनतम स्कोर{% else %}Latest Score{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="progress-wrap">
+    <div class="progress-label">
+        <span>{% if is_hindi %}समग्र प्रगति{% else %}Overall Progress{% endif %}</span>
+        <span>{{ enrollment.progress_percent }}%</span>
+    </div>
+    <div class="progress-bar">
+        <div class="progress-fill {% if enrollment.is_completed %}gold{% endif %}" style="width: {{ enrollment.progress_percent }}%"></div>
+    </div>
+</div>
+
+{% for module in modules %}
+<div class="module-block">
+    <div class="module-header">
+        <div class="module-title">
+            {% if is_hindi and module.title_hi %}{{ module.title_hi }}{% else %}{{ module.title }}{% endif %}
+        </div>
+        <div class="module-badge">{% if is_hindi %}मॉड्यूल {{ module.order }}{% else %}Module {{ module.order }}{% endif %}</div>
+    </div>
+    <ul class="lesson-list">
+        {% for lesson in module.lessons.all %}
+        {% with lp=progress_map|get_item:lesson.id %}
+        <li class="lesson-item">
+            <div class="lesson-icon">
+                {% if lesson.lesson_type == 'video' %}🎬{% else %}📄{% endif %}
+            </div>
+            <a href="{% url 'lesson_view' lesson.id %}">
+                {% if is_hindi and lesson.title_hi %}{{ lesson.title_hi }}{% else %}{{ lesson.title }}{% endif %}
+            </a>
+            {% if lp and lp.is_completed %}
+            <span class="lesson-done">✓</span>
+            {% endif %}
+            <span class="lesson-duration">{{ lesson.duration_minutes }} min</span>
+        </li>
+        {% endwith %}
+        {% endfor %}
+    </ul>
+</div>
+{% endfor %}
+
+<div class="module-block">
+    <div class="module-header">
+        <div class="module-title">📝 {% if is_hindi %}परीक्षा{% else %}Final Assessment{% endif %}</div>
+    </div>
+    <div class="lesson-list">
+        <div class="lesson-item">
+            <div class="lesson-icon">📝</div>
+            <div>
+                {% if is_hindi %}पाठ्यक्रम समाप्त करें और फिर परीक्षा दें।{% else %}Complete all lessons and then take the quiz.{% endif %}
+                {% if latest_attempt %}
+                <div>
+                    <span class="badge {% if latest_attempt.passed %}badge-elective{% else %}badge-mandatory{% endif %}">
+                        {% if latest_attempt.passed %}✓ {% if is_hindi %}उत्तीर्ण{% else %}Passed{% endif %} ({{ latest_attempt.score }}%){% else %}{% if is_hindi %}अनुत्तीर्ण{% else %}Failed{% endif %} ({{ latest_attempt.score }}%){% endif %}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            <a href="{% url 'take_quiz' course.id %}" class="btn btn-gold btn-sm" style="margin-left: auto;">
+                {% if is_hindi %}परीक्षा दें{% else %}Take Quiz{% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    {% if is_hindi %}नमस्ते, {{ user.first_name }}{% else %}Welcome, {{ user.first_name|default:user.employee_id }}{% endif %}
+</div>
+<p class="page-subtitle">
+    {% if is_hindi %}
+    आपकी सीखने की प्रगति और अनिवार्य प्रशिक्षण यहाँ देखें।
+    {% else %}
+    View your learning progress and mandatory training courses here.
+    {% endif %}
+</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">📚</div>
+        <div>
+            <div class="stat-value">{{ user_enrollments|length }}</div>
+            <div class="stat-label">{% if is_hindi %}पाठ्यक्रम{% else %}Enrolled Courses{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div>
+            <div class="stat-value">{{ completed_count }}</div>
+            <div class="stat-label">{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon gold">⏳</div>
+        <div>
+            <div class="stat-value">{{ in_progress_count }}</div>
+            <div class="stat-label">{% if is_hindi %}चल रहा{% else %}In Progress{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon crimson">🏆</div>
+        <div>
+            <div class="stat-value">{{ certificates_count }}</div>
+            <div class="stat-label">{% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+{% if user_enrollments %}
+<div class="section-title">
+    {% if is_hindi %}मेरे पाठ्यक्रम{% else %}My Courses{% endif %}
+</div>
+<div class="card-grid">
+    {% for enrollment in user_enrollments %}
+    <div class="course-card">
+        <div class="course-card-header">
+            <div class="course-icon">📖</div>
+            <div class="course-title">
+                {% if is_hindi and enrollment.course.title_hi %}{{ enrollment.course.title_hi }}{% else %}{{ enrollment.course.title }}{% endif %}
+            </div>
+        </div>
+        <div class="course-card-body">
+            {% if enrollment.course.is_mandatory %}
+                <span class="badge badge-mandatory">{% if is_hindi %}अनिवार्य{% else %}Mandatory{% endif %}</span>
+            {% else %}
+                <span class="badge badge-elective">{% if is_hindi %}वैकल्पिक{% else %}Elective{% endif %}</span>
+            {% endif %}
+            <span class="badge badge-category">{{ enrollment.course.category.name }}</span>
+            <div class="progress-wrap" style="margin-top: 1rem;">
+                <div class="progress-label">
+                    <span>{% if is_hindi %}प्रगति{% else %}Progress{% endif %}</span>
+                    <span data-progress-text>{{ enrollment.progress_percent }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill {% if enrollment.is_completed %}gold{% endif %}"
+                         data-progress-percent style="width: {{ enrollment.progress_percent }}%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="course-card-footer">
+            {% if enrollment.is_completed %}
+                <span class="badge badge-elective">✓ {% if is_hindi %}पूर्ण हुआ{% else %}Completed{% endif %}</span>
+            {% endif %}
+            <a href="{% url 'course_detail' enrollment.course.id %}" class="btn btn-primary btn-sm">
+                {% if is_hindi %}जारी रखें{% else %}Continue{% endif %}
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if available_courses %}
+<div class="section-title">
+    {% if is_hindi %}उपलब्ध पाठ्यक्रम{% else %}Available Courses{% endif %}
+</div>
+<div class="card-grid">
+    {% for course in available_courses %}
+    <div class="course-card">
+        <div class="course-card-header">
+            <div class="course-icon">➕</div>
+            <div class="course-title">
+                {% if is_hindi and course.title_hi %}{{ course.title_hi }}{% else %}{{ course.title }}{% endif %}
+            </div>
+        </div>
+        <div class="course-card-body">
+            <div class="course-desc">
+                {% if is_hindi and course.description_hi %}{{ course.description_hi }}{% else %}{{ course.description }}{% endif %}
+            </div>
+            <span class="badge badge-category">{{ course.category.name }}</span>
+        </div>
+        <div class="course-card-footer">
+            <span class="lesson-duration">{{ course.get_total_lessons }} {% if is_hindi %}पाठ{% else %}lessons{% endif %}</span>
+            <a href="{% url 'enroll_course' course.id %}" class="btn btn-success btn-sm">
+                {% if is_hindi %}नामांकन{% else %}Enroll{% endif %}
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if not user_enrollments and not available_courses %}
+<div class="alert alert-info">
+    {% if is_hindi %}कोई पाठ्यक्रम उपलब्ध नहीं है।{% else %}No courses available. Please contact your HOD for enrollment.{% endif %}
+</div>
+{% endif %}
+{% endblock %}

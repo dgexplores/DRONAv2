@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Profile | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    {% if is_hindi %}मेरी प्रोफ़ाइल{% else %}My Profile{% endif %}
+</div>
+<p class="page-subtitle">
+    {% if is_hindi %}आपके कार्य विवरण और सीखने की प्रगति।{% else %}Your work details and learning progress.{% endif %}
+</p>
+
+<div class="module-block">
+    <div class="module-header">
+        <div class="module-title">{% if is_hindi %}कर्मचारी जानकारी{% else %}Employee Information{% endif %}</div>
+    </div>
+    <div class="lesson-list">
+        <div class="lesson-item">
+            <div class="lesson-icon">👤</div>
+            <div><strong>{{ staff_user.get_full_name }}</strong></div>
+        </div>
+        <div class="lesson-item">
+            <div class="lesson-icon">🪪</div>
+            <div>{% if is_hindi %}कर्मचारी आईडी:{% else %}Employee ID:{% endif %} {{ staff_user.employee_id }}</div>
+        </div>
+        <div class="lesson-item">
+            <div class="lesson-icon">🏢</div>
+            <div>{% if is_hindi %}विभाग:{% else %}Department:{% endif %} {{ staff_user.department.name|default:"—" }}</div>
+        </div>
+        <div class="lesson-item">
+            <div class="lesson-icon">💼</div>
+            <div>{% if is_hindi %}पद:{% else %}Designation:{% endif %} {{ staff_user.designation|default:"—" }}</div>
+        </div>
+        <div class="lesson-item">
+            <div class="lesson-icon">🎖️</div>
+            <div>{% if is_hindi %}भूमिका:{% else %}Role:{% endif %} {{ staff_user.get_role_display }}</div>
+        </div>
+        <div class="lesson-item">
+            <div class="lesson-icon">📧</div>
+            <div>{{ staff_user.email|default:"—" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="section-title" style="margin-top: 1.5rem;">📚 {% if is_hindi %}मेरे नामांकन{% else %}My Enrollments{% endif %}</div>
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}पाठ्यक्रम{% else %}Course{% endif %}</th>
+                <th>{% if is_hindi %}प्रगति{% else %}Progress{% endif %}</th>
+                <th>{% if is_hindi %}स्थिति{% else %}Status{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enrollment in enrollments %}
+            <tr>
+                <td>{{ enrollment.course.title }}</td>
+                <td>{{ enrollment.progress_percent }}%</td>
+                <td>
+                    {% if enrollment.is_completed %}
+                    <span class="badge badge-elective">✓ {% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</span>
+                    {% else %}
+                    <span class="badge badge-category">{% if is_hindi %}चल रहा{% else %}In Progress{% endif %}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align: center; color: var(--muted);">
+                {% if is_hindi %}कोई नामांकन नहीं।{% else %}No enrollments yet.{% endif %}
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="section-title">🏆 {% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}पाठ्यक्रम{% else %}Course{% endif %}</th>
+                <th>{% if is_hindi %}प्रमाणपत्र आईडी{% else %}Certificate ID{% endif %}</th>
+                <th>{% if is_hindi %}जारी{% else %}Issued{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in certificates %}
+            <tr>
+                <td>{{ cert.course.title }}</td>
+                <td class="cert-id">{{ cert.certificate_id }}</td>
+                <td>{{ cert.issued_at|date:"d M Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align: center; color: var(--muted);">
+                {% if is_hindi %}कोई प्रमाणपत्र नहीं।{% else %}No certificates yet.{% endif %}
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

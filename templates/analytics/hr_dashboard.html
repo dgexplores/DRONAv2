@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}HR Analytics Dashboard | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">📊 {% if is_hindi %}एचआर एनालिटिक्स डैशबोर्ड{% else %}HR Analytics Dashboard{% endif %}</div>
+<p class="page-subtitle">
+    {% if is_hindi %}विभागवार सीखने की प्रगति और अनुपालन आँकड़े।{% else %}Department-wise learning progress and compliance metrics.{% endif %}
+</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">👥</div>
+        <div>
+            <div class="stat-value">{{ total_staff_count }}</div>
+            <div class="stat-label">{% if is_hindi %}कुल कर्मचारी{% else %}Total Staff{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">📚</div>
+        <div>
+            <div class="stat-value">{{ total_courses_count }}</div>
+            <div class="stat-label">{% if is_hindi %}कुल पाठ्यक्रम{% else %}Total Courses{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon gold">🏆</div>
+        <div>
+            <div class="stat-value">{{ total_cert_count }}</div>
+            <div class="stat-label">{% if is_hindi %}पूर्ण नामांकन{% else %}Completed Enrollments{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon crimson">🎯</div>
+        <div>
+            <div class="stat-value">{{ avg_quiz_score }}%</div>
+            <div class="stat-label">{% if is_hindi %}औसत क्विज़ स्कोर{% else %}Avg Quiz Score{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="section-title">{% if is_hindi %}विभागवार समापन दर{% else %}Department Completion Rates{% endif %}</div>
+<div class="module-block" style="padding: 1rem;">
+    <canvas id="completionChart" height="100"></canvas>
+</div>
+
+<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}विभाग सांख्यिकी{% else %}Department Statistics{% endif %}</div>
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}विभाग{% else %}Department{% endif %}</th>
+                <th>{% if is_hindi %}कर्मचारी{% else %}Staff{% endif %}</th>
+                <th>{% if is_hindi %}नामांकन{% else %}Enrollments{% endif %}</th>
+                <th>{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</th>
+                <th>{% if is_hindi %}समापन दर{% else %}Completion Rate{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dept in dept_stats %}
+            <tr>
+                <td>{{ dept.department.name }}</td>
+                <td>{{ dept.total_staff }}</td>
+                <td>{{ dept.total_enrollments }}</td>
+                <td>{{ dept.completed_enrollments }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="progress-bar" style="flex: 1; max-width: 120px;">
+                            <div class="progress-fill" style="width: {{ dept.completion_rate }}%"></div>
+                        </div>
+                        <strong>{{ dept.completion_rate }}%</strong>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align: center; color: var(--muted);">{% if is_hindi %}कोई विभाग नहीं।{% else %}No departments found.{% endif %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}हाल के प्रयास{% else %}Recent Quiz Attempts{% endif %}</div>
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}कर्मचारी{% else %}Employee{% endif %}</th>
+                <th>{% if is_hindi %}प्रश्नोत्तरी{% else %}Quiz{% endif %}</th>
+                <th>{% if is_hindi %}स्कोर{% else %}Score{% endif %}</th>
+                <th>{% if is_hindi %}स्थिति{% else %}Status{% endif %}</th>
+                <th>{% if is_hindi %}दिनांक{% else %}Date{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attempt in recent_attempts %}
+            <tr>
+                <td>{{ attempt.staff_user.get_full_name }}</td>
+                <td>{{ attempt.quiz.title }}</td>
+                <td>{{ attempt.score }}%</td>
+                <td>
+                    {% if attempt.passed %}
+                    <span class="badge badge-elective">✓ {% if is_hindi %}उत्तीर्ण{% else %}Passed{% endif %}</span>
+                    {% else %}
+                    <span class="badge badge-mandatory">✗ {% if is_hindi %}अनुत्तीर्ण{% else %}Failed{% endif %}</span>
+                    {% endif %}
+                </td>
+                <td>{{ attempt.attempted_at|date:"d M Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align: center; color: var(--muted);">{% if is_hindi %}कोई प्रयास नहीं।{% else %}No attempts yet.{% endif %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<a href="{% url 'export_staff_csv' %}" class="btn btn-primary">⬇️ {% if is_hindi %}CSV रिपोर्ट निर्यात करें{% else %}Export CSV Report{% endif %}</a>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var ctx = document.getElementById('completionChart');
+    if (!ctx || typeof Chart === 'undefined') return;
+
+    var departments = [];
+    var rates = [];
+
+    {% for dept in dept_stats %}
+    departments.push('{{ dept.department.name }}');
+    rates.push({{ dept.completion_rate }});
+    {% endfor %}
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: departments,
+            datasets: [{
+                label: '{% if is_hindi %}समापन दर (%){% else %}Completion Rate (%){% endif %}',
+                data: rates,
+                backgroundColor: [
+                    '#1e3a8a', '#2563eb', '#065f46', '#d97706',
+                    '#b91c1c', '#7c3aed', '#0d9488', '#db2777'
+                ],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { callback: function (v) { return v + '%'; } }
+                }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

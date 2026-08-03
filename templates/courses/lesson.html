@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}{{ lesson.title }} | SRMS Drona{% endblock %}
+
+{% block content %}
+<a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-sm" style="margin-bottom: 1rem;">← {% if is_hindi %}कोर्स पर वापस{% else %}Back to Course{% endif %}</a>
+
+<div class="page-title">
+    {% if is_hindi and lesson.title_hi %}{{ lesson.title_hi }}{% else %}{{ lesson.title }}{% endif %}
+</div>
+<p class="page-subtitle">
+    {{ course.title }} &mdash; {% if is_hindi %}मॉड्यूल{% else %}Module{% endif %} {{ lesson.module.order }} &middot; {% if is_hindi %}पाठ{% else %}Lesson{% endif %} {{ lesson.order }}
+</p>
+
+{% if lesson.lesson_type == 'video' and lesson.video_url %}
+<div class="video-wrapper">
+    <video id="lesson-video" data-lesson-id="{{ lesson.id }}"
+           data-resume="{{ progress.last_position_seconds }}"
+           src="{{ lesson.video_url }}"
+           controls preload="metadata"></video>
+</div>
+{% elif lesson.lesson_type == 'pdf' and lesson.pdf_file %}
+<div class="pdf-viewer">
+    <iframe class="pdf-frame" src="{{ lesson.pdf_file.url }}"></iframe>
+</div>
+{% elif lesson.sop_text %}
+<div class="pdf-viewer" style="padding: 2rem;">
+    <h3 style="color: var(--srms-navy); margin-bottom: 1rem;">{{ lesson.title }}</h3>
+    <pre style="white-space: pre-wrap; font-family: inherit;">{{ lesson.sop_text }}</pre>
+</div>
+{% else %}
+<div class="alert alert-warning">
+    {% if is_hindi %}इस पाठ के लिए कोई सामग्री उपलब्ध नहीं है।{% else %}No content available for this lesson yet.{% endif %}
+</div>
+{% endif %}
+
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-icon blue">📊</div>
+        <div>
+            <div class="stat-value">{{ enrollment.progress_percent }}%</div>
+            <div class="stat-label">{% if is_hindi %}कोर्स प्रगति{% else %}Course Progress{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">⏱️</div>
+        <div>
+            <div class="stat-value">{{ lesson.duration_minutes }}</div>
+            <div class="stat-label">{% if is_hindi %}मिनट{% else %}Minutes{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon {% if progress.is_completed %}green{% else %}crimson{% endif %}">🎯</div>
+        <div>
+            <div class="stat-value">{% if progress.is_completed %}✓{% else %}—{% endif %}</div>
+            <div class="stat-label">{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="course-card-footer" style="justify-content: space-between; gap: 1rem; padding: 1.25rem 0;">
+    {% if prev_lesson %}
+    <a href="{% url 'lesson_view' prev_lesson.id %}" class="btn btn-secondary">← {% if is_hindi %}पिछला{% else %}Previous{% endif %}</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+
+    {% if next_lesson %}
+    <a href="{% url 'lesson_view' next_lesson.id %}" class="btn btn-primary">{% if is_hindi %}अगला{% else %}Next{% endif %} →</a>
+    {% else %}
+    <a href="{% url 'take_quiz' course.id %}" class="btn btn-gold">{% if is_hindi %}परीक्षा दें{% else %}Take Quiz{% endif %}</a>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var video = document.getElementById('lesson-video');
+    if (!video) return;
+    var resume = parseInt(video.getAttribute('data-resume') || '0', 10);
+    if (resume > 5) {
+        video.addEventListener('loadedmetadata', function () {
+            video.currentTime = resume;
+        });
+    }
+})();
+</script>
+{% endblock %}
