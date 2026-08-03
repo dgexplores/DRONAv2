@@ -33,6 +33,11 @@ jobs:
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run:
-          # --detach streams build logs without blocking; link by service.
-          railway up --service $RAILWAY_SERVICE_ID --detach
+          # --detach streams build logs without blocking; pin project + service.
+          railway up \
+            --project $RAILWAY_PROJECT_ID \
+            --service $RAILWAY_SERVICE_ID \
+            --environment production \
+            --detach
