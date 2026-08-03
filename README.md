@@ -90,7 +90,58 @@ srms_drona/
 ├── static/             # CSS, JS, manifest.json, sw.js, icons
 ├── templates/          # PWA HTML templates
 ├── media/              # uploaded PDFs, certificates
+├── landing/            # Vercel static marketing site
+├── .github/workflows/  # CI + CD pipelines
 ├── seed.py             # demo data loader
 ├── Procfile            # Railway web command (gunicorn)
 └── requirements.txt
 ```
+
+## Running Tests
+```bash
+./venv/bin/python manage.py test apps --settings=srms_drona.test_settings
+```
+`test_settings.py` forces an in-memory DB, disables the scheduler, and clears the Gemini
+key so AI tests use the offline rule-based generator.
+
+## CI/CD (GitHub Actions)
+Three workflows run automatically on every push to `main`:
+
+| Workflow | File | Job |
+|---|---|---|
+| **CI** | `.github/workflows/ci.yml` | Django system check + 31 tests + `collectstatic`, validates landing assets |
+| **CD – Backend** | `.github/workflows/deploy-backend.yml` | Deploys Django to Railway via `railway up` |
+| **CD – Frontend** | `.github/workflows/deploy-frontend.yml` | Deploys `landing/` to Vercel |
+
+### Required GitHub Secrets
+Set these in **Repo → Settings → Secrets and variables → Actions**:
+
+| Secret | Where to get it | Used by |
+|---|---|---|
+| `RAILWAY_TOKEN` | Railway Dashboard → Account → Tokens | Backend CD |
+| `RAILWAY_SERVICE_ID` | Railway service → Settings → Service ID | Backend CD |
+| `VERCEL_TOKEN` | Vercel → Settings → Tokens (create new) | Frontend CD |
+
+> The Vercel org/project IDs are already hardcoded in `deploy-frontend.yml`.
+> Backend CD triggers only on backend path changes; frontend CD only on `landing/**`.
+> Backend deploys run `python manage.py migrate --noinput` on every deployment
+> (via `railway.toml` `predeploy`).
+
+### Env Vars on Railway
+| Variable | Notes |
+|---|---|
+| `DATABASE_URL` | Auto-provided by the Railway Postgres plugin |
+| `DJANGO_SECRET_KEY` | Long random string |
+| `DJANGO_DEBUG` | `False` |
+| `DJANGO_ALLOWED_HOSTS` | `<app>.up.railway.app` |
+| `GEMINI_API_KEY` | Live AI quiz generation |
+| `SRMS_BASE_URL` | `https://<app>.up.railway.app` |
+| `SRMS_RUN_SCHEDULER` | `1` to enable email reminders |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | Reminder emails |
+
+## Deployment Summary
+- **Landing page** → Vercel (deployed, live)
+- **Django app** → Railway (connect repo → Postgres → env vars)
+- **Database** → Railway-managed PostgreSQL
+- **Scheduler** → APScheduler in the Django process (`SRMS_RUN_SCHEDULER=1`)
+

@@ -1,0 +1,36 @@
+name: Deploy Backend to Railway
+
+# Triggers on every push to main AFTER CI passes.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'srms_drona/**'
+      - 'static/**'
+      - 'templates/**'
+      - 'requirements.txt'
+      - 'Procfile'
+      - 'runtime.txt'
+      - 'railway.toml'
+      - 'seed.py'
+
+jobs:
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    # Only run after CI succeeded (reuse the same workflow run's CI job is not
+    # possible cross-file; rely on branch protection, or gate here if desired).
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.app/install.sh | sh
+
+      - name: Deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          # --detach streams build logs without blocking; link by service.
+          railway up --service $RAILWAY_SERVICE_ID --detach

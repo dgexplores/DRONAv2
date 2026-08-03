@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
 
 from apps.users import views as user_views
 from apps.courses import views as course_views
@@ -10,6 +11,9 @@ from apps.certificates import views as cert_views
 from apps.analytics import views as analytics_views
 
 urlpatterns = [
+    # Healthcheck (used by Railway + CI)
+    path('health/', lambda request: HttpResponse('ok', content_type='text/plain'), name='health'),
+
     # Admin
     path('admin/', admin.site.urls),
 

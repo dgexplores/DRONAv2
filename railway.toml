@@ -1,0 +1,20 @@
+# Railway (Nixpacks) configuration for the SRMS Drona Django backend.
+# Sets the start command and healthcheck. Nixpacks auto-detects Python + requirements.txt.
+
+provider = "nixpacks"
+
+[runtime]
+version = "3.12"
+
+[commands]
+# Runs on every Railway deployment before the app starts.
+predeploy = "python manage.py migrate --noinput"
+
+[start]
+cmd = "gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120"
+
+[healthcheck]
+path = "/health/"
+interval = 30
+timeout = 10
+retries = 3
