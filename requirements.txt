@@ -37,3 +37,4 @@ typing_extensions==4.16.0
 tzlocal==5.4.4
 urllib3==2.7.0
 websockets==16.1.1
+whitenoise==6.12.0
