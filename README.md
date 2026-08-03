@@ -4,10 +4,23 @@ Skill Learning & Performance Tracking Platform for **non-teaching staff** at SRM
 
 Built from the project spec documents (Project Plan + System Workflow).
 
+## 🚀 Live Deployment
+| Service | URL |
+|---|---|
+| **App (Django backend)** | https://dronav2-production.up.railway.app |
+| **Landing page** | https://landing-two-phi-95.vercel.app |
+
+**Demo accounts** — password `drona123` for all:
+| Role | Employee ID |
+|---|---|
+| Super Admin | `ADMIN001` |
+| HOD / Trainer | `EMP010` |
+| Staff | `EMP001`–`EMP006` |
+
 ## Tech Stack
 - **Backend:** Python 3.12 / Django 6 (custom `StaffUser`, RBAC, PostgreSQL-ready)
 - **Frontend:** Server-rendered HTML + custom professional CSS + vanilla JS (mobile-first PWA)
-- **AI:** Google Gemini API (`gemini-2.5-flash`) — auto MCQ generation from SOP PDF/text
+- **AI:** Google Gemini API (`gemini-3.5-flash`) — auto MCQ generation from SOP PDF/text
 - **PDF/QR:** ReportLab + qrcode — QR-verified certificates
 - **Scheduler:** APScheduler — email reminders
 - **Deploy:** Railway (backend) · Vercel (frontend/static, optional)
@@ -75,7 +88,7 @@ Open http://127.0.0.1:8000/
 > **Note:** Keep the scheduler to a single worker to avoid duplicate emails (`--workers 2` is fine; each worker runs the ready() scheduler — for production use `SRMS_RUN_SCHEDULER=1` on exactly one process, or set `--workers 1`).
 
 ## About Vercel
-Django renders HTML templates server-side, so the **app itself runs on Railway**. Vercel is **not** needed for the core app. If you want a static/landing page in front, point `vercel.json` at a `static/` build separately — but the PWA + admin + API all live on Railway.
+Django renders HTML templates server-side, so the **app itself runs on Railway**. Vercel hosts the static `landing/` marketing page (https://landing-two-phi-95.vercel.app) whose CTA links to the live app. The PWA + admin + API all live on Railway.
 
 ## Project Structure
 ```
@@ -140,8 +153,10 @@ Set these in **Repo → Settings → Secrets and variables → Actions**:
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | Reminder emails |
 
 ## Deployment Summary
-- **Landing page** → Vercel (deployed, live)
-- **Django app** → Railway (connect repo → Postgres → env vars)
-- **Database** → Railway-managed PostgreSQL
+- **Landing page** → Vercel — live at https://landing-two-phi-95.vercel.app (CTA opens the app)
+- **Django app** → Railway — live at https://dronav2-production.up.railway.app
+- **Database** → Railway-managed PostgreSQL (auto-attached via `DATABASE_URL`)
 - **Scheduler** → APScheduler in the Django process (`SRMS_RUN_SCHEDULER=1`)
+- **CI/CD** → GitHub Actions: CI + backend + frontend all green on every push
+- **Data** → seeded with demo departments, staff, courses, quizzes, certificates
 
