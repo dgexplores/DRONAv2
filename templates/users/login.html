@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1e3a8a">
-    <title>Login | SRMS Drona Learning App</title>
+    <meta name="theme-color" content="#0d1b3e">
+    <title>Sign In | SRMS Drona Learning App</title>
     <link rel="manifest" href="{% static 'manifest.json' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/icon-192.png' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
@@ -14,7 +15,7 @@
         <div class="login-card">
             <div class="login-brand">
                 <div class="logo-circle">S</div>
-                <h1>SRMS Drona Learning App</h1>
+                <h1>SRMS Drona</h1>
                 <p>Skill Learning &amp; Performance Tracking for Non-Teaching Staff</p>
             </div>
 
@@ -38,11 +39,11 @@
                     <input type="password" id="password" name="password" class="form-input"
                            placeholder="Enter your password" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                <button type="submit" class="btn btn-primary btn-block mt-2">Sign In</button>
             </form>
 
             <div class="login-hint">
-                <strong>Demo Credentials:</strong><br>
+                <strong>Demo Credentials</strong><br>
                 Staff: <code>EMP001</code> / <code>drona123</code><br>
                 Trainer: <code>EMP010</code> / <code>drona123</code>
             </div>

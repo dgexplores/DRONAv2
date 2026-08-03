@@ -85,6 +85,60 @@
     });
   }
 
+  // ===== Sidebar drawer (mobile) =====
+  var sidebar = document.getElementById('sidebar');
+  var menuToggle = document.getElementById('menuToggle');
+  var backdrop = document.getElementById('sidebarBackdrop');
+
+  function openSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.add('open');
+    if (backdrop) backdrop.classList.add('show');
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('show');
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  if (menuToggle) {
+    menuToggle.addEventListener('click', function () {
+      if (sidebar.classList.contains('open')) closeSidebar();
+      else openSidebar();
+    });
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', closeSidebar);
+  }
+
+  // Close drawer when a nav link is tapped on mobile
+  document.querySelectorAll('.sidebar-link').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (sidebar && sidebar.classList.contains('open')) closeSidebar();
+    });
+  });
+
+  // Close drawer on resize back to desktop
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 900) closeSidebar();
+  });
+
+  // ===== Auto-dismiss alerts =====
+  document.querySelectorAll('.alert-dismiss').forEach(function (alert) {
+    setTimeout(function () {
+      alert.style.opacity = '0';
+      alert.style.transform = 'translateY(-6px)';
+      alert.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      setTimeout(function () { alert.remove(); }, 450);
+    }, 5000);
+  });
+
   // Cookie helper for CSRF
   function getCookie(name) {
     var value = '; ' + document.cookie;

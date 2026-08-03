@@ -3,8 +3,8 @@
 <html lang="{{ UI_LANG }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1e3a8a">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d1b3e">
     <title>{% block title %}SRMS Drona Learning App{% endblock %}</title>
     <meta name="description" content="Skill Learning & Performance Tracking Platform for SRMS Non-Teaching Staff">
     <link rel="manifest" href="{% static 'manifest.json' %}">
@@ -13,56 +13,99 @@
 </head>
 <body>
     {% if user.is_authenticated %}
-    <header class="topbar">
-        <div class="topbar-inner">
-            <a href="{% url 'dashboard' %}" class="brand">
-                <div class="brand-icon">S</div>
-                <span>SRMS Drona</span>
-            </a>
-            <div class="topbar-actions">
-                <a href="{% url 'toggle_language' %}?lang={% if is_hindi %}en{% else %}hi{% endif %}" class="lang-toggle">
-                    {% if is_hindi %}English{% else %}हिंदी{% endif %}
-                </a>
-                <div class="topbar-user">
-                    <div class="avatar">{{ user.first_name|first|default:"S" }}{{ user.last_name|first }}</div>
-                    <span>{{ user.get_full_name|default:user.employee_id }}</span>
-                    <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
-                </div>
+    {% with url_name=request.resolver_match.url_name %}
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">S</div>
+            <div>
+                <span class="sidebar-brand-name">SRMS Drona</span>
+                <span class="sidebar-brand-sub">{% if is_hindi %}सीखने का मंच{% else %}Learning Platform{% endif %}</span>
             </div>
         </div>
-    </header>
 
-    <nav class="navbar">
-        <div class="navbar-inner">
-            <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <nav class="sidebar-nav">
+            <div class="nav-group-label">{% if is_hindi %}मुख्य{% else %}Main{% endif %}</div>
+
+            <a href="{% url 'dashboard' %}" class="sidebar-link {% if url_name == 'dashboard' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
                 {% if is_hindi %}डैशबोर्ड{% else %}Dashboard{% endif %}
             </a>
-            <a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-                {% if is_hindi %}प्रोफ़ाइल{% else %}Profile{% endif %}
+
+            <a href="{% url 'profile' %}" class="sidebar-link {% if url_name == 'profile' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                {% if is_hindi %}प्रोफ़ाइल{% else %}My Profile{% endif %}
             </a>
-            <a href="{% url 'my_certificates' %}" class="{% if request.resolver_match.url_name == 'my_certificates' %}active{% endif %}">
+
+            <a href="{% url 'my_certificates' %}" class="sidebar-link {% if url_name == 'my_certificates' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M9 14.5V22l3-2 3 2v-7.5"/></svg>
                 {% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}
             </a>
+
             {% if user.role == 'trainer' or user.role == 'admin' or user.is_staff %}
-            <a href="{% url 'generate_ai_quiz' %}" class="{% if request.resolver_match.url_name == 'generate_ai_quiz' %}active{% endif %}">
+            <div class="nav-group-label">{% if is_hindi %}प्रशासन{% else %}Administration{% endif %}</div>
+
+            <a href="{% url 'generate_ai_quiz' %}" class="sidebar-link {% if url_name == 'generate_ai_quiz' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
                 {% if is_hindi %}AI प्रश्नोत्तरी{% else %}AI Quiz Generator{% endif %}
             </a>
-            <a href="{% url 'hr_dashboard' %}" class="{% if request.resolver_match.url_name == 'hr_dashboard' %}active{% endif %}">
+
+            <a href="{% url 'hr_dashboard' %}" class="sidebar-link {% if url_name == 'hr_dashboard' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
                 {% if is_hindi %}एचआर डैशबोर्ड{% else %}HR Dashboard{% endif %}
             </a>
-            <a href="/admin/" target="_blank">
+
+            <a href="/admin/" class="sidebar-link" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
                 {% if is_hindi %}एडमिन{% else %}Admin{% endif %}
             </a>
             {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="avatar">{{ user.first_name|first|default:"S" }}{{ user.last_name|first }}</div>
+                <div>
+                    <span class="sidebar-user-name">{{ user.get_full_name|default:user.employee_id }}</span>
+                    <span class="sidebar-user-role">{{ user.get_role_display }}</span>
+                </div>
+            </div>
         </div>
-    </nav>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Shell wrapper for authenticated layout -->
+    <div class="app">
+        <header class="topbar">
+            <div class="topbar-inner">
+                <button class="menu-toggle" id="menuToggle" aria-label="{% if is_hindi %}मेनू{% else %}Toggle menu{% endif %}" aria-expanded="false">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <span class="topbar-title">{% block page_title %}SRMS Drona{% endblock %}</span>
+                <div class="topbar-actions">
+                    <a href="{% url 'toggle_language' %}?lang={% if is_hindi %}en{% else %}hi{% endif %}" class="lang-toggle">
+                        {% if is_hindi %}English{% else %}हिंदी{% endif %}
+                    </a>
+                    <div class="topbar-user">
+                        <div class="avatar">{{ user.first_name|first|default:"S" }}{{ user.last_name|first }}</div>
+                        <span>{{ user.get_full_name|default:user.employee_id }}</span>
+                        <a href="{% url 'logout' %}" class="logout-btn">
+                            <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                            {% if is_hindi %}लॉगआउट{% else %}Logout{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+    {% endwith %}
     {% endif %}
 
     <main class="main">
         <div class="container">
             {% if messages %}
                 {% for message in messages %}
-                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismiss">
                     {{ message }}
                 </div>
                 {% endfor %}
@@ -72,11 +115,14 @@
         </div>
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            © 2026 SRMS Drona Learning App &mdash; Shri Ram Murti Smarak Group of Institutions
-        </div>
-    </footer>
+    {% if user.is_authenticated %}
+        <footer class="footer">
+            <div class="container">
+                © 2026 SRMS Drona Learning App &mdash; Shri Ram Murti Smarak Group of Institutions
+            </div>
+        </footer>
+    </div><!-- /.app -->
+    {% endif %}
 
     <script src="{% static 'js/app.js' %}"></script>
     {% block scripts %}{% endblock %}
