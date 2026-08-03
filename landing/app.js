@@ -1,6 +1,15 @@
 (function () {
   'use strict';
 
+  // ===== CONFIG: point this at the live Railway app once deployed =====
+  var SRMS_APP_URL = '#'; // e.g. 'https://drona.up.railway.app'
+
+  // Apply app URL to all CTA links
+  document.querySelectorAll('[data-app-link]').forEach(function (el) {
+    el.setAttribute('href', SRMS_APP_URL);
+  });
+  // =====================================================================
+
   // Nav shadow on scroll
   var nav = document.getElementById('nav');
   var onScroll = function () {
