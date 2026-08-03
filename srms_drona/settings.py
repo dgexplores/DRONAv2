@@ -133,4 +133,4 @@ SRMS_BASE_URL = os.getenv('SRMS_BASE_URL', 'http://127.0.0.1:8000')
 
 # ---- APScheduler email reminders ----
 SRMS_RUN_SCHEDULER = os.getenv('SRMS_RUN_SCHEDULER', '0') == '1'
-SRMS_REMINDER_INTERVAL_HOURS = int(os.getenv('SRMS_REMINDER_INTERVAL_HOURS', '24'))
+SRMS_REMINDER_INTERVAL_HOURS = int(os.getenv('SRMS_REMINDER_INTERVAL_HOURS', '24'))# Deploy trigger: CD workflow smoke test
