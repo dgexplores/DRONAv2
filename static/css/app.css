@@ -1245,6 +1245,21 @@ textarea.form-input {
   color: var(--danger);
 }
 
+input[type="checkbox"].form-check {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--brand-500);
+  cursor: pointer;
+}
+
+input[type="file"].form-input {
+  padding: 0.45rem;
+}
+
+select[multiple].form-input {
+  min-height: 120px;
+}
+
 .stat-icon.violet { background: linear-gradient(135deg, #6d28d9, #4c1d95); }
 
 /* ===== Verify Certificate ===== */

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
@@ -52,8 +52,22 @@ urlpatterns = [
     # Analytics & HR Dashboard
     path('analytics/', analytics_views.hr_dashboard_view, name='hr_dashboard'),
     path('analytics/export/csv/', analytics_views.export_staff_report_csv, name='export_staff_csv'),
+
+    # Management Console (admin/trainer)
+    path('manage/', include('apps.management.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # Serve uploaded media (lesson SOP PDFs, certificate PDFs) in production.
+    # WhiteNoise only serves static files, not media uploads.
+    from django.views.static import serve as media_serve
+    urlpatterns += [
+        path(
+            f'{settings.MEDIA_URL.lstrip("/")}<path:path>',
+            media_serve,
+            {'document_root': settings.MEDIA_ROOT},
+        )
+    ]

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Management Console | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">🛠️ Management Console</div>
+<p class="page-subtitle">Create courses, upload modules &amp; lessons, and assign training to departments.</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">📚</div>
+        <div><div class="stat-value">{{ course_count }}</div><div class="stat-label">Courses</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">🗂️</div>
+        <div><div class="stat-value">{{ module_count }}</div><div class="stat-label">Modules</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon gold">📄</div>
+        <div><div class="stat-value">{{ lesson_count }}</div><div class="stat-label">Lessons</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon crimson">👥</div>
+        <div><div class="stat-value">{{ active_staff_count }}</div><div class="stat-label">Active Staff</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon violet">🎯</div>
+        <div><div class="stat-value">{{ quiz_count }}</div><div class="stat-label">Quizzes</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">🔗</div>
+        <div><div class="stat-value">{{ enrollment_count }}</div><div class="stat-label">Enrollments</div></div>
+    </div>
+</div>
+
+<div class="section-title" style="margin-top: 1.5rem;">Quick Actions</div>
+<div class="module-block" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+    <a href="{% url 'mgmt_course_create' %}" class="btn btn-primary">➕ Create Course</a>
+    <a href="{% url 'mgmt_course_list' %}" class="btn btn-secondary">📚 Manage Courses</a>
+    <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold">👥 Bulk Enroll Staff</a>
+    <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">📊 HR Analytics</a>
+    {% if pending_count %}
+    <a href="{% url 'hr_dashboard' %}" class="btn btn-success">⏳ {{ pending_count }} Pending Approval(s)</a>
+    {% endif %}
+    <a href="{% url 'generate_ai_quiz' %}" class="btn btn-secondary">🤖 AI Quiz Generator</a>
+</div>
+{% endblock %}

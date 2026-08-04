@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib import messages
 from apps.courses.models import Category, Course, Module, Lesson, Enrollment, LessonProgress
 
 class LessonInline(admin.TabularInline):
@@ -16,10 +17,34 @@ class CourseAdmin(admin.ModelAdmin):
     list_filter = ('category', 'is_mandatory')
     search_fields = ('title', 'description')
     filter_horizontal = ('target_departments',)
+    inlines = [ModuleInline]
+
+    actions = ['enroll_target_department_staff']
+
+    @admin.action(description="Enroll all active staff in target departments")
+    def enroll_target_department_staff(self, request, queryset):
+        from apps.users.models import StaffUser
+        created = 0
+        already = 0
+        for course in queryset:
+            depts = list(course.target_departments.all())
+            staff = StaffUser.objects.filter(is_active=True, department__in=depts)
+            for user in staff:
+                _, was_created = Enrollment.objects.get_or_create(staff_user=user, course=course)
+                if was_created:
+                    created += 1
+                else:
+                    already += 1
+        self.message_user(
+            request,
+            f"Enrolled {created} staff ({already} already enrolled) across {queryset.count()} course(s).",
+            level=messages.SUCCESS,
+        )
 
 class ModuleAdmin(admin.ModelAdmin):
     list_display = ('title', 'course', 'order')
     list_filter = ('course',)
+    inlines = [LessonInline]
 
 class LessonAdmin(admin.ModelAdmin):
     list_display = ('title', 'module', 'lesson_type', 'order')

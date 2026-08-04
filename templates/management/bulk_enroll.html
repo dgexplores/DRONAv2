@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Enroll Staff | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">👥 Bulk Enroll Staff</div>
+<p class="page-subtitle">Assign a course to all active staff in a department (or everyone) in one step.</p>
+
+<div class="module-block" style="max-width: 560px;">
+    <form method="POST">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small style="color:var(--muted);">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        {% endfor %}
+        <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+            <button type="submit" class="btn btn-gold">🔗 Enroll Staff</button>
+            <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

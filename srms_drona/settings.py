@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'apps.certificates.apps.CertificatesConfig',
     'apps.analytics.apps.AnalyticsConfig',
     'apps.notifications.apps.NotificationsConfig',
+    'apps.management.apps.ManagementConfig',
 ]
 
 MIDDLEWARE = [

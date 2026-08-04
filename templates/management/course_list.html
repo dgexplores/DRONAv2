@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Manage Courses | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">📚 Manage Courses</div>
+<p class="page-subtitle">Edit course structure, add modules and lessons, and track enrollments.</p>
+
+<div style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem;">
+    <a href="{% url 'mgmt_course_create' %}" class="btn btn-primary">➕ New Course</a>
+    <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold">👥 Bulk Enroll</a>
+    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">← Back</a>
+</div>
+
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>Course</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Modules</th>
+                <th>Lessons</th>
+                <th>Enrollments</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for course in courses %}
+            <tr>
+                <td>
+                    <strong>{{ course.title }}</strong>
+                    <div style="font-size:0.78rem; color:var(--muted);">{{ course.description|truncatechars:70 }}</div>
+                </td>
+                <td>{{ course.category.name }}</td>
+                <td>
+                    {% if course.is_mandatory %}
+                    <span class="badge badge-mandatory">Mandatory</span>
+                    {% else %}
+                    <span class="badge badge-elective">Elective</span>
+                    {% endif %}
+                </td>
+                <td>{{ course.module_count }}</td>
+                <td>{{ course.get_total_lessons }}</td>
+                <td>{{ course.enrollment_count }}</td>
+                <td>
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                        <a href="{% url 'mgmt_course_detail' course.id %}" class="btn btn-secondary btn-sm">Open</a>
+                        <a href="{% url 'mgmt_course_edit' course.id %}" class="btn btn-primary btn-sm">Edit</a>
+                        <form method="POST" action="{% url 'mgmt_course_delete' course.id %}" style="display:inline;"
+                              onsubmit="return confirm('Delete course \'{{ course.title }}\' and all its modules/lessons?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" style="text-align:center; color:var(--muted);">No courses yet. <a href="{% url 'mgmt_course_create' %}">Create your first course.</a></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
