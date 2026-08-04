@@ -10,12 +10,12 @@ Built from the project spec documents (Project Plan + System Workflow).
 | **App (Django backend)** | https://dronav2-production.up.railway.app |
 | **Landing page** | https://landing-two-phi-95.vercel.app |
 
-**Demo accounts** — password `drona123` for all:
-| Role | Employee ID |
-|---|---|
-| Super Admin | `ADMIN001` |
-| HOD / Trainer | `EMP010` |
-| Staff | `EMP001`–`EMP006` |
+**Demo accounts** (recreated on a fresh production DB):
+| Role | Employee ID | Password |
+|---|---|---|
+| Super Admin | `ADMIN001` | `Admin12345` |
+| HOD / Trainer | `EMP010` | `drona123` |
+| Staff | `EMP001`–`EMP006` | `drona123` |
 
 ## Tech Stack
 - **Backend:** Python 3.12 / Django 6 (custom `StaffUser`, RBAC, PostgreSQL-ready)
@@ -27,6 +27,9 @@ Built from the project spec documents (Project Plan + System Workflow).
 
 ## Features
 - ✅ Employee ID login + RBAC (staff / trainer-HOD / super admin)
+- ✅ Split login page — **Staff/Trainee** and **Admin/Management** tabs (admin lands in the Management Console)
+- ✅ **Password reset** via email (SMTP) — self-service "Forgot password?" link
+- ✅ Optional **Clerk SSO** sign-in (auto-provisions accounts by email)
 - ✅ Category → Course → Module → Lesson hierarchy
 - ✅ Auto-enrollment in mandatory courses by department
 - ✅ Video watch-position persistence (10s heartbeat) + progress calculation
@@ -57,9 +60,27 @@ Open http://127.0.0.1:8000/
 ### Demo Accounts
 | Role       | Employee ID | Password   |
 |------------|-------------|------------|
-| Super Admin| `ADMIN001`  | `drona123` |
+| Super Admin| `ADMIN001`  | `Admin12345` |
 | HOD/Trainer| `EMP010`    | `drona123` |
 | Staff      | `EMP001`-`EMP006` | `drona123` |
+
+> **Production admin password** is stored on the deployment machine at `~/.drona_admin_pw.txt`
+> (permissions `600`). Change it after any shared-machine access.
+
+## Authentication
+- **Login** (`/login/`) has two tabs:
+  - **Staff / Trainee** — for learners; lands on the dashboard.
+  - **Admin / Management** — for admins & trainers; lands in the Management Console (`/manage/`).
+- **Self-signup** (`/register/`) creates an *inactive* account that an **admin must approve** in the HR Dashboard (`/analytics/` → Pending Approvals).
+- **Forgot password** (`/password-reset/`) emails a reset link. Emails are sent via SMTP
+  (see env vars below) from the configured sender account.
+- **Clerk SSO** renders on the login page when `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` are set.
+  Note: set the Clerk Dashboard **Homepage URL** to the live app URL so SSO signups work.
+
+## Intro Videos
+Welcome / platform-tour videos ship as git-tracked assets under `static/videos/`
+(`intro_overview.mp4`, `intro_tour.mp4`) and are served by WhiteNoise at `/static/videos/`.
+They seed the **Platform Introduction** course via a data migration (`apps/courses/migrations/0004_seed_intro_videos.py`).
 
 ## Deployment — Railway (backend)
 
@@ -100,9 +121,9 @@ srms_drona/
 │   ├── certificates/   # Certificate model + pdf_builder (QR)
 │   ├── analytics/      # HR dashboard + CSV export
 │   └── notifications/  # APScheduler email reminders
-├── static/             # CSS, JS, manifest.json, sw.js, icons
-├── templates/          # PWA HTML templates
-├── media/              # uploaded PDFs, certificates
+├── static/             # CSS, JS, manifest.json, sw.js, icons, videos/
+├── templates/          # PWA HTML templates (incl. password-reset pages)
+├── media/              # runtime uploads (cert PDFs, SOP PDFs)
 ├── landing/            # Vercel static marketing site
 ├── .github/workflows/  # CI + CD pipelines
 ├── seed.py             # demo data loader
@@ -147,10 +168,14 @@ Set these in **Repo → Settings → Secrets and variables → Actions**:
 | `DJANGO_SECRET_KEY` | Long random string |
 | `DJANGO_DEBUG` | `False` |
 | `DJANGO_ALLOWED_HOSTS` | `<app>.up.railway.app` |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://<app>.up.railway.app` (comma-separated; required for HTTPS form POSTs) |
 | `GEMINI_API_KEY` | Live AI quiz generation |
 | `SRMS_BASE_URL` | `https://<app>.up.railway.app` |
 | `SRMS_RUN_SCHEDULER` | `1` to enable email reminders |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | Reminder emails |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | Reminder + password-reset emails |
+| `DEFAULT_FROM_EMAIL` | Sender shown on outgoing emails |
+| `DJANGO_EMAIL_BACKEND` | `django.core.mail.backends.smtp.EmailBackend` (set this — default is console) |
+| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_JWT_AUDIENCE` | Optional Clerk SSO |
 
 ## Deployment Summary
 - **Landing page** → Vercel — live at https://landing-two-phi-95.vercel.app (CTA opens the app)
