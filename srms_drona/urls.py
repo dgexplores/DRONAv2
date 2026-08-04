@@ -1,8 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
+from django.contrib.auth import views as auth_views
 
 from apps.users import views as user_views
 from apps.courses import views as course_views
@@ -32,6 +33,24 @@ urlpatterns = [
     path('users/<int:user_id>/approve/', user_views.approve_user, name='approve_user'),
     path('users/<int:user_id>/reject/', user_views.reject_user, name='reject_user'),
     path('language/toggle/', user_views.toggle_language, name='toggle_language'),
+
+    # Password Reset
+    path('password-reset/', auth_views.PasswordResetView.as_view(
+        template_name='users/password_reset_form.html',
+        email_template_name='users/password_reset_email.html',
+        subject_template_name='users/password_reset_subject.txt',
+        success_url=reverse_lazy('password_reset_done'),
+    ), name='password_reset'),
+    path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(
+        template_name='users/password_reset_done.html',
+    ), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='users/password_reset_confirm.html',
+        success_url=reverse_lazy('password_reset_complete'),
+    ), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='users/password_reset_complete.html',
+    ), name='password_reset_complete'),
 
     # Courses & PWA Dashboard
     path('', course_views.dashboard_view, name='dashboard'),

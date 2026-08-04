@@ -48,6 +48,9 @@ def login_view(request):
                 candidate.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(request, candidate)
                 messages.success(request, f"Welcome back, {candidate.first_name or candidate.employee_id}!")
+                next_url = request.POST.get('next') or request.GET.get('next') or ''
+                if next_url.startswith('/') and not next_url.startswith('//'):
+                    return redirect(next_url)
                 return redirect('dashboard')
         messages.error(request, _("Invalid Employee ID or Password. Please try again."))
 
