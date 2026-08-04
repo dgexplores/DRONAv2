@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Import Staff (CSV) | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">📥 Bulk Import Staff (CSV)</div>
+<p class="page-subtitle">Upload a CSV to create staff accounts in one step. Imported staff get an initial password equal to their Employee ID.</p>
+
+<div class="module-block" style="max-width: 640px;">
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="csv_file">CSV File</label>
+            <input type="file" id="csv_file" name="csv_file" class="form-input" accept=".csv,text/csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary">⬆️ Import Staff</button>
+    </form>
+
+    <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border);">
+        <h4 style="margin-bottom:0.5rem;">Required CSV format</h4>
+        <pre style="white-space:pre-wrap; background:var(--surface-2); padding:0.75rem; border-radius:0.5rem; font-size:0.78rem;">employee_id,first_name,last_name,email,department,designation,role
+EMP101,Alice,Sharma,alice@srms.edu.in,IT,Lab Assistant,staff
+EMP102,Bob,Kumar,bob@srms.edu.in,LIB,Library Clerk,staff</pre>
+        <p style="color:var(--muted); font-size:0.78rem;">
+            <code>department</code> = Department code (e.g. <code>IT</code>, <code>LIB</code>). <code>role</code> = staff / trainer / admin. Rows with a duplicate Employee ID are skipped.
+        </p>
+    </div>
+</div>
+
+{% if result %}
+<div class="section-title" style="margin-top:1.5rem;">Import Result</div>
+<div class="module-block">
+    <p>✅ <strong>{{ result.created }}</strong> created &nbsp;·&nbsp; ⏭️ <strong>{{ result.skipped }}</strong> skipped</p>
+    {% if result.errors %}
+    <ul style="color:var(--danger); font-size:0.82rem;">
+        {% for e in result.errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

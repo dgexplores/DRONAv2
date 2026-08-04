@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from apps.users.models import StaffUser, Department
-from apps.courses.models import Category, Course, Module, Lesson, Enrollment
+from apps.courses.models import Category, Course, Module, Lesson, Enrollment, TrainingSession
 
 
 class CourseForm(forms.ModelForm):
@@ -77,3 +77,23 @@ class EnrollForm(forms.Form):
         empty_label=_("All departments (all active staff)"),
         widget=forms.Select(attrs={'class': 'form-input'}),
     )
+
+
+class TrainingSessionForm(forms.ModelForm):
+    class Meta:
+        model = TrainingSession
+        fields = ['title', 'description', 'course', 'date', 'start_time', 'end_time', 'location', 'is_mandatory']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. Fire Drill Workshop'}),
+            'description': forms.Textarea(attrs={'class': 'form-input', 'rows': 3}),
+            'course': forms.Select(attrs={'class': 'form-input'}),
+            'date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={'class': 'form-input', 'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'class': 'form-input', 'type': 'time'}),
+            'location': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. Training Hall, Block B'}),
+            'is_mandatory': forms.CheckboxInput(attrs={'class': 'form-check'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['course'].empty_label = _("No linked course (optional)")

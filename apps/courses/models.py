@@ -71,6 +71,7 @@ class Enrollment(models.Model):
     is_completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
     progress_percent = models.IntegerField(default=0)
+    watch_seconds = models.PositiveIntegerField(default=0, help_text="Total active learning time watched (seconds)")
 
     class Meta:
         unique_together = ('staff_user', 'course')
@@ -107,3 +108,24 @@ class LessonProgress(models.Model):
 
     def __str__(self):
         return f"{self.enrollment.staff_user.employee_id} - {self.lesson.title}: {'Completed' if self.is_completed else 'In Progress'}"
+
+
+class TrainingSession(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='training_sessions')
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField(null=True, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    is_mandatory = models.BooleanField(default=False)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='training_sessions'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date', 'start_time']
+
+    def __str__(self):
+        return f"{self.title} ({self.date})"

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib import messages
-from apps.courses.models import Category, Course, Module, Lesson, Enrollment, LessonProgress
+from apps.courses.models import Category, Course, Module, Lesson, Enrollment, LessonProgress, TrainingSession
 
 class LessonInline(admin.TabularInline):
     model = Lesson
@@ -63,3 +63,12 @@ admin.site.register(Module, ModuleAdmin)
 admin.site.register(Lesson, LessonAdmin)
 admin.site.register(Enrollment, EnrollmentAdmin)
 admin.site.register(LessonProgress, LessonProgressAdmin)
+
+
+class TrainingSessionAdmin(admin.ModelAdmin):
+    list_display = ('title', 'date', 'start_time', 'end_time', 'location', 'is_mandatory')
+    list_filter = ('is_mandatory', 'date')
+    search_fields = ('title', 'location')
+
+
+admin.site.register(TrainingSession, TrainingSessionAdmin)

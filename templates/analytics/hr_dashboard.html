@@ -45,6 +45,13 @@
             <div class="stat-label">{% if is_hindi %}औसत क्विज़ स्कोर{% else %}Avg Quiz Score{% endif %}</div>
         </div>
     </div>
+    <div class="stat-card">
+        <div class="stat-icon teal">⏱️</div>
+        <div>
+            <div class="stat-value">{{ total_learning_hours }}h</div>
+            <div class="stat-label">{% if is_hindi %}कुल सीखने के घंटे{% else %}Total Learning Hours{% endif %}</div>
+        </div>
+    </div>
 </div>
 
 <div class="section-title">{% if is_hindi %}विभागवार समापन दर{% else %}Department Completion Rates{% endif %}</div>

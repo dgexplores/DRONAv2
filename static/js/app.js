@@ -21,9 +21,10 @@
     var lessonId = lessonVideo.getAttribute('data-lesson-id');
     var saveUrl = '/lessons/' + lessonId + '/progress/';
     var lastSaved = 0;
+    var watchedSinceSave = 0;
     var saveTimer = null;
 
-    function saveProgress(position, completed) {
+    function saveProgress(position, completed, watched) {
       fetch(saveUrl, {
         method: 'POST',
         headers: {
@@ -33,7 +34,8 @@
         credentials: 'same-origin',
         body: JSON.stringify({
           position: position,
-          completed: completed || false
+          completed: completed || false,
+          watched: watched || 0
         })
       }).then(function (resp) {
         return resp.json();
@@ -59,19 +61,25 @@
     lessonVideo.addEventListener('timeupdate', function () {
       var current = Math.floor(lessonVideo.currentTime);
       if (current - lastSaved >= 10) {
+        watchedSinceSave = current - lastSaved;
         lastSaved = current;
-        saveProgress(current, false);
+        saveProgress(current, false, watchedSinceSave);
+        watchedSinceSave = 0;
       }
     });
 
     // Save on pause/end
     lessonVideo.addEventListener('pause', function () {
-      saveProgress(Math.floor(lessonVideo.currentTime), false);
+      var current = Math.floor(lessonVideo.currentTime);
+      saveProgress(current, false, watchedSinceSave);
+      watchedSinceSave = 0;
     });
 
     // Mark completed when video ends
     lessonVideo.addEventListener('ended', function () {
-      saveProgress(Math.floor(lessonVideo.currentTime), true);
+      var current = Math.floor(lessonVideo.currentTime);
+      saveProgress(current, true, watchedSinceSave);
+      watchedSinceSave = 0;
     });
 
     // Save on page unload
@@ -79,7 +87,8 @@
       if (lessonVideo.currentTime > 0) {
         navigator.sendBeacon(saveUrl, new Blob([JSON.stringify({
           position: Math.floor(lessonVideo.currentTime),
-          completed: false
+          completed: false,
+          watched: watchedSinceSave
         })], { type: 'application/json' }));
       }
     });

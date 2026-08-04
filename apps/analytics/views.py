@@ -2,7 +2,7 @@ import csv
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.db.models import Count, Avg, Q
+from django.db.models import Count, Avg, Q, Sum
 from django.contrib import messages
 
 from apps.users.models import StaffUser, Department
@@ -38,6 +38,7 @@ def hr_dashboard_view(request):
     total_courses_count = Course.objects.count()
     total_cert_count = Enrollment.objects.filter(is_completed=True).count()
     avg_quiz_score = QuizAttempt.objects.aggregate(Avg('score'))['score__avg'] or 0.0
+    total_learning_hours = (Enrollment.objects.aggregate(Sum('watch_seconds'))['watch_seconds__sum'] or 0) / 3600
 
     recent_attempts = QuizAttempt.objects.select_related('staff_user', 'quiz').order_by('-attempted_at')[:10]
 
@@ -50,6 +51,7 @@ def hr_dashboard_view(request):
         'total_courses_count': total_courses_count,
         'total_cert_count': total_cert_count,
         'avg_quiz_score': round(avg_quiz_score, 1),
+        'total_learning_hours': round(total_learning_hours, 1),
         'recent_attempts': recent_attempts,
         'pending_users': pending_users,
         'is_admin': is_admin,

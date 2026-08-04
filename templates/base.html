@@ -43,6 +43,11 @@
                 {% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}
             </a>
 
+            <a href="{% url 'training_calendar' %}" class="sidebar-link {% if url_name == 'training_calendar' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+                {% if is_hindi %}प्रशिक्षण कैलेंडर{% else %}Training Calendar{% endif %}
+            </a>
+
             {% if user.role == 'trainer' or user.role == 'admin' or user.is_staff %}
             <div class="nav-group-label">{% if is_hindi %}प्रशासन{% else %}Administration{% endif %}</div>
 

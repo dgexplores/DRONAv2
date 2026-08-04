@@ -33,14 +33,20 @@ class CourseFlowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(Enrollment.objects.filter(staff_user=self.user, course=self.course).exists())
 
-    def test_staff_cannot_view_unassigned_course(self):
+    def test_staff_cannot_view_unassigned_mandatory_course(self):
+        other = Course.objects.create(title="ERP", category=self.cat, is_mandatory=True)
+        resp = self.client.get(reverse('course_detail', args=[other.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(Enrollment.objects.filter(staff_user=self.user, course=other).exists())
+
+    def test_staff_auto_enroll_elective_on_view(self):
         elective = Course.objects.create(title="ERP", category=self.cat, is_mandatory=False)
         resp = self.client.get(reverse('course_detail', args=[elective.id]))
-        self.assertEqual(resp.status_code, 302)
-        self.assertFalse(Enrollment.objects.filter(staff_user=self.user, course=elective).exists())
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(Enrollment.objects.filter(staff_user=self.user, course=elective).exists())
 
-    def test_staff_cannot_access_unassigned_lesson(self):
-        other = Course.objects.create(title="Other", category=self.cat, is_mandatory=False)
+    def test_staff_cannot_access_unassigned_mandatory_lesson(self):
+        other = Course.objects.create(title="Other", category=self.cat, is_mandatory=True)
         other_module = Module.objects.create(course=other, title="M", order=1)
         other_lesson = Lesson.objects.create(
             module=other_module, title="L", order=1, lesson_type='video', duration_minutes=10

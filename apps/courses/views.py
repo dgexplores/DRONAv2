@@ -2,11 +2,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.views.decorators.csrf import csrf_exempt
 import json
+from datetime import datetime as dt, timedelta as td
 
-from apps.courses.models import Course, Category, Module, Lesson, Enrollment, LessonProgress
+from apps.courses.models import Course, Category, Module, Lesson, Enrollment, LessonProgress, TrainingSession
 from apps.users.models import Department
 
 @login_required
@@ -20,6 +22,10 @@ def dashboard_view(request):
             Enrollment.objects.get_or_create(staff_user=user, course=course)
 
     user_enrollments = Enrollment.objects.filter(staff_user=user).select_related('course')
+    enrolled_course_ids = user_enrollments.values_list('course_id', flat=True)
+
+    # Self-service catalog: elective courses not yet enrolled (mandatory is assigned by admin/HOD).
+    available_courses = Course.objects.filter(is_mandatory=False).exclude(id__in=enrolled_course_ids)
 
     # Metrics
     completed_count = user_enrollments.filter(is_completed=True).count()
@@ -28,6 +34,7 @@ def dashboard_view(request):
 
     context = {
         'user_enrollments': user_enrollments,
+        'available_courses': available_courses,
         'completed_count': completed_count,
         'in_progress_count': in_progress_count,
         'certificates_count': certificates_count,
@@ -38,15 +45,21 @@ def dashboard_view(request):
 def course_detail_view(request, course_id):
     course = get_object_or_404(Course, id=course_id)
 
-    # Staff may only view assigned courses; managers may preview any course.
+    # Managers may preview any course; staff may view assigned courses or self-enroll into electives.
     is_manager = request.user.role in ('admin', 'trainer') or request.user.is_superuser
+
     try:
         enrollment = Enrollment.objects.get(staff_user=request.user, course=course)
     except Enrollment.DoesNotExist:
-        if not is_manager:
+        if is_manager:
+            enrollment = None
+        elif not course.is_mandatory:
+            # Self-service enrollment for elective courses.
+            enrollment, _ = Enrollment.objects.get_or_create(staff_user=request.user, course=course)
+            messages.success(request, f"You are now enrolled in '{course.title}'.")
+        else:
             messages.error(request, "This course has not been assigned to you yet.")
             return redirect('dashboard')
-        enrollment = None
 
     modules = course.modules.prefetch_related('lessons').all()
 
@@ -80,10 +93,13 @@ def lesson_view(request, lesson_id):
     try:
         enrollment = Enrollment.objects.get(staff_user=request.user, course=course)
     except Enrollment.DoesNotExist:
-        if not is_manager:
+        if is_manager:
+            enrollment = None
+        elif not course.is_mandatory:
+            enrollment, _ = Enrollment.objects.get_or_create(staff_user=request.user, course=course)
+        else:
             messages.error(request, "This course has not been assigned to you yet.")
             return redirect('dashboard')
-        enrollment = None
 
     progress = None
     if enrollment is not None:
@@ -127,9 +143,62 @@ def save_lesson_progress(request, lesson_id):
                 progress.is_completed = True
             progress.save()
 
+            # Accumulate active learning time (watched seconds this heartbeat).
+            watched = data.get('watched', 0)
+            try:
+                watched = max(0, int(watched))
+            except (TypeError, ValueError):
+                watched = 0
+            if watched:
+                enrollment.watch_seconds += watched
+                enrollment.save(update_fields=['watch_seconds'])
+
             enrollment.update_progress()
 
             return JsonResponse({'status': 'success', 'progress_percent': enrollment.progress_percent})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'status': 'invalid method'}, status=405)
+
+
+@login_required
+def training_calendar(request):
+    month = request.GET.get('month') or timezone.localdate().strftime('%Y-%m')
+    try:
+        year, month_num = [int(p) for p in month.split('-')]
+    except (ValueError, AttributeError):
+        year, month_num = timezone.localdate().year, timezone.localdate().month
+
+    sessions = TrainingSession.objects.filter(date__year=year, date__month=month_num)
+
+    # Group sessions by day for the calendar grid.
+    day_map = {}
+    for s in sessions:
+        day_map.setdefault(s.date.day, []).append(s)
+
+    context = {
+        'sessions': sessions,
+        'day_map': day_map,
+        'year': year,
+        'month': month_num,
+        'current_month': month,
+        'month_name': dt(year, month_num, 1).strftime('%B'),
+        'prev': (dt(year, month_num, 1) - td(days=1)).strftime('%Y-%m'),
+        'next': f"{year}-{month_num + 1:02d}" if month_num < 12 else f"{year + 1}-01",
+    }
+    return render(request, 'courses/training_calendar.html', context)
+
+
+@login_required
+def enroll_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    if course.is_mandatory:
+        messages.error(request, "Mandatory courses are assigned by your HOD and cannot be self-enrolled.")
+        return redirect('course_detail', course_id=course.id)
+
+    _, created = Enrollment.objects.get_or_create(staff_user=request.user, course=course)
+    if created:
+        messages.success(request, f"You are now enrolled in '{course.title}'.")
+    else:
+        messages.info(request, f"You are already enrolled in '{course.title}'.")
+    return redirect('course_detail', course_id=course.id)

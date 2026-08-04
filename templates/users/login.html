@@ -42,6 +42,11 @@
                 <button type="submit" class="btn btn-primary btn-block mt-2">Sign In</button>
             </form>
 
+            {% if clerk_enabled %}
+            <div class="login-divider">or</div>
+            <div id="clerk-signin"></div>
+            {% endif %}
+
             <div class="login-alt">
                 Don't have an account? <a href="{% url 'register' %}">Create Account</a>
             </div>
@@ -55,5 +60,38 @@
     </div>
 
     <script src="{% static 'js/app.js' %}"></script>
+
+    {% if clerk_enabled %}
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"></script>
+    <script>
+        (function () {
+            var key = "{{ clerk_publishable_key }}";
+            window.Clerk.load({ publishableKey: key }).then(function () {
+                window.Clerk.mountSignIn(document.getElementById('clerk-signin'));
+                window.Clerk.addListener(function (payload) {
+                    if (payload.session) {
+                        var form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = "{% url 'clerk_login' %}";
+                        var csrf = document.createElement('input');
+                        csrf.type = 'hidden';
+                        csrf.name = 'csrfmiddlewaretoken';
+                        csrf.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        var token = document.createElement('input');
+                        token.type = 'hidden';
+                        token.name = 'token';
+                        form.appendChild(csrf);
+                        payload.session.getToken().then(function (jwt) {
+                            token.value = jwt;
+                            form.appendChild(token);
+                            document.body.appendChild(form);
+                            form.submit();
+                        });
+                    }
+                });
+            });
+        })();
+    </script>
+    {% endif %}
 </body>
 </html>

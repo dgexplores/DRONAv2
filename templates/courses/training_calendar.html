@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Training Calendar | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">📅 {% if is_hindi %}प्रशिक्षण कैलेंडर{% else %}Training Calendar{% endif %}</div>
+<p class="page-subtitle">{% if is_hindi %}आगामी कार्यशालाओं और प्रशिक्षण सत्र देखें।{% else %}View upcoming workshops and training sessions.{% endif %}</p>
+
+<div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:1.25rem;">
+    {% with prev_month_ts=current_month %}
+    <a href="{% url 'training_calendar' %}?month={{ prev }}" class="btn btn-secondary btn-sm">← {% if is_hindi %}पिछला{% else %}Prev{% endif %}</a>
+    {% endwith %}
+    <strong>{{ month_name }} {{ year }}</strong>
+    <a href="{% url 'training_calendar' %}?month={{ next }}" class="btn btn-secondary btn-sm">{% if is_hindi %}अगला{% else %}Next{% endif %} →</a>
+</div>
+
+{% if sessions %}
+<div class="section-title">{% if is_hindi %}इस माह के सत्र{% else %}Sessions This Month{% endif %}</div>
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}दिनांक{% else %}Date{% endif %}</th>
+                <th>{% if is_hindi %}सत्र{% else %}Session{% endif %}</th>
+                <th>{% if is_hindi %}समय{% else %}Time{% endif %}</th>
+                <th>{% if is_hindi %}स्थान{% else %}Location{% endif %}</th>
+                <th>{% if is_hindi %}प्रकार{% else %}Type{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sessions %}
+            <tr>
+                <td>{{ s.date|date:"D, d M Y" }}</td>
+                <td>
+                    <strong>{{ s.title }}</strong>
+                    {% if s.course %}<div style="font-size:0.78rem; color:var(--muted);">Course: {{ s.course.title }}</div>{% endif %}
+                    {% if s.description %}<div style="font-size:0.78rem; color:var(--muted);">{{ s.description|truncatechars:80 }}</div>{% endif %}
+                </td>
+                <td>{{ s.start_time|time:"H:i" }}{% if s.end_time %} – {{ s.end_time|time:"H:i" }}{% endif %}</td>
+                <td>{{ s.location|default:"—" }}</td>
+                <td>
+                    {% if s.is_mandatory %}<span class="badge badge-mandatory">{% if is_hindi %}अनिवार्य{% else %}Mandatory{% endif %}</span>
+                    {% else %}<span class="badge badge-elective">{% if is_hindi %}वैकल्पिक{% else %}Elective{% endif %}</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">{% if is_hindi %}इस माह कोई सत्र निर्धारित नहीं है।{% else %}No training sessions scheduled for this month.{% endif %}</div>
+{% endif %}
+{% endblock %}

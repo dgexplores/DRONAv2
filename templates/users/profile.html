@@ -41,6 +41,22 @@
     </div>
 </div>
 
+<div class="section-title" style="margin-top: 1.5rem;">🏆 {% if is_hindi %}बैज{% else %}Badges{% endif %} &nbsp;<small style="color:var(--muted); font-weight:400;">⏱️ {{ learning_hours|floatformat:1 }} {% if is_hindi %}घंटे{% else %}hrs{% endif %} learning</small></div>
+<div class="card-grid" style="margin-bottom:0;">
+    {% for badge in badges %}
+    <div class="course-card" style="{% if not badge.earned %}opacity:.45; filter:grayscale(1);{% endif %}">
+        <div class="course-card-header">
+            <div class="course-icon">{{ badge.icon }}</div>
+            <div class="course-title">{{ badge.name }}</div>
+        </div>
+        <div class="course-card-body">
+            <div class="course-desc">{{ badge.description }}</div>
+            {% if badge.earned %}<span class="badge badge-elective">✓ Earned</span>{% else %}<span class="badge badge-category">Locked</span>{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
 <div class="section-title" style="margin-top: 1.5rem;">📚 {% if is_hindi %}मेरे नामांकन{% else %}My Enrollments{% endif %}</div>
 <div class="table-wrap">
     <table class="data">

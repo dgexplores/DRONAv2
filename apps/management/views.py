@@ -3,11 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Count
+import csv
 
 from apps.users.models import StaffUser, Department
-from apps.courses.models import Course, Module, Lesson, Enrollment, Category
+from apps.courses.models import Course, Module, Lesson, Enrollment, Category, TrainingSession
 from apps.quizzes.models import Quiz
-from apps.management.forms import CourseForm, ModuleForm, LessonForm, EnrollForm
+from apps.management.forms import (
+    CourseForm, ModuleForm, LessonForm, EnrollForm, TrainingSessionForm,
+)
 
 
 def _can_manage(user):
@@ -255,3 +258,122 @@ def bulk_enroll(request):
         form = EnrollForm()
 
     return render(request, 'management/bulk_enroll.html', {'form': form})
+
+
+@login_required
+def session_list(request):
+    redirect_resp = _require_manager(request)
+    if redirect_resp:
+        return redirect_resp
+    sessions = TrainingSession.objects.select_related('course').order_by('date', 'start_time')
+    return render(request, 'management/session_list.html', {'sessions': sessions})
+
+
+@login_required
+def session_create(request):
+    redirect_resp = _require_manager(request)
+    if redirect_resp:
+        return redirect_resp
+    if request.method == 'POST':
+        form = TrainingSessionForm(request.POST)
+        if form.is_valid():
+            session = form.save(commit=False)
+            session.created_by = request.user
+            session.save()
+            messages.success(request, f"Training session '{session.title}' scheduled.")
+            return redirect('mgmt_session_list')
+    else:
+        form = TrainingSessionForm()
+    return render(request, 'management/session_form.html', {'form': form, 'title': _('Schedule Training Session'), 'is_new': True})
+
+
+@login_required
+def session_edit(request, session_id):
+    redirect_resp = _require_manager(request)
+    if redirect_resp:
+        return redirect_resp
+    session = get_object_or_404(TrainingSession, id=session_id)
+    if request.method == 'POST':
+        form = TrainingSessionForm(request.POST, instance=session)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Training session updated.")
+            return redirect('mgmt_session_list')
+    else:
+        form = TrainingSessionForm(instance=session)
+    return render(request, 'management/session_form.html', {'form': form, 'title': _('Edit Training Session'), 'session': session, 'is_new': False})
+
+
+@login_required
+def session_delete(request, session_id):
+    redirect_resp = _require_manager(request)
+    if redirect_resp:
+        return redirect_resp
+    session = get_object_or_404(TrainingSession, id=session_id)
+    if request.method == 'POST':
+        session.delete()
+        messages.warning(request, "Training session deleted.")
+    return redirect('mgmt_session_list')
+
+
+@login_required
+def import_staff(request):
+    redirect_resp = _require_manager(request)
+    if redirect_resp:
+        return redirect_resp
+
+    result = None
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        decoded = csv_file.read().decode('utf-8-sig')
+        reader = csv.DictReader(decoded.splitlines())
+
+        created = 0
+        skipped = 0
+        errors = []
+        for row_num, row in enumerate(reader, start=2):
+            employee_id = (row.get('employee_id') or '').strip().upper()
+            first_name = (row.get('first_name') or '').strip()
+            last_name = (row.get('last_name') or '').strip()
+            email = (row.get('email') or '').strip()
+            dept_code = (row.get('department') or row.get('department_code') or '').strip()
+            designation = (row.get('designation') or '').strip()
+            role = (row.get('role') or 'staff').strip().lower()
+
+            if not employee_id or not first_name or not email:
+                errors.append(f"Row {row_num}: missing employee_id/first_name/email.")
+                continue
+            if StaffUser.objects.filter(employee_id=employee_id).exists():
+                skipped += 1
+                continue
+
+            department = None
+            if dept_code:
+                department = Department.objects.filter(code=dept_code).first()
+                if department is None:
+                    errors.append(f"Row {row_num}: unknown department code '{dept_code}'.")
+                    continue
+
+            if role not in dict(StaffUser.ROLE_CHOICES):
+                role = 'staff'
+
+            StaffUser.objects.create_user(
+                username=employee_id,
+                employee_id=employee_id,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                department=department,
+                designation=designation,
+                role=role,
+                password=employee_id,
+                is_active=True,
+            )
+            created += 1
+
+        result = {'created': created, 'skipped': skipped, 'errors': errors}
+        messages.success(request, f"Imported {created} staff ({skipped} skipped).")
+        if errors:
+            messages.warning(request, f"{len(errors)} rows had problems.")
+
+    return render(request, 'management/staff_import.html', {'result': result})

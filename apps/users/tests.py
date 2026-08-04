@@ -79,7 +79,7 @@ class RegistrationApprovalTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "already registered")
 
-    def test_login_pending_shows_approval_message(self):
+    def test_login_pending_uses_generic_error(self):
         user = StaffUser.objects.create_user(
             employee_id="EMP779", username="emp779",
             email="a@b.com", password="pass12345", role="staff", is_active=False,
@@ -88,7 +88,19 @@ class RegistrationApprovalTests(TestCase):
             'employee_id': 'EMP779', 'password': 'pass12345'
         })
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "pending admin approval")
+        self.assertContains(resp, "Invalid Employee ID or Password")
+        self.assertNotContains(resp, "pending admin approval")
+
+    def test_login_wrong_password_does_not_reveal_pending_account(self):
+        StaffUser.objects.create_user(
+            employee_id="EMP778", username="emp778",
+            email="a@b.com", password="pass12345", role="staff", is_active=False,
+        )
+        resp = self.client.post(reverse('login'), {
+            'employee_id': 'EMP778', 'password': 'wrongpass'
+        })
+        self.assertContains(resp, "Invalid Employee ID or Password")
+        self.assertNotContains(resp, "pending admin approval")
 
     def test_approve_user_enables_login(self):
         user = StaffUser.objects.create_user(
@@ -135,3 +147,52 @@ class LanguageToggleTests(TestCase):
         resp = self.client.get(reverse('dashboard'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "पाठ्यक्रम", status_code=200)
+
+
+class ClerkAuthTests(TestCase):
+    def setUp(self):
+        from django.test import override_settings
+        self.override = override_settings(
+            CLERK_SECRET_KEY='sk_test_dummy',
+            CLERK_PUBLISHABLE_KEY='pk_test_dummy',
+        )
+        self.override.enable()
+        self.addCleanup(self.override.disable)
+
+    def test_clerk_maps_existing_user_by_email(self):
+        existing = StaffUser.objects.create_user(
+            employee_id="EMP301", username="emp301",
+            email="clerk@srms.ac.in", password="pass12345", role="staff",
+        )
+        from django.test import override_settings
+        from unittest import mock as umock
+        with umock.patch('apps.users.clerk_auth.verify_token', return_value={
+            'email': 'CLERK@srms.ac.in',
+            'first_name': 'Clerk',
+            'last_name': 'User',
+        }):
+            resp = self.client.post(reverse('clerk_login'), {'token': 'valid.jwt.token'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(int(self.client.session['_auth_user_id']), existing.pk)
+
+    def test_clerk_provisions_new_user(self):
+        from unittest import mock as umock
+        with umock.patch('apps.users.clerk_auth.verify_token', return_value={
+            'email': 'newuser@srms.ac.in',
+            'first_name': 'New',
+            'last_name': 'User',
+        }):
+            resp = self.client.post(reverse('clerk_login'), {'token': 'valid.jwt.token'})
+        self.assertEqual(resp.status_code, 302)
+        created = StaffUser.objects.get(email='newuser@srms.ac.in')
+        self.assertTrue(created.is_active)
+        self.assertEqual(int(self.client.session['_auth_user_id']), created.pk)
+
+    def test_clerk_rejects_invalid_token(self):
+        from clerk_backend_api.security.types import TokenVerificationError, TokenVerificationErrorReason
+        from unittest import mock as umock
+        with umock.patch('apps.users.clerk_auth.verify_token',
+                         side_effect=TokenVerificationError(TokenVerificationErrorReason.TOKEN_INVALID)):
+            resp = self.client.post(reverse('clerk_login'), {'token': 'bad.token'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertNotIn('_auth_user_id', self.client.session)

@@ -25,6 +25,7 @@ urlpatterns = [
 
     # Auth & Users
     path('login/', user_views.login_view, name='login'),
+    path('clerk/login/', user_views.clerk_login_view, name='clerk_login'),
     path('register/', user_views.register_view, name='register'),
     path('logout/', user_views.logout_view, name='logout'),
     path('profile/', user_views.profile_view, name='profile'),
@@ -35,8 +36,10 @@ urlpatterns = [
     # Courses & PWA Dashboard
     path('', course_views.dashboard_view, name='dashboard'),
     path('courses/<int:course_id>/', course_views.course_detail_view, name='course_detail'),
+    path('courses/<int:course_id>/enroll/', course_views.enroll_course, name='enroll_course'),
     path('lessons/<int:lesson_id>/', course_views.lesson_view, name='lesson_view'),
     path('lessons/<int:lesson_id>/progress/', course_views.save_lesson_progress, name='save_lesson_progress'),
+    path('training-calendar/', course_views.training_calendar, name='training_calendar'),
 
     # Quizzes & AI Generator
     path('quizzes/course/<int:course_id>/', quiz_views.take_quiz_view, name='take_quiz'),

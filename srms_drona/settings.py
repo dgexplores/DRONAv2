@@ -85,7 +85,23 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+]
+
 AUTH_USER_MODEL = 'users.StaffUser'
+
+# Clerk SSO (optional). Set CLERK_SECRET_KEY to enable Clerk session auth.
+CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', '')
+CLERK_PUBLISHABLE_KEY = os.getenv('CLERK_PUBLISHABLE_KEY', '')
+CLERK_JWT_AUDIENCE = os.getenv('CLERK_JWT_AUDIENCE', '')
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'apps.users.clerk_auth.ClerkAuthenticationBackend',
+]
 
 CACHES = {
     'default': {

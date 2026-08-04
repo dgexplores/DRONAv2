@@ -42,5 +42,7 @@
     <a href="{% url 'hr_dashboard' %}" class="btn btn-success">⏳ {{ pending_count }} Pending Approval(s)</a>
     {% endif %}
     <a href="{% url 'generate_ai_quiz' %}" class="btn btn-secondary">🤖 AI Quiz Generator</a>
+    <a href="{% url 'mgmt_session_list' %}" class="btn btn-secondary">📅 Training Sessions</a>
+    <a href="{% url 'mgmt_staff_import' %}" class="btn btn-secondary">📥 Import Staff (CSV)</a>
 </div>
 {% endblock %}

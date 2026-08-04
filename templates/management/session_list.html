@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Training Sessions | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">📅 Training Sessions</div>
+<p class="page-subtitle">Schedule workshops, drills, and live training for staff.</p>
+
+<div style="display:flex; gap:0.75rem; margin-bottom:1.25rem;">
+    <a href="{% url 'mgmt_session_create' %}" class="btn btn-primary">➕ New Session</a>
+    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">← Back</a>
+</div>
+
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>Session</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Location</th>
+                <th>Linked Course</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sessions %}
+            <tr>
+                <td>
+                    <strong>{{ s.title }}</strong>
+                    {% if s.description %}<div style="font-size:0.78rem; color:var(--muted);">{{ s.description|truncatechars:60 }}</div>{% endif %}
+                </td>
+                <td>{{ s.date|date:"d M Y" }}</td>
+                <td>{{ s.start_time|time:"H:i" }}{% if s.end_time %} – {{ s.end_time|time:"H:i" }}{% endif %}</td>
+                <td>{{ s.location|default:"—" }}</td>
+                <td>{% if s.course %}{{ s.course.title }}{% else %}—{% endif %}</td>
+                <td>
+                    {% if s.is_mandatory %}<span class="badge badge-mandatory">Mandatory</span>{% else %}<span class="badge badge-elective">Elective</span>{% endif %}
+                </td>
+                <td>
+                    <div style="display:flex; gap:0.4rem;">
+                        <a href="{% url 'mgmt_session_edit' s.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                        <form method="POST" action="{% url 'mgmt_session_delete' s.id %}" style="display:inline;"
+                              onsubmit="return confirm('Delete this session?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" style="text-align:center; color:var(--muted);">No sessions scheduled yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
