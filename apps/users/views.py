@@ -2,11 +2,23 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django_ratelimit.decorators import ratelimit
+from django.utils.translation import gettext_lazy as _
 from apps.users.models import StaffUser, Department
 
+LOGIN_MAX_RATE = '5/5m'  # max 5 attempts per IP per 5 minutes
+
+@ratelimit(key='ip', rate=LOGIN_MAX_RATE, method='POST', block=False)
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
+
+    if getattr(request, 'limited', False):
+        messages.error(
+            request,
+            _("Too many failed login attempts. Please wait a few minutes and try again."),
+        )
+        return render(request, 'users/login.html', status=429)
 
     if request.method == 'POST':
         employee_id = request.POST.get('employee_id', '').strip()
@@ -18,7 +30,7 @@ def login_view(request):
             messages.success(request, f"Welcome back, {user.first_name or user.employee_id}!")
             return redirect('dashboard')
         else:
-            messages.error(request, "Invalid Employee ID or Password. Please try again.")
+            messages.error(request, _("Invalid Employee ID or Password. Please try again."))
 
     return render(request, 'users/login.html')
 

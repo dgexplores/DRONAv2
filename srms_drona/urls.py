@@ -10,6 +10,12 @@ from apps.quizzes import views as quiz_views
 from apps.certificates import views as cert_views
 from apps.analytics import views as analytics_views
 
+# Custom error handlers
+handler400 = 'srms_drona.views.handler400'
+handler403 = 'srms_drona.views.handler403'
+handler404 = 'srms_drona.views.handler404'
+handler500 = 'srms_drona.views.handler500'
+
 urlpatterns = [
     # Healthcheck (used by Railway + CI)
     path('health/', lambda request: HttpResponse('ok', content_type='text/plain'), name='health'),

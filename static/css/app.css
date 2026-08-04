@@ -1298,6 +1298,60 @@ textarea.form-input {
 .text-small { font-size: 0.82rem; }
 
 /* ==========================================================================
+   Error Pages
+   ========================================================================== */
+.error-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(900px 500px at 85% -10%, rgba(201, 162, 75, 0.12), transparent 60%),
+    radial-gradient(800px 500px at -10% 110%, rgba(39, 78, 168, 0.25), transparent 55%),
+    var(--bg);
+  padding: 1.25rem;
+}
+
+.error-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  padding: 3rem 2.25rem;
+}
+
+.error-code {
+  font-size: 4.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--brand-700), var(--brand-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.error-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 1rem 0 0.4rem;
+}
+
+.error-message {
+  color: var(--text-2);
+  font-size: 0.92rem;
+  margin-bottom: 1.75rem;
+}
+
+.error-card .btn {
+  margin: 0 0.3rem;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 

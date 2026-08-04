@@ -1,5 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
+from django.utils.translation import gettext_lazy as _
+
+employee_id_validator = RegexValidator(
+    regex=r'^[A-Z0-9]{3,20}$',
+    message=_(
+        "Employee ID must be 3-20 characters using only uppercase letters and numbers "
+        "(e.g. EMP001, ADMIN001)."
+    ),
+    code='invalid_employee_id',
+)
 
 class Department(models.Model):
     name = models.CharField(max_length=100)
@@ -20,7 +31,12 @@ class StaffUser(AbstractUser):
         ('hi', 'Hindi'),
     )
 
-    employee_id = models.CharField(max_length=50, unique=True, verbose_name="Employee ID")
+    employee_id = models.CharField(
+        max_length=50,
+        unique=True,
+        validators=[employee_id_validator],
+        verbose_name="Employee ID",
+    )
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_members')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='staff')
     preferred_language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default='en')

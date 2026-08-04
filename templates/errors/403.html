@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d1b3e">
+    <title>Access Denied | SRMS Drona</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    <div class="error-page">
+        <div class="error-card">
+            <div class="error-code">403</div>
+            <div class="error-title">Access denied</div>
+            <p class="error-message">You don't have permission to view this page. If you believe this is a mistake, please contact your administrator.</p>
+            <a href="/" class="btn btn-primary">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
