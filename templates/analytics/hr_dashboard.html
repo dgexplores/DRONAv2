@@ -8,47 +8,47 @@
 </p>
 
 <div class="stats-grid">
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon blue">👥</div>
         <div>
-            <div class="stat-value">{{ total_staff_count }}</div>
+            <div class="stat-value" data-count="{{ total_staff_count }}">{{ total_staff_count }}</div>
             <div class="stat-label">{% if is_hindi %}कुल कर्मचारी{% else %}Total Staff{% endif %}</div>
         </div>
     </div>
     {% if is_admin %}
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon violet">⏳</div>
         <div>
-            <div class="stat-value">{{ pending_users|length }}</div>
+            <div class="stat-value" data-count="{{ pending_users|length }}">{{ pending_users|length }}</div>
             <div class="stat-label">{% if is_hindi %}लंबित अनुमोदन{% else %}Pending Approvals{% endif %}</div>
         </div>
     </div>
     {% endif %}
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon green">📚</div>
         <div>
-            <div class="stat-value">{{ total_courses_count }}</div>
+            <div class="stat-value" data-count="{{ total_courses_count }}">{{ total_courses_count }}</div>
             <div class="stat-label">{% if is_hindi %}कुल पाठ्यक्रम{% else %}Total Courses{% endif %}</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon gold">🏆</div>
         <div>
-            <div class="stat-value">{{ total_cert_count }}</div>
+            <div class="stat-value" data-count="{{ total_cert_count }}">{{ total_cert_count }}</div>
             <div class="stat-label">{% if is_hindi %}पूर्ण नामांकन{% else %}Completed Enrollments{% endif %}</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon crimson">🎯</div>
         <div>
-            <div class="stat-value">{{ avg_quiz_score }}%</div>
+            <div class="stat-value" data-count="{{ avg_quiz_score }}">{{ avg_quiz_score }}%</div>
             <div class="stat-label">{% if is_hindi %}औसत क्विज़ स्कोर{% else %}Avg Quiz Score{% endif %}</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon teal">⏱️</div>
         <div>
-            <div class="stat-value">{{ total_learning_hours }}h</div>
+            <div class="stat-value" data-count="{{ total_learning_hours }}">{{ total_learning_hours }}h</div>
             <div class="stat-label">{% if is_hindi %}कुल सीखने के घंटे{% else %}Total Learning Hours{% endif %}</div>
         </div>
     </div>

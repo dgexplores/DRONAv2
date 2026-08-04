@@ -80,6 +80,17 @@ body {
   min-height: 100vh;
 }
 
+h1, h2, h3, h4, .page-title, .section-title,
+.sidebar-brand-name, .stat-value, .course-title, .module-title,
+.topbar-title, .sidebar-logo {
+  font-family: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+h1, h2, h3, .page-title, .section-title {
+  text-wrap: balance;
+}
+
 a {
   color: var(--brand-600);
   text-decoration: none;
@@ -430,7 +441,7 @@ code {
 }
 
 .page-subtitle {
-  color: var(--text-3);
+  color: var(--text-2);
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
 }
@@ -1454,6 +1465,78 @@ select[multiple].form-input {
   .topbar-title { font-size: 0.95rem; }
   .login-card { padding: 1.9rem 1.4rem; }
   .main { padding: 1.25rem 0 2.5rem; }
+}
+
+/* ==========================================================================
+   Motion & Micro-interactions
+   ========================================================================== */
+.btn:active,
+.lang-toggle:active {
+  transform: scale(0.97);
+}
+
+.btn {
+  transition: transform var(--speed) var(--ease), box-shadow var(--speed),
+    background var(--speed), border-color var(--speed), color var(--speed);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+select,
+textarea,
+.form-input {
+  transition: border-color var(--speed), box-shadow var(--speed);
+}
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+select:focus,
+textarea:focus,
+.form-input:focus {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(39, 78, 168, 0.14);
+}
+
+/* Scroll-reveal (progressive enhancement — content visible by default) */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Stat value count-up emphasis */
+.stat-value[data-count] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toast/alert entrance */
+.alert {
+  animation: alert-in 0.3s var(--ease);
+}
+@keyframes alert-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
 }
 
 /* ==========================================================================

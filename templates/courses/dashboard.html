@@ -14,28 +14,28 @@
 </p>
 
 <div class="stats-grid">
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon blue">📚</div>
         <div>
             <div class="stat-value">{{ user_enrollments|length }}</div>
             <div class="stat-label">{% if is_hindi %}पाठ्यक्रम{% else %}Enrolled Courses{% endif %}</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon green">✅</div>
         <div>
             <div class="stat-value">{{ completed_count }}</div>
             <div class="stat-label">{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon gold">⏳</div>
         <div>
             <div class="stat-value">{{ in_progress_count }}</div>
             <div class="stat-label">{% if is_hindi %}चल रहा{% else %}In Progress{% endif %}</div>
         </div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card reveal">
         <div class="stat-icon crimson">🏆</div>
         <div>
             <div class="stat-value">{{ certificates_count }}</div>
@@ -50,7 +50,7 @@
 </div>
 <div class="card-grid">
     {% for enrollment in user_enrollments %}
-    <div class="course-card">
+    <div class="course-card reveal">
         <div class="course-card-header">
             <div class="course-icon">📖</div>
             <div class="course-title">
@@ -95,7 +95,7 @@
 <p class="page-subtitle" style="margin-top: 0;">{% if is_hindi %}स्व-पंजीकरण के लिए खुला।{% else %}Open for self-enrollment.{% endif %}</p>
 <div class="card-grid">
     {% for course in available_courses %}
-    <div class="course-card">
+    <div class="course-card reveal">
         <div class="course-card-header">
             <div class="course-icon">➕</div>
             <div class="course-title">
