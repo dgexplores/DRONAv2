@@ -88,39 +88,9 @@
 </div>
 {% endif %}
 
-{% if available_courses %}
-<div class="section-title">
-    {% if is_hindi %}उपलब्ध पाठ्यक्रम{% else %}Available Courses{% endif %}
-</div>
-<div class="card-grid">
-    {% for course in available_courses %}
-    <div class="course-card">
-        <div class="course-card-header">
-            <div class="course-icon">➕</div>
-            <div class="course-title">
-                {% if is_hindi and course.title_hi %}{{ course.title_hi }}{% else %}{{ course.title }}{% endif %}
-            </div>
-        </div>
-        <div class="course-card-body">
-            <div class="course-desc">
-                {% if is_hindi and course.description_hi %}{{ course.description_hi }}{% else %}{{ course.description }}{% endif %}
-            </div>
-            <span class="badge badge-category">{{ course.category.name }}</span>
-        </div>
-        <div class="course-card-footer">
-            <span class="lesson-duration">{{ course.get_total_lessons }} {% if is_hindi %}पाठ{% else %}lessons{% endif %}</span>
-            <a href="{% url 'enroll_course' course.id %}" class="btn btn-success btn-sm">
-                {% if is_hindi %}नामांकन{% else %}Enroll{% endif %}
-            </a>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-{% if not user_enrollments and not available_courses %}
+{% if not user_enrollments %}
 <div class="alert alert-info">
-    {% if is_hindi %}कोई पाठ्यक्रम उपलब्ध नहीं है।{% else %}No courses available. Please contact your HOD for enrollment.{% endif %}
+    {% if is_hindi %}कोई पाठ्यक्रम निर्धारित नहीं है।{% else %}No courses assigned yet. Your HOD or HR will assign training courses to you.{% endif %}
 </div>
 {% endif %}
 {% endblock %}

@@ -35,7 +35,6 @@ urlpatterns = [
     # Courses & PWA Dashboard
     path('', course_views.dashboard_view, name='dashboard'),
     path('courses/<int:course_id>/', course_views.course_detail_view, name='course_detail'),
-    path('courses/<int:course_id>/enroll/', course_views.enroll_course, name='enroll_course'),
     path('lessons/<int:lesson_id>/', course_views.lesson_view, name='lesson_view'),
     path('lessons/<int:lesson_id>/progress/', course_views.save_lesson_progress, name='save_lesson_progress'),
 

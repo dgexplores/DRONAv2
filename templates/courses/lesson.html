@@ -37,7 +37,7 @@
     <div class="stat-card">
         <div class="stat-icon blue">📊</div>
         <div>
-            <div class="stat-value">{{ enrollment.progress_percent }}%</div>
+            <div class="stat-value">{% if enrollment %}{{ enrollment.progress_percent }}%{% else %}—{% endif %}</div>
             <div class="stat-label">{% if is_hindi %}कोर्स प्रगति{% else %}Course Progress{% endif %}</div>
         </div>
     </div>

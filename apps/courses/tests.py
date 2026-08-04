@@ -33,11 +33,31 @@ class CourseFlowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(Enrollment.objects.filter(staff_user=self.user, course=self.course).exists())
 
-    def test_enroll_elective(self):
+    def test_staff_cannot_view_unassigned_course(self):
         elective = Course.objects.create(title="ERP", category=self.cat, is_mandatory=False)
-        resp = self.client.get(reverse('enroll_course', args=[elective.id]))
+        resp = self.client.get(reverse('course_detail', args=[elective.id]))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(Enrollment.objects.filter(staff_user=self.user, course=elective).exists())
+        self.assertFalse(Enrollment.objects.filter(staff_user=self.user, course=elective).exists())
+
+    def test_staff_cannot_access_unassigned_lesson(self):
+        other = Course.objects.create(title="Other", category=self.cat, is_mandatory=False)
+        other_module = Module.objects.create(course=other, title="M", order=1)
+        other_lesson = Lesson.objects.create(
+            module=other_module, title="L", order=1, lesson_type='video', duration_minutes=10
+        )
+        resp = self.client.get(reverse('lesson_view', args=[other_lesson.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_manager_can_preview_any_course(self):
+        manager = StaffUser.objects.create_user(
+            employee_id="TRAIN200", username="train200", email="t@y.com",
+            password="pass12345", role="trainer"
+        )
+        self.client.login(employee_id='TRAIN200', password='pass12345')
+        elective = Course.objects.create(title="ERP", category=self.cat, is_mandatory=False)
+        resp = self.client.get(reverse('course_detail', args=[elective.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsNone(resp.context['enrollment'])
 
     def test_course_detail(self):
         enrollment = Enrollment.objects.create(staff_user=self.user, course=self.course)

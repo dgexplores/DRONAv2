@@ -16,7 +16,7 @@
     <div class="stat-card">
         <div class="stat-icon blue">📊</div>
         <div>
-            <div class="stat-value">{{ enrollment.progress_percent }}%</div>
+            <div class="stat-value">{% if enrollment %}{{ enrollment.progress_percent }}%{% else %}—{% endif %}</div>
             <div class="stat-label">{% if is_hindi %}प्रगति{% else %}Progress{% endif %}</div>
         </div>
     </div>
@@ -36,6 +36,7 @@
     </div>
 </div>
 
+{% if enrollment %}
 <div class="progress-wrap">
     <div class="progress-label">
         <span>{% if is_hindi %}समग्र प्रगति{% else %}Overall Progress{% endif %}</span>
@@ -45,6 +46,7 @@
         <div class="progress-fill {% if enrollment.is_completed %}gold{% endif %}" style="width: {{ enrollment.progress_percent }}%"></div>
     </div>
 </div>
+{% endif %}
 
 {% for module in modules %}
 <div class="module-block">
