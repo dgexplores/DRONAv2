@@ -16,6 +16,15 @@ DATABASES = {
     }
 }
 
+# Tests use an in-memory DB, which cannot host the DatabaseCache backend.
+# Use an in-memory cache so the rate-limit tests run in isolation.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'test-cache',
+    }
+}
+
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',
 ]

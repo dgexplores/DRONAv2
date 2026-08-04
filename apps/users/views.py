@@ -8,7 +8,15 @@ from apps.users.models import StaffUser, Department
 
 LOGIN_MAX_RATE = '5/5m'  # max 5 attempts per IP per 5 minutes
 
-@ratelimit(key='ip', rate=LOGIN_MAX_RATE, method='POST', block=False)
+
+def get_client_ip(group, request):
+    xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
+
+
+@ratelimit(key=get_client_ip, rate=LOGIN_MAX_RATE, method='POST', block=False)
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
