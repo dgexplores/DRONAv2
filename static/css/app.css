@@ -1221,6 +1221,32 @@ textarea.form-input {
   background: var(--surface);
 }
 
+.login-alt {
+  margin-top: 1.2rem;
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--text-2);
+}
+
+.login-alt a {
+  color: var(--brand-400);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-alt a:hover {
+  text-decoration: underline;
+}
+
+.form-error {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.76rem;
+  color: var(--danger);
+}
+
+.stat-icon.violet { background: linear-gradient(135deg, #6d28d9, #4c1d95); }
+
 /* ===== Verify Certificate ===== */
 .verify-box {
   max-width: 560px;

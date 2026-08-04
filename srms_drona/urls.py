@@ -25,8 +25,11 @@ urlpatterns = [
 
     # Auth & Users
     path('login/', user_views.login_view, name='login'),
+    path('register/', user_views.register_view, name='register'),
     path('logout/', user_views.logout_view, name='logout'),
     path('profile/', user_views.profile_view, name='profile'),
+    path('users/<int:user_id>/approve/', user_views.approve_user, name='approve_user'),
+    path('users/<int:user_id>/reject/', user_views.reject_user, name='reject_user'),
     path('language/toggle/', user_views.toggle_language, name='toggle_language'),
 
     # Courses & PWA Dashboard

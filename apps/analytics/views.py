@@ -41,6 +41,9 @@ def hr_dashboard_view(request):
 
     recent_attempts = QuizAttempt.objects.select_related('staff_user', 'quiz').order_by('-attempted_at')[:10]
 
+    is_admin = request.user.role == 'admin' or request.user.is_superuser
+    pending_users = StaffUser.objects.filter(is_active=False).order_by('date_joined') if is_admin else []
+
     context = {
         'dept_stats': dept_stats,
         'total_staff_count': total_staff_count,
@@ -48,6 +51,8 @@ def hr_dashboard_view(request):
         'total_cert_count': total_cert_count,
         'avg_quiz_score': round(avg_quiz_score, 1),
         'recent_attempts': recent_attempts,
+        'pending_users': pending_users,
+        'is_admin': is_admin,
     }
     return render(request, 'analytics/hr_dashboard.html', context)
 

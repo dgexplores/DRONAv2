@@ -46,6 +46,75 @@ class AuthTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
+class RegistrationApprovalTests(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(name="IT", code="IT")
+        self.admin = StaffUser.objects.create_user(
+            employee_id="ADMIN9", username="admin9",
+            email="admin9@srms.ac.in", password="pass12345",
+            role="admin", is_superuser=True,
+        )
+
+    def test_register_creates_inactive_user(self):
+        resp = self.client.post(reverse('register'), {
+            'employee_id': 'EMP777', 'first_name': 'New', 'last_name': 'User',
+            'email': 'new@srms.ac.in', 'department': self.dept.id,
+            'designation': 'Lab Assistant', 'phone_number': '12345',
+            'password1': 'secret123', 'password2': 'secret123',
+        })
+        self.assertEqual(resp.status_code, 302)
+        user = StaffUser.objects.get(employee_id='EMP777')
+        self.assertFalse(user.is_active)
+        self.assertEqual(user.role, 'staff')
+
+    def test_register_rejects_duplicate_employee_id(self):
+        StaffUser.objects.create_user(
+            employee_id="EMP778", username="emp778",
+            email="a@b.com", password="pass12345", role="staff",
+        )
+        resp = self.client.post(reverse('register'), {
+            'employee_id': 'EMP778', 'first_name': 'A', 'last_name': 'B',
+            'email': 'x@srms.ac.in', 'password1': 'secret123', 'password2': 'secret123',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "already registered")
+
+    def test_login_pending_shows_approval_message(self):
+        user = StaffUser.objects.create_user(
+            employee_id="EMP779", username="emp779",
+            email="a@b.com", password="pass12345", role="staff", is_active=False,
+        )
+        resp = self.client.post(reverse('login'), {
+            'employee_id': 'EMP779', 'password': 'pass12345'
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "pending admin approval")
+
+    def test_approve_user_enables_login(self):
+        user = StaffUser.objects.create_user(
+            employee_id="EMP780", username="emp780",
+            email="a@b.com", password="pass12345", role="staff", is_active=False,
+        )
+        self.client.login(employee_id='ADMIN9', password='pass12345')
+        resp = self.client.post(reverse('approve_user', args=[user.id]))
+        self.assertEqual(resp.status_code, 302)
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+
+    def test_non_admin_cannot_approve(self):
+        staff = StaffUser.objects.create_user(
+            employee_id="EMP781", username="emp781",
+            email="a@b.com", password="pass12345", role="staff",
+        )
+        pending = StaffUser.objects.create_user(
+            employee_id="EMP782", username="emp782",
+            email="a@b.com", password="pass12345", role="staff", is_active=False,
+        )
+        self.client.login(employee_id='EMP781', password='pass12345')
+        resp = self.client.post(reverse('approve_user', args=[pending.id]))
+        self.assertEqual(resp.status_code, 403)
+
+
 class LanguageToggleTests(TestCase):
     def setUp(self):
         self.staff = StaffUser.objects.create_user(

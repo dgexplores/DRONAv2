@@ -15,6 +15,15 @@
             <div class="stat-label">{% if is_hindi %}कुल कर्मचारी{% else %}Total Staff{% endif %}</div>
         </div>
     </div>
+    {% if is_admin %}
+    <div class="stat-card">
+        <div class="stat-icon violet">⏳</div>
+        <div>
+            <div class="stat-value">{{ pending_users|length }}</div>
+            <div class="stat-label">{% if is_hindi %}लंबित अनुमोदन{% else %}Pending Approvals{% endif %}</div>
+        </div>
+    </div>
+    {% endif %}
     <div class="stat-card">
         <div class="stat-icon green">📚</div>
         <div>
@@ -111,6 +120,52 @@
         </tbody>
     </table>
 </div>
+
+{% if is_admin %}
+<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}लंबित खाता अनुमोदन{% else %}Pending Account Approvals{% endif %}</div>
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}कर्मचारी आईडी{% else %}Employee ID{% endif %}</th>
+                <th>{% if is_hindi %}नाम{% else %}Name{% endif %}</th>
+                <th>{% if is_hindi %}विभाग{% else %}Department{% endif %}</th>
+                <th>{% if is_hindi %}ईमेल{% else %}Email{% endif %}</th>
+                <th>{% if is_hindi %}पदनाम{% else %}Designation{% endif %}</th>
+                <th>{% if is_hindi %}पंजीकरण{% else %}Registered{% endif %}</th>
+                <th>{% if is_hindi %}कार्रवाई{% else %}Actions{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in pending_users %}
+            <tr>
+                <td><code>{{ user.employee_id }}</code></td>
+                <td>{{ user.get_full_name|default:"-" }}</td>
+                <td>{{ user.department.name|default:"-" }}</td>
+                <td>{{ user.email|default:"-" }}</td>
+                <td>{{ user.designation|default:"-" }}</td>
+                <td>{{ user.date_joined|date:"d M Y" }}</td>
+                <td>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <form method="POST" action="{% url 'approve_user' user.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-sm">✓ {% if is_hindi %}अनुमोदन{% else %}Approve{% endif %}</button>
+                        </form>
+                        <form method="POST" action="{% url 'reject_user' user.id %}" style="display:inline;"
+                              onsubmit="return confirm('Reject and remove this registration request?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">✗ {% if is_hindi %}अस्वीकार{% else %}Reject{% endif %}</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" style="text-align: center; color: var(--muted);">{% if is_hindi %}कोई लंबित अनुमोदन नहीं।{% else %}No pending approvals.{% endif %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
 
 <a href="{% url 'export_staff_csv' %}" class="btn btn-primary">⬇️ {% if is_hindi %}CSV रिपोर्ट निर्यात करें{% else %}Export CSV Report{% endif %}</a>
 
