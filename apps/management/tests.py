@@ -65,6 +65,27 @@ class ManagementConsoleTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(Enrollment.objects.filter(staff_user=self.staff, course=course).exists())
 
+    def test_assign_single_staff(self):
+        course = Course.objects.create(title="C4", description="d", category=self.category)
+        staff2 = StaffUser.objects.create_user(
+            employee_id="EMP91", username="emp91",
+            email="emp91@srms.ac.in", password="pass12345",
+            role="staff", department=self.dept,
+        )
+        resp = self.client.post(reverse('mgmt_assign_staff'), {
+            'staff_user': staff2.id, 'course': course.id,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse('mgmt_home'))
+        self.assertTrue(Enrollment.objects.filter(staff_user=staff2, course=course).exists())
+        self.assertFalse(Enrollment.objects.filter(staff_user=self.staff, course=course).exists())
+
+    def test_assign_staff_requires_manager(self):
+        course = Course.objects.create(title="C5", description="d", category=self.category)
+        self.client.login(employee_id='EMP90', password='pass12345')
+        resp = self.client.get(reverse('mgmt_assign_staff'))
+        self.assertEqual(resp.status_code, 302)
+
 
 class CreateAccountTests(TestCase):
     def setUp(self):

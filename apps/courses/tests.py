@@ -92,3 +92,30 @@ class CourseFlowTests(TestCase):
         Enrollment.objects.create(staff_user=self.user, course=self.course)
         resp = self.client.get(reverse('save_lesson_progress', args=[self.lesson.id]))
         self.assertEqual(resp.status_code, 405)
+
+
+class TrainingCalendarManagerTests(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(name="IT", code="IT")
+        self.cat = Category.objects.create(name="Safety")
+        self.training_calendar_staff = StaffUser.objects.create_user(
+            employee_id="TF1", username="tf1", email="tf1@y.com",
+            password="pass12345", role="trainer", department=self.dept
+        )
+        self.emp = StaffUser.objects.create_user(
+            employee_id="EMP300", username="emp300", email="emp300@y.com",
+            password="pass12345", role="staff", department=self.dept
+        )
+        self.manager_flag_route = reverse('training_calendar')
+
+    def test_trainer_sees_manager_controls(self):
+        self.assertTrue(self.client.login(employee_id='TF1', password='pass12345'), 'trainer login failed')
+        resp = self.client.get(self.manager_flag_route)
+        self.assertEqual(resp.status_code, 200, msg=f"got {resp.status_code} -> {getattr(resp,'url',None)}")
+        self.assertTrue(resp.context['is_manager'])
+
+    def test_staff_does_not_see_manager_controls(self):
+        self.assertTrue(self.client.login(employee_id='EMP300', password='pass12345'), 'staff login failed')
+        resp = self.client.get(self.manager_flag_route)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.context['is_manager'])

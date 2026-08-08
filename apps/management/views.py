@@ -7,6 +7,7 @@ import csv
 import secrets
 import string
 import logging
+import datetime as _datetime
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ from apps.users.models import StaffUser, Department
 from apps.courses.models import Course, Module, Lesson, Enrollment, Category, TrainingSession
 from apps.quizzes.models import Quiz
 from apps.management.forms import (
-    CreateUserForm, CourseForm, ModuleForm, LessonForm, EnrollForm, TrainingSessionForm,
+    CreateUserForm, CourseForm, ModuleForm, LessonForm, EnrollForm, AssignStaffForm, TrainingSessionForm,
 )
 
 
@@ -266,6 +267,35 @@ def bulk_enroll(request):
 
 
 @login_required
+def assign_staff(request):
+    redirect_resp = _require_manager(request)
+    if redirect_resp:
+        return redirect_resp
+
+    if request.method == 'POST':
+        form = AssignStaffForm(request.POST)
+        if form.is_valid():
+            staff = form.cleaned_data['staff_user']
+            course = form.cleaned_data['course']
+            _, was_created = Enrollment.objects.get_or_create(staff_user=staff, course=course)
+            if was_created:
+                messages.success(
+                    request,
+                    f"Assigned '{course.title}' to {staff.get_full_name() or staff.employee_id}.",
+                )
+            else:
+                messages.info(
+                    request,
+                    f"{staff.get_full_name() or staff.employee_id} is already enrolled in '{course.title}'.",
+                )
+            return redirect('mgmt_home')
+    else:
+        form = AssignStaffForm()
+
+    return render(request, 'management/assign_staff.html', {'form': form})
+
+
+@login_required
 def session_list(request):
     redirect_resp = _require_manager(request)
     if redirect_resp:
@@ -288,7 +318,15 @@ def session_create(request):
             messages.success(request, f"Training session '{session.title}' scheduled.")
             return redirect('mgmt_session_list')
     else:
-        form = TrainingSessionForm()
+        initial = {}
+        date_param = request.GET.get('date', '')
+        if date_param:
+            try:
+                y, m, d = [int(p) for p in date_param.split('-')[:3]]
+                initial['date'] = _datetime.date(y, m, d)
+            except (ValueError, AttributeError):
+                pass
+        form = TrainingSessionForm(initial=initial)
     return render(request, 'management/session_form.html', {'form': form, 'title': _('Schedule Training Session'), 'is_new': True})
 
 

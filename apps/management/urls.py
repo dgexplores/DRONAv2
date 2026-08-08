@@ -14,6 +14,7 @@ urlpatterns = [
     path('lessons/<int:lesson_id>/edit/', views.lesson_edit, name='mgmt_lesson_edit'),
     path('lessons/<int:lesson_id>/delete/', views.lesson_delete, name='mgmt_lesson_delete'),
     path('enroll/', views.bulk_enroll, name='mgmt_bulk_enroll'),
+    path('enroll/assign/', views.assign_staff, name='mgmt_assign_staff'),
     path('sessions/', views.session_list, name='mgmt_session_list'),
     path('sessions/new/', views.session_create, name='mgmt_session_create'),
     path('sessions/<int:session_id>/edit/', views.session_edit, name='mgmt_session_edit'),

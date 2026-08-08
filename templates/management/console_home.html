@@ -37,6 +37,7 @@
     <a href="{% url 'mgmt_course_create' %}" class="btn btn-primary">➕ Create Course</a>
     <a href="{% url 'mgmt_course_list' %}" class="btn btn-secondary">📚 Manage Courses</a>
     <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold">👥 Bulk Enroll Staff</a>
+    <a href="{% url 'mgmt_assign_staff' %}" class="btn btn-secondary">🎯 Assign Course to Employee</a>
     <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">📊 HR Analytics</a>
     {% if pending_count %}
     <a href="{% url 'hr_dashboard' %}" class="btn btn-success">⏳ {{ pending_count }} Pending Approval(s)</a>

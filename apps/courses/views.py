@@ -176,6 +176,8 @@ def training_calendar(request):
     for s in sessions:
         day_map.setdefault(s.date.day, []).append(s)
 
+    is_manager = request.user.role in ('trainer', 'admin') or request.user.is_superuser or request.user.is_staff
+
     context = {
         'sessions': sessions,
         'day_map': day_map,
@@ -185,6 +187,7 @@ def training_calendar(request):
         'month_name': dt(year, month_num, 1).strftime('%B'),
         'prev': (dt(year, month_num, 1) - td(days=1)).strftime('%Y-%m'),
         'next': f"{year}-{month_num + 1:02d}" if month_num < 12 else f"{year + 1}-01",
+        'is_manager': is_manager,
     }
     return render(request, 'courses/training_calendar.html', context)
 

@@ -1,7 +1,52 @@
 {% extends 'base.html' %}
-{% block title %}My Certificates | SRMS Drona{% endblock %}
+{% block title %}{% if is_manager %}Certificate Directory | SRMS Drona{% else %}My Certificates | SRMS Drona{% endif %}{% endblock %}
 
 {% block content %}
+{% if is_manager %}
+<div class="page-title">🏆 {% if is_hindi %}प्रमाणपत्र निर्देशिका{% else %}Certificate Directory{% endif %}</div>
+<p class="page-subtitle">
+    {% if is_hindi %}
+    किसने कौन सा प्रमाणपत्र पूरा किया - खोज और फ़िल्टर करें।
+    {% else %}
+    Who completed which certificate - search and filter below.
+    {% endif %}
+</p>
+
+<div class="module-block" style="margin-bottom: 1.25rem;">
+    <form method="GET" action="{% url 'my_certificates' %}" style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:flex-end;">
+        <div class="form-group" style="flex:1; min-width:220px; margin-bottom:0;">
+            <label for="id_q">{% if is_hindi %}खोजें (कर्मचारी आईडी / नाम / ईमेल){% else %}Search (Employee ID / Name / Email){% endif %}</label>
+            <input type="text" name="q" id="id_q" class="form-input" value="{{ query }}"
+                   placeholder="e.g. EMP001 or Dr. Kumar">
+        </div>
+        <div class="form-group" style="min-width:180px; margin-bottom:0;">
+            <label for="id_dept">{% if is_hindi %}विभाग{% else %}Department{% endif %}</label>
+            <select name="dept" id="id_dept" class="form-input">
+                <option value="">{% if is_hindi %}सभी विभाग{% else %}All departments{% endif %}</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if selected_dept == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="min-width:200px; margin-bottom:0;">
+            <label for="id_course">{% if is_hindi %}पाठ्यक्रम{% else %}Course{% endif %}</label>
+            <select name="course" id="id_course" class="form-input">
+                <option value="">{% if is_hindi %}सभी पाठ्यक्रम{% else %}All courses{% endif %}</option>
+                {% for c in courses_offered %}
+                <option value="{{ c.id }}" {% if selected_course == c.id|stringformat:"s" %}selected{% endif %}>{{ c.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">🔍 {% if is_hindi %}फ़िल्टर करें{% else %}Filter{% endif %}</button>
+        {% if query or selected_dept or selected_course %}
+        <a href="{% url 'my_certificates' %}" class="btn btn-secondary">{% if is_hindi %}साफ़ करें{% else %}Clear{% endif %}</a>
+        {% endif %}
+    </form>
+    <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--muted);">
+        {% if is_hindi %}{{ all_cert_count }} प्रमाणपत्र मिले।{% else %}{{ all_cert_count }} certificate(s) found.{% endif %}
+    </div>
+</div>
+{% else %}
 <div class="page-title">🏆 {% if is_hindi %}मेरे प्रमाणपत्र{% else %}My Certificates{% endif %}</div>
 <p class="page-subtitle">
     {% if is_hindi %}
@@ -10,8 +55,51 @@
     Your QR-verified certificates are available here.
     {% endif %}
 </p>
+{% endif %}
 
 {% if certificates %}
+
+{% if is_manager %}
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}कर्मचारी आईडी{% else %}Employee ID{% endif %}</th>
+                <th>{% if is_hindi %}नाम{% else %}Name{% endif %}</th>
+                <th>{% if is_hindi %}विभाग{% else %}Department{% endif %}</th>
+                <th>{% if is_hindi %}पाठ्यक्रम{% else %}Course{% endif %}</th>
+                <th>{% if is_hindi %}प्रमाणपत्र आईडी{% else %}Certificate ID{% endif %}</th>
+                <th>{% if is_hindi %}जारी दिनांक{% else %}Issued On{% endif %}</th>
+                <th>{% if is_hindi %}कार्रवाई{% else %}Actions{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for cert in certificates %}
+            <tr>
+                <td><code>{{ cert.staff_user.employee_id }}</code></td>
+                <td>{{ cert.staff_user.get_full_name|default:"-" }}</td>
+                <td>{{ cert.staff_user.department.name|default:"—" }}</td>
+                <td>{{ cert.course.title }}</td>
+                <td><code>{{ cert.certificate_id }}</code></td>
+                <td>{{ cert.issued_at|date:"d M Y" }}</td>
+                <td>
+                    <div style="display:flex; gap:0.4rem;">
+                        <a href="{% url 'download_certificate' cert.certificate_id %}" class="btn btn-success btn-sm" target="_blank">📄 PDF</a>
+                        <a href="{% url 'verify_certificate' cert.certificate_id %}" class="btn btn-secondary btn-sm" target="_blank">✓ Verify</a>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center; color:var(--muted);">
+                    {% if is_hindi %}कोई प्रमाणपत्र नहीं मिला।{% else %}No certificates found.{% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
 <div class="certificate-grid">
     {% for cert in certificates %}
     <div class="cert-card">
@@ -27,12 +115,22 @@
     </div>
     {% endfor %}
 </div>
+{% endif %}
+
 {% else %}
 <div class="alert alert-info">
+    {% if is_manager %}
+    {% if is_hindi %}
+    कोई प्रमाणपत्र नहीं मिला। फ़िल्टर बदलने का प्रयास करें।
+    {% else %}
+    No certificates found. Try adjusting your filters.
+    {% endif %}
+    {% else %}
     {% if is_hindi %}
     आपके पास अभी कोई प्रमाणपत्र नहीं है। एक अनिवार्य पाठ्यक्रम पूरा करें और अंतिम परीक्षा उत्तीर्ण करें।
     {% else %}
     You have no certificates yet. Complete a mandatory course and pass the final assessment.
+    {% endif %}
     {% endif %}
 </div>
 {% endif %}

@@ -5,12 +5,17 @@
 <div class="page-title">📅 {% if is_hindi %}प्रशिक्षण कैलेंडर{% else %}Training Calendar{% endif %}</div>
 <p class="page-subtitle">{% if is_hindi %}आगामी कार्यशालाओं और प्रशिक्षण सत्र देखें।{% else %}View upcoming workshops and training sessions.{% endif %}</p>
 
-<div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:1.25rem;">
+<div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap;">
     {% with prev_month_ts=current_month %}
     <a href="{% url 'training_calendar' %}?month={{ prev }}" class="btn btn-secondary btn-sm">← {% if is_hindi %}पिछला{% else %}Prev{% endif %}</a>
     {% endwith %}
     <strong>{{ month_name }} {{ year }}</strong>
     <a href="{% url 'training_calendar' %}?month={{ next }}" class="btn btn-secondary btn-sm">{% if is_hindi %}अगला{% else %}Next{% endif %} →</a>
+    {% if is_manager %}
+    <span style="flex:1;"></span>
+    <a href="{% url 'mgmt_session_create' %}?date={{ current_month }}" class="btn btn-primary btn-sm">➕ {% if is_hindi %}नया सत्र{% else %}New Session{% endif %}</a>
+    <a href="{% url 'mgmt_session_list' %}" class="btn btn-secondary btn-sm">🗂️ {% if is_hindi %}सत्र प्रबंधन{% else %}Manage Sessions{% endif %}</a>
+    {% endif %}
 </div>
 
 {% if sessions %}
@@ -24,6 +29,7 @@
                 <th>{% if is_hindi %}समय{% else %}Time{% endif %}</th>
                 <th>{% if is_hindi %}स्थान{% else %}Location{% endif %}</th>
                 <th>{% if is_hindi %}प्रकार{% else %}Type{% endif %}</th>
+                {% if is_manager %}<th>{% if is_hindi %}कार्रवाई{% else %}Actions{% endif %}</th>{% endif %}
             </tr>
         </thead>
         <tbody>
@@ -41,6 +47,18 @@
                     {% if s.is_mandatory %}<span class="badge badge-mandatory">{% if is_hindi %}अनिवार्य{% else %}Mandatory{% endif %}</span>
                     {% else %}<span class="badge badge-elective">{% if is_hindi %}वैकल्पिक{% else %}Elective{% endif %}</span>{% endif %}
                 </td>
+                {% if is_manager %}
+                <td>
+                    <div style="display:flex; gap:0.4rem;">
+                        <a href="{% url 'mgmt_session_edit' s.id %}" class="btn btn-secondary btn-sm">✏️ {% if is_hindi %}संपादित करें{% else %}Edit{% endif %}</a>
+                        <form method="POST" action="{% url 'mgmt_session_delete' s.id %}" style="display:inline;"
+                              onsubmit="return confirm('Delete this session?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">🗑️ {% if is_hindi %}हटाएँ{% else %}Del{% endif %}</button>
+                        </form>
+                    </div>
+                </td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>

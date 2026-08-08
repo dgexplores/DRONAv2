@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Assign Course | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">🎯 Assign Course to Employee</div>
+<p class="page-subtitle">Enroll a specific employee into a course (per-student assignment).</p>
+
+<div class="module-block" style="max-width: 560px;">
+    <form method="POST">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small style="color:var(--muted);">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        {% endfor %}
+        <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+            <button type="submit" class="btn btn-primary">🔗 Assign</button>
+            <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

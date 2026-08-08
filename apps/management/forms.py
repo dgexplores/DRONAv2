@@ -122,6 +122,24 @@ class EnrollForm(forms.Form):
     )
 
 
+class AssignStaffForm(forms.Form):
+    staff_user = forms.ModelChoiceField(
+        queryset=StaffUser.objects.filter(is_active=True).order_by('employee_id'),
+        label=_("Employee"),
+        widget=forms.Select(attrs={'class': 'form-input'}),
+    )
+    course = forms.ModelChoiceField(
+        queryset=Course.objects.all().order_by('title'),
+        label=_("Course"),
+        widget=forms.Select(attrs={'class': 'form-input'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('staff_user', 'course'):
+            self.fields[name].empty_label = _("Choose ...")
+
+
 class TrainingSessionForm(forms.ModelForm):
     class Meta:
         model = TrainingSession
