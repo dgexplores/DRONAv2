@@ -154,7 +154,7 @@ def register_view(request):
 
 @login_required
 def approve_user(request, user_id):
-    if request.user.role != 'admin' and not request.user.is_superuser:
+    if request.user.role not in ('admin', 'trainer') and not request.user.is_superuser:
         return HttpResponse(_("Unauthorized"), status=403)
 
     target = get_object_or_404(StaffUser, id=user_id)
@@ -170,7 +170,7 @@ def approve_user(request, user_id):
 
 @login_required
 def reject_user(request, user_id):
-    if request.user.role != 'admin' and not request.user.is_superuser:
+    if request.user.role not in ('admin', 'trainer') and not request.user.is_superuser:
         return HttpResponse(_("Unauthorized"), status=403)
 
     target = get_object_or_404(StaffUser, id=user_id)

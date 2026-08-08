@@ -64,3 +64,47 @@ class ManagementConsoleTests(TestCase):
         })
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(Enrollment.objects.filter(staff_user=self.staff, course=course).exists())
+
+
+class CreateAccountTests(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(name="HR", code="HR")
+        self.admin = StaffUser.objects.create_user(
+            employee_id="ADMIN8", username="admin8",
+            email="admin8@srms.ac.in", password="pass12345",
+            role="admin", is_staff=True, is_superuser=True,
+        )
+        self.trainer = StaffUser.objects.create_user(
+            employee_id="EMP11", username="emp11",
+            email="emp11@srms.ac.in", password="pass12345",
+            role="trainer",
+        )
+
+    def test_admin_can_create_hr_account(self):
+        self.client.login(employee_id='ADMIN8', password='pass12345')
+        resp = self.client.post(reverse('mgmt_create_user'), {
+            'employee_id': 'HR001', 'first_name': 'Ritu',
+            'last_name': 'Arora', 'email': 'ritu@srms.ac.in',
+            'department': self.dept.pk, 'designation': 'HR Manager',
+            'role': 'trainer', 'password': 'Temp@12345',
+        })
+        self.assertRedirects(resp, reverse('mgmt_home'))
+        u = StaffUser.objects.get(employee_id='HR001')
+        self.assertTrue(u.is_active)
+        self.assertEqual(u.role, 'trainer')
+        self.assertTrue(u.check_password('Temp@12345'))
+
+    def test_trainer_cannot_create_account(self):
+        self.client.login(employee_id='EMP11', password='pass12345')
+        resp = self.client.get(reverse('mgmt_create_user'))
+        self.assertRedirects(resp, reverse('mgmt_home'))
+        self.assertFalse(StaffUser.objects.filter(employee_id='HR002').exists())
+
+    def test_duplicate_employee_id_rejected(self):
+        self.client.login(employee_id='ADMIN8', password='pass12345')
+        self.client.post(reverse('mgmt_create_user'), {
+            'employee_id': 'ADMIN8', 'first_name': 'Dup',
+            'last_name': 'User', 'email': 'dup@srms.ac.in',
+            'role': 'staff', 'password': 'Temp@12345',
+        })
+        self.assertEqual(StaffUser.objects.filter(employee_id='ADMIN8').count(), 1)

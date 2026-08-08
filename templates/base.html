@@ -69,6 +69,13 @@
                 {% if is_hindi %}प्रबंधन{% else %}Management{% endif %}
             </a>
 
+            {% if user.is_superuser or user.role == 'admin' %}
+            <a href="{% url 'mgmt_create_user' %}" class="sidebar-link {% if url_name == 'mgmt_create_user' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/><path d="M19 5v4M17 7h4"/></svg>
+                {% if is_hindi %}खाता बनाएँ{% else %}Create Account{% endif %}
+            </a>
+            {% endif %}
+
             <a href="/admin/" class="sidebar-link" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
                 {% if is_hindi %}एडमिन{% else %}Admin{% endif %}

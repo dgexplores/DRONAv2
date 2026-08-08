@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Create Account | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">➕ Create HR / HOD / Staff Account</div>
+<p class="page-subtitle">Provision a new account manually. The new user can then manage training and approve signup requests.</p>
+
+<div class="module-block" style="max-width: 640px; padding: 1.5rem;">
+    <form method="POST">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="text-muted text-small">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">✅ Create Account</button>
+        <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

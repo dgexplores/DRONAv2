@@ -42,7 +42,7 @@ def hr_dashboard_view(request):
 
     recent_attempts = QuizAttempt.objects.select_related('staff_user', 'quiz').order_by('-attempted_at')[:10]
 
-    is_admin = request.user.role == 'admin' or request.user.is_superuser
+    is_admin = request.user.role in ('admin', 'trainer') or request.user.is_superuser
     pending_users = StaffUser.objects.filter(is_active=False).order_by('date_joined') if is_admin else []
 
     context = {

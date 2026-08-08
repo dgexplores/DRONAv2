@@ -15,9 +15,11 @@ through an HR analytics console — all under strict role-based access control (
 - **Employee-ID auth + RBAC** — three roles: **Staff / Learner**, **HOD / Trainer**, **Super Admin**.
   The login page splits into a *Staff/Trainee* tab and an *Admin/Management* tab so each persona
   lands in the right workspace.
-- **Self-signup with admin approval workflow** — new accounts are created *inactive*, an admin
-  approves or rejects them in the HR Dashboard, and the user gets an email either way. No lockout,
-  no enumeration leaks.
+- **Self-signup with admin approval workflow** — new accounts are created *inactive*, an admin or
+  trainer/HOD approves or rejects them in the HR Dashboard, and the user gets an email either way.
+  No lockout, no enumeration leaks.
+- **Admin provisions HR / HOD accounts** — super admin creates trainer accounts directly (no signup
+  needed); those HR/HOD accounts get approval rights **and** the full management console.
 - **Category → Course → Module → Lesson** hierarchy with **auto-enrollment** into mandatory courses
   by department.
 - **Video progress tracking** — watch position saved on a 10s heartbeat; per-course progress %
@@ -121,9 +123,13 @@ for staff. Override `SEED_ADMIN_PASSWORD` for your own seed.
 - **Login** (`/login/`) — two tabs:
   - **Staff / Trainee** → learner dashboard.
   - **Admin / Management** → Management Console (`/manage/`).
-- **Self-signup** (`/register/`) creates an **inactive** account. An admin approves it in the
-  HR Dashboard (`/analytics/` → Pending Approvals). Approved users can then sign in and, if needed,
-  reset their password via email.
+- **Self-signup** (`/register/`) creates an **inactive** account. An admin **or trainer/HOD** approves
+  it in the HR Dashboard (`/analytics/` → Pending Approvals). Approved users can then sign in and, if
+  needed, reset their password via email.
+- **Admin-provisioned accounts** — the super admin can create HR / HOD / staff accounts directly from
+  the Management Console (`➕ Create HR/HOD Account`, `/manage/users/create/`). The new account is
+  active immediately. HR/HOD (trainer) accounts get approval rights plus the full management console,
+  so they can operate independently.
 - **Password reset** (`/password-reset/`) — emails a reset link via SMTP.
 - **Clerk SSO** (optional) — renders when `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` are set.
   Set the Clerk Dashboard **Homepage URL** to the live app URL for SSO signups to work.

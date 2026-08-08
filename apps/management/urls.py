@@ -19,4 +19,5 @@ urlpatterns = [
     path('sessions/<int:session_id>/edit/', views.session_edit, name='mgmt_session_edit'),
     path('sessions/<int:session_id>/delete/', views.session_delete, name='mgmt_session_delete'),
     path('staff/import/', views.import_staff, name='mgmt_staff_import'),
+    path('users/create/', views.create_user, name='mgmt_create_user'),
 ]

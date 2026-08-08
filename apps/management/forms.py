@@ -5,6 +5,49 @@ from apps.users.models import StaffUser, Department
 from apps.courses.models import Category, Course, Module, Lesson, Enrollment, TrainingSession
 
 
+class CreateUserForm(forms.ModelForm):
+    """Provisions an HR / HOD / staff account (super admin only)."""
+
+    password = forms.CharField(
+        label="Temporary password",
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-input', 'autocomplete': 'new-password'}),
+        help_text=_("Temporary password. Leave blank to auto-generate a random one."),
+    )
+
+    class Meta:
+        model = StaffUser
+        fields = ['employee_id', 'first_name', 'last_name', 'email', 'department',
+                  'designation', 'role']
+        widgets = {
+            'employee_id': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. HR001'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'email': forms.EmailInput(attrs={'class': 'form-input'}),
+            'department': forms.Select(attrs={'class': 'form-input'}),
+            'designation': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. HR Manager'}),
+            'role': forms.Select(attrs={'class': 'form-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['department'].empty_label = _("No department")
+        self.fields['employee_id'].help_text = _("Uppercase letters/numbers only (e.g. HR001).")
+        self.fields['employee_id'].widget.attrs['autofocus'] = True
+
+    def clean_employee_id(self):
+        employee_id = self.cleaned_data['employee_id'].strip().upper()
+        if StaffUser.objects.filter(employee_id=employee_id).exists():
+            raise forms.ValidationError(_("An account with this Employee ID already exists."))
+        return employee_id
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        if email and StaffUser.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(_("An account with this email already exists."))
+        return email
+
+
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course

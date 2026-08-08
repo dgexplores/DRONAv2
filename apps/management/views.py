@@ -4,12 +4,17 @@ from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Count
 import csv
+import secrets
+import string
+import logging
+
+logger = logging.getLogger(__name__)
 
 from apps.users.models import StaffUser, Department
 from apps.courses.models import Course, Module, Lesson, Enrollment, Category, TrainingSession
 from apps.quizzes.models import Quiz
 from apps.management.forms import (
-    CourseForm, ModuleForm, LessonForm, EnrollForm, TrainingSessionForm,
+    CreateUserForm, CourseForm, ModuleForm, LessonForm, EnrollForm, TrainingSessionForm,
 )
 
 
@@ -377,3 +382,48 @@ def import_staff(request):
             messages.warning(request, f"{len(errors)} rows had problems.")
 
     return render(request, 'management/staff_import.html', {'result': result})
+
+
+def _super_admin_only(user):
+    return user.is_superuser or (user.role == 'admin' and user.is_staff)
+
+
+@login_required
+def create_user(request):
+    """Super-admin form to provision HR / HOD / staff accounts."""
+    if not _super_admin_only(request.user):
+        messages.error(request, _("Only super admins can create accounts."))
+        return redirect('mgmt_home')
+
+    form = CreateUserForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        data = form.cleaned_data
+        password = data.get('password') or ''.join(
+            secrets.choice(string.ascii_letters + string.digits) for _ in range(12)
+        )
+        try:
+            user = StaffUser.objects.create_user(
+                username=data['employee_id'],
+                employee_id=data['employee_id'],
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                email=data['email'],
+                department=data['department'],
+                designation=data['designation'],
+                role=data['role'],
+                password=password,
+                is_active=True,
+            )
+        except Exception:
+            logger.exception("Account creation failed")
+            messages.error(request, _("Could not create the account. Check for duplicate Employee ID or email."))
+            return render(request, 'management/user_create.html', {'form': form})
+
+        messages.success(
+            request,
+            f"Account created for {data['first_name'] or data['employee_id']} "
+            f"({data['role']}). Initial password: {password} — share it only with the user.",
+        )
+        return redirect('mgmt_home')
+
+    return render(request, 'management/user_create.html', {'form': form})
