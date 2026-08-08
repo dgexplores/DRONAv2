@@ -33,6 +33,45 @@ class CourseFlowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(Enrollment.objects.filter(staff_user=self.user, course=self.course).exists())
 
+    def test_manager_sees_command_center_not_learner_catalog(self):
+        manager = StaffUser.objects.create_user(
+            employee_id="HOD001", username="hod001", email="h@y.com",
+            password="pass12345", role="trainer", department=self.dept
+        )
+        self.client.force_login(manager)
+        resp = self.client.get(reverse('dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Management Actions")
+        self.assertNotContains(resp, "module-card")
+        self.assertFalse(
+            Enrollment.objects.filter(staff_user=manager, course=self.course).exists(),
+            "Manager must not be auto-enrolled into learner courses",
+        )
+
+    def test_manager_profile_shows_scoped_overview(self):
+        hr_dept = Department.objects.create(name="Corporate", code="CORP")
+        manager = StaffUser.objects.create_user(
+            employee_id="HOD002", username="hod002", email="h2@y.com",
+            password="pass12345", role="trainer", department=hr_dept
+        )
+        staff = StaffUser.objects.create_user(
+            employee_id="EMP300", username="emp300", email="s@y.com",
+            password="pass12345", role="staff", department=self.dept
+        )
+        other_dept = Department.objects.create(name="HR2", code="HR2")
+        other_staff = StaffUser.objects.create_user(
+            employee_id="EMP301", username="emp301", email="o@y.com",
+            password="pass12345", role="staff", department=other_dept
+        )
+        Enrollment.objects.create(staff_user=staff, course=self.course, is_completed=True)
+        self.client.force_login(manager)
+        resp = self.client.get(reverse('profile'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Management Overview")
+        self.assertNotContains(resp, "My Enrollments")
+        self.assertEqual(resp.context['active_staff'], 1)
+        self.assertEqual(resp.context['completed_count'], 0)
+
     def test_staff_cannot_view_unassigned_mandatory_course(self):
         other = Course.objects.create(title="ERP", category=self.cat, is_mandatory=True)
         resp = self.client.get(reverse('course_detail', args=[other.id]))

@@ -220,6 +220,11 @@ def logout_view(request):
 @login_required
 def profile_view(request):
     staff_user = request.user
+    is_manager = staff_user.role in ('admin', 'trainer') or staff_user.is_superuser or staff_user.is_staff
+
+    if is_manager:
+        return _manager_profile(request)
+
     certificates = staff_user.certificates.select_related('course').all()
     enrollments = staff_user.enrollments.select_related('course').all()
     total_watch = staff_user.enrollments.aggregate(total=Sum('watch_seconds'))['total'] or 0
@@ -231,6 +236,43 @@ def profile_view(request):
         'enrollments': enrollments,
         'badges': badges,
         'learning_hours': total_watch / 3600,
+    }
+    return render(request, 'users/profile.html', context)
+
+
+def _manager_profile(request):
+    """Role-aware profile for super-admin and HOD/trainer accounts.
+
+    Shows account details plus a scoped management overview instead of the
+    learner badge/enrollment trackers.
+    """
+    staff_user = request.user
+    is_super = staff_user.is_superuser or staff_user.role == 'admin'
+    dept = staff_user.department
+
+    from apps.users.models import StaffUser as SU
+    from apps.courses.models import Enrollment, Course
+    from apps.certificates.models import Certificate
+
+    def staff_qs():
+        qs = SU.objects.filter(is_active=True)
+        return qs if is_super or not dept else qs.filter(department=dept)
+
+    def enrollment_qs():
+        qs = Enrollment.objects.all()
+        return qs if is_super or not dept else qs.filter(staff_user__department=dept)
+
+    scope_label = "all departments" if is_super else (dept.name if dept else "department")
+    context = {
+        'staff_user': staff_user,
+        'is_manager': True,
+        'is_super': is_super,
+        'scope_label': scope_label,
+        'active_staff': staff_qs().count(),
+        'completed_count': enrollment_qs().filter(is_completed=True).count(),
+        'enrollment_count': Course.objects.filter(enrollments__in=enrollment_qs()).distinct().count(),
+        'cert_count': (Certificate.objects.count()
+                       if is_super else Certificate.objects.filter(staff_user__department=dept).count()),
     }
     return render(request, 'users/profile.html', context)
 

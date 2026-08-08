@@ -6,7 +6,11 @@
     {% if is_hindi %}मेरी प्रोफ़ाइल{% else %}My Profile{% endif %}
 </div>
 <p class="page-subtitle">
+    {% if is_manager %}
+    {% if is_hindi %}आपका खाता विवरण और प्रबंधन अवलोकन।{% else %}Your account details and management overview.{% endif %}
+    {% else %}
     {% if is_hindi %}आपके कार्य विवरण और सीखने की प्रगति।{% else %}Your work details and learning progress.{% endif %}
+    {% endif %}
 </p>
 
 <div class="module-block">
@@ -41,6 +45,7 @@
     </div>
 </div>
 
+{% if not is_manager %}
 <div class="section-title" style="margin-top: 1.5rem;">🏆 {% if is_hindi %}बैज{% else %}Badges{% endif %} &nbsp;<small style="color:var(--muted); font-weight:400;">⏱️ {{ learning_hours|floatformat:1 }} {% if is_hindi %}घंटे{% else %}hrs{% endif %} learning</small></div>
 <div class="card-grid" style="margin-bottom:0;">
     {% for badge in badges %}
@@ -114,4 +119,45 @@
         </tbody>
     </table>
 </div>
+{% endif %}
+
+{% if is_manager %}
+<div class="section-title" style="margin-top: 1.5rem;">📊 {% if is_hindi %}प्रबंधन अवलोकन{% else %}Management Overview{% endif %} &nbsp;<small style="color:var(--muted); font-weight:400;">{{ scope_label }}</small></div>
+<div class="stats-grid">
+    <div class="stat-card reveal">
+        <div class="stat-icon blue">👥</div>
+        <div>
+            <div class="stat-value" data-count="{{ active_staff }}">{{ active_staff }}</div>
+            <div class="stat-label">{% if is_hindi %}कर्मचारी{% else %}Staff{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon teal">🏁</div>
+        <div>
+            <div class="stat-value" data-count="{{ completed_count }}">{{ completed_count }}</div>
+            <div class="stat-label">{% if is_hindi %}पूर्ण पाठ्यक्रम{% else %}Completed{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon gold">📚</div>
+        <div>
+            <div class="stat-value" data-count="{{ enrollment_count }}">{{ enrollment_count }}</div>
+            <div class="stat-label">{% if is_hindi %}सक्रिय पाठ्यक्रम{% else %}Courses{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon crimson">🏆</div>
+        <div>
+            <div class="stat-value" data-count="{{ cert_count }}">{{ cert_count }}</div>
+            <div class="stat-label">{% if is_hindi %}जारी प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+        </div>
+    </div>
+</div>
+<div class="module-block" style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">📊 {% if is_hindi %}डैशबोर्ड{% else %}Command Center{% endif %}</a>
+    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">🛠️ {% if is_hindi %}प्रबंधन कंसोल{% else %}Management{% endif %}</a>
+    <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">📈 {% if is_hindi %}एचआर एनालिटिक्स{% else %}HR Analytics{% endif %}</a>
+    <a href="{% url 'my_certificates' %}" class="btn btn-secondary">🏆 {% if is_hindi %}प्रमाणपत्र निर्देशिका{% else %}Certificates{% endif %}</a>
+</div>
+{% endif %}
 {% endblock %}

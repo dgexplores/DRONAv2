@@ -9,12 +9,19 @@ import json
 from datetime import datetime as dt, timedelta as td
 
 from apps.courses.models import Course, Category, Module, Lesson, Enrollment, LessonProgress, TrainingSession
-from apps.users.models import Department
+from apps.users.models import Department, StaffUser
+from apps.certificates.models import Certificate
 
 @login_required
 def dashboard_view(request):
     user = request.user
-    
+
+    # Managers (super admin / HOD / trainer) get a command-center dashboard,
+    # not the learner catalogue. Return before any learner auto-enrollment.
+    is_manager = user.role in ('admin', 'trainer') or user.is_superuser or user.is_staff
+    if is_manager:
+        return _manager_dashboard(request)
+
     # Auto-enroll in mandatory courses for user's department
     if user.department:
         mandatory_courses = Course.objects.filter(is_mandatory=True, target_departments=user.department)
@@ -40,6 +47,56 @@ def dashboard_view(request):
         'certificates_count': certificates_count,
     }
     return render(request, 'courses/dashboard.html', context)
+
+
+def _manager_dashboard(request):
+    """Role-aware home page for super-admin and HOD/trainer accounts.
+
+    Super admin sees platform-wide numbers; HOD/trainers see department-level
+    numbers for their own department. Both get shortcuts to the management
+    console, HR analytics, certificate directory, and pending approvals.
+    """
+    user = request.user
+    is_super = user.is_superuser or user.role == 'admin'
+
+    dept = user.department
+
+    def staff_qs():
+        qs = StaffUser.objects.filter(is_active=True)
+        return qs if is_super or not dept else qs.filter(department=dept)
+
+    def enrollment_qs():
+        qs = Enrollment.objects.all()
+        return qs if is_super or not dept else qs.filter(staff_user__department=dept)
+
+    staff_members = staff_qs()
+    enrollments = enrollment_qs()
+
+    active_staff = staff_members.count()
+    completed = enrollments.filter(is_completed=True).count()
+    total_courses = Course.objects.count()
+    course_count = enrollments.count()
+    certificates_count = Certificate.objects.count() if is_super else Certificate.objects.filter(staff_user__department=dept).count()
+    pending_count = StaffUser.objects.filter(is_active=False).count()
+    sessions_this_month = TrainingSession.objects.filter(date__year=timezone.localdate().year, date__month=timezone.localdate().month).count()
+
+    scope_label = "all departments" if is_super else (dept.name if dept else "your department")
+
+    recent_enrollments = enrollments.select_related('staff_user', 'course').order_by('-enrolled_at')[:8]
+
+    context = {
+        'is_super': is_super,
+        'active_staff': active_staff,
+        'completed_count': completed,
+        'course_count': total_courses,
+        'enrollment_count': course_count,
+        'pending_count': pending_count,
+        'certificates_count': certificates_count,
+        'sessions_this_month': sessions_this_month,
+        'scope_label': scope_label,
+        'recent_enrollments': recent_enrollments,
+    }
+    return render(request, 'courses/manager_dashboard.html', context)
 
 @login_required
 def course_detail_view(request, course_id):

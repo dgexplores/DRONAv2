@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_super %}Admin Command Center{% else %}HOD / Training Dashboard{% endif %} | SRMS Drona{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    {% if is_hindi %}नमस्ते, {% endif %}{{ user.first_name|default:user.employee_id }}
+</div>
+<p class="page-subtitle">
+    {% if is_super %}
+    {% if is_hindi %}पूरे संगठन की प्रशिक्षण गतिविधि और अनुपालन का अवलोकन।{% else %}Platform-wide training activity and compliance at a glance.{% endif %}
+    {% else %}
+    {% if is_hindi %}{{ scope_label }} की प्रशिक्षण प्रगति का अवलोकन।{% else %}Overview of training progress for {{ scope_label }}.{% endif %}
+    {% endif %}
+</p>
+
+<div class="stats-grid">
+    <div class="stat-card reveal">
+        <div class="stat-icon blue">👥</div>
+        <div>
+            <div class="stat-value" data-count="{{ active_staff }}">{{ active_staff }}</div>
+            <div class="stat-label">{% if is_hindi %}सक्रिय कर्मचारी{% else %}Active Staff{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon green">📚</div>
+        <div>
+            <div class="stat-value" data-count="{{ course_count }}">{{ course_count }}</div>
+            <div class="stat-label">{% if is_hindi %}पाठ्यक्रम{% else %}Courses{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon gold">🎓</div>
+        <div>
+            <div class="stat-value" data-count="{{ enrollment_count }}">{{ enrollment_count }}</div>
+            <div class="stat-label">{% if is_hindi %}नामांकन{% else %}Enrollments{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon teal">🏁</div>
+        <div>
+            <div class="stat-value" data-count="{{ completed_count }}">{{ completed_count }}</div>
+            <div class="stat-label">{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon crimson">⏳</div>
+        <div>
+            <div class="stat-value" data-count="{{ pending_count }}">{{ pending_count }}</div>
+            <div class="stat-label">{% if is_hindi %}लंबित अनुमोदन{% else %}Pending Approvals{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon violet">📅</div>
+        <div>
+            <div class="stat-value" data-count="{{ sessions_this_month }}">{{ sessions_this_month }}</div>
+            <div class="stat-label">{% if is_hindi %}इस माह के सत्र{% else %}Sessions This Month{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}प्रबंधन क्रियाएँ{% else %}Management Actions{% endif %}</div>
+<div class="module-block" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+    <a href="{% url 'mgmt_home' %}" class="btn btn-primary">🛠️ {% if is_hindi %}प्रबंधन कंसोल{% else %}Management Console{% endif %}</a>
+    <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">📊 {% if is_hindi %}एचआर एनालिटिक्स{% else %}HR Analytics{% endif %}</a>
+    <a href="{% url 'my_certificates' %}" class="btn btn-success">🏆 {% if is_hindi %}प्रमाणपत्र निर्देशिका{% else %}Certificate Directory{% endif %}</a>
+    <a href="{% url 'training_calendar' %}" class="btn btn-secondary">📅 {% if is_hindi %}प्रशिक्षण कैलेंडर{% else %}Training Calendar{% endif %}</a>
+    <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold">👥 {% if is_hindi %}सामूहिक नामांकन{% else %}Bulk Enroll{% endif %}</a>
+    <a href="{% url 'mgmt_assign_staff' %}" class="btn btn-secondary">🎯 {% if is_hindi %}पाठ्यक्रम असाइन करें{% else %}Assign Course{% endif %}</a>
+    <a href="{% url 'mgmt_session_list' %}" class="btn btn-secondary">🗂️ {% if is_hindi %}सत्र प्रबंधन{% else %}Session Manager{% endif %}</a>
+</div>
+
+{% if pending_count %}
+<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}कार्रवाई की आवश्यकता{% else %}Needs Your Action{% endif %}</div>
+<div class="alert alert-warning" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+    <span>{% if is_hindi %}{{ pending_count }} नए खाता अनुमोदन लंबित हैं।{% else %}{{ pending_count }} account approval request(s) are pending.{% endif %}</span>
+    <a href="{% url 'hr_dashboard' %}" class="btn btn-success btn-sm">{% if is_hindi %}अनुमोदन देखें{% else %}Review Approvals{% endif %}</a>
+</div>
+{% endif %}
+
+{% if recent_enrollments %}
+<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}हाल के नामांकन{% else %}Recent Enrollments{% endif %}</div>
+<div class="table-wrap">
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{% if is_hindi %}कर्मचारी{% else %}Employee{% endif %}</th>
+                <th>{% if is_hindi %}पाठ्यक्रम{% else %}Course{% endif %}</th>
+                <th>{% if is_hindi %}दिनांक{% else %}Date{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in recent_enrollments %}
+            <tr>
+                <td>{{ e.staff_user.get_full_name|default:e.staff_user.employee_id }}</td>
+                <td>{{ e.course.title }}</td>
+                <td>{{ e.enrolled_at|date:"d M Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align:center; color:var(--muted);">{% if is_hindi %}कोई नामांकन नहीं।{% else %}No enrollments yet.{% endif %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if is_super %}
+<script>
+    // Super admin sees the completion-focused bar chart too.
+    var ctx = document.getElementById('managerChart');
+    if (ctx && typeof Chart !== 'undefined') {
+        new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ['Active Staff'], datasets: [{ data: [{{ active_staff }}] }] }
+        });
+    }
+</script>
+{% endif %}
+{% endblock %}
