@@ -1,1 +1,1 @@
-web: python manage.py collectstatic --noinput && python manage.py createcachetable rate_limit_cache && python manage.py migrate --noinput && python manage.py set_admin_password && python manage.py send_test_email && gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+web: python manage.py collectstatic --noinput && python manage.py createcachetable rate_limit_cache && python manage.py migrate --noinput && python manage.py set_admin_password && gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
