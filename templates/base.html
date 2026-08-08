@@ -117,11 +117,16 @@
     <main class="main">
         <div class="container">
             {% if messages %}
+                <div class="messages" aria-live="polite" aria-atomic="false">
                 {% for message in messages %}
                 <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismiss">
-                    {{ message }}
+                    <span class="alert-msg">{{ message }}</span>
+                    <button type="button" class="alert-close" aria-label="{% if is_hindi %}बंद करें{% else %}Dismiss{% endif %}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
                 </div>
                 {% endfor %}
+                </div>
             {% endif %}
 
             {% block content %}{% endblock %}

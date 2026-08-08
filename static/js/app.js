@@ -138,14 +138,23 @@
     if (window.innerWidth > 900) closeSidebar();
   });
 
-  // ===== Auto-dismiss alerts =====
+  // ===== Auto-dismiss + manual dismiss alerts =====
+  function dismissAlert(alert) {
+    if (!alert || alert.classList.contains('is-hidden')) return;
+    alert.classList.add('is-hidden');
+    alert.addEventListener('transitionend', function () { alert.remove(); },
+      { once: true });
+    setTimeout(function () { alert.remove(); }, 500);
+  }
+
+  // Manual dismiss (close button) via delegation
+  document.addEventListener('click', function (e) {
+    var close = e.target.closest('.alert-close');
+    if (close) dismissAlert(close.closest('.alert'));
+  });
+
   document.querySelectorAll('.alert-dismiss').forEach(function (alert) {
-    setTimeout(function () {
-      alert.style.opacity = '0';
-      alert.style.transform = 'translateY(-6px)';
-      alert.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-      setTimeout(function () { alert.remove(); }, 450);
-    }, 5000);
+    setTimeout(function () { dismissAlert(alert); }, 6000);
   });
 
   // Cookie helper for CSRF
