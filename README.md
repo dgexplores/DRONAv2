@@ -5,8 +5,8 @@ A full-featured, production-ready skill-learning and performance-tracking platfo
 watch SOP videos, take AI-generated quizzes, earn QR-verified certificates, and are managed
 through an HR analytics console — all under strict role-based access control (RBAC).
 
-> Built to spec (Project Plan + System Workflow). Deployed on Railway (Django) + Vercel (landing),
-> with GitHub Actions CI/CD and zero-cost single-worker hosting.
+> Built to spec (Project Plan + System Workflow). Deployed on Railway (Django), with
+> GitHub Actions CI/CD and zero-cost single-worker hosting.
 
 ---
 
@@ -54,8 +54,8 @@ through an HR analytics console — all under strict role-based access control (
 | **PDF / QR** | ReportLab + qrcode — verifiable certificates |
 | **Scheduler** | APScheduler — email reminders |
 | **Auth** | Django auth + optional Clerk SSO (JWT) |
-| **Hosting** | Railway (app) · Vercel (landing) |
-| **CI/CD** | GitHub Actions (CI + deploy backend + deploy frontend) |
+| **Hosting** | Railway (app) |
+| **CI/CD** | GitHub Actions (CI + deploy backend) |
 
 ---
 
@@ -64,7 +64,6 @@ through an HR analytics console — all under strict role-based access control (
 | Service | URL |
 |---|---|
 | **App (Django backend)** | https://dronav2-production.up.railway.app |
-| **Landing page** | https://landing-two-phi-95.vercel.app |
 
 ---
 
@@ -197,8 +196,7 @@ password in production.
 > a managed PostgreSQL, runs migrations, and serves it behind HTTPS with the single-worker gunicorn
 > command from `Procfile`. GitHub Actions deploys automatically on every push to `main`.
 >
-> **Live app (deployed):** https://dronav2-production.up.railway.app — **landing:**
-> https://landing-two-phi-95.vercel.app
+> **Live app (deployed):** https://dronav2-production.up.railway.app
 
 ### 1. Push to GitHub
 
@@ -260,13 +258,12 @@ on startup, so the live super-admin password is always environment-managed, neve
 
 ## 🚦 CI/CD (GitHub Actions)
 
-Three workflows run on every push to `main`:
+Three workflows in `.github/workflows/`:
 
 | Workflow | File | Job |
 |---|---|---|
-| **CI** | `.github/workflows/ci.yml` | Django system check + full test suite + `collectstatic`, validates landing assets |
+| **CI** | `.github/workflows/ci.yml` | Django system check + full test suite + `collectstatic` |
 | **CD – Backend** | `.github/workflows/deploy-backend.yml` | Deploys Django to Railway (`railway up`) |
-| **CD – Frontend** | `.github/workflows/deploy-frontend.yml` | Deploys `landing/` to Vercel |
 
 ### Required GitHub Secrets
 
@@ -275,10 +272,8 @@ Three workflows run on every push to `main`:
 | `RAILWAY_TOKEN` | Railway Dashboard → Account → Tokens | Backend CD |
 | `RAILWAY_SERVICE_ID` | Railway service → Settings → Service ID | Backend CD |
 | `RAILWAY_PROJECT_ID` | Railway project → Settings → Project ID | Backend CD |
-| `VERCEL_TOKEN` | Vercel → Settings → Tokens | Frontend CD |
 
-Backend CD triggers only on backend-path changes; frontend CD only on `landing/**`.
-Migrations run on every backend deployment.
+Backend CD triggers on backend-path changes. Migrations run on every backend deployment.
 
 ---
 
@@ -311,8 +306,7 @@ DRONAv2/
 ├── static/             # CSS (design system), JS, manifest.json, sw.js, icons, videos/
 ├── templates/          # Server-rendered HTML templates
 ├── media/              # Runtime uploads (cert PDFs, SOP PDFs)
-├── landing/            # Vercel static marketing page
-├── .github/workflows/  # CI + CD pipelines
+├── .github/workflows/  # CI + backend deploy pipeline
 ├── seed.py             # Demo data loader
 ├── Procfile            # Railway web command (gunicorn, single worker)
 └── requirements.txt

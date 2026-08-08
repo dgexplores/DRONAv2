@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}AI Quiz Generator | SRMS Drona{% endblock %}
+{% block title %}Quiz Builder | SRMS Drona{% endblock %}
 
 {% block content %}
-<div class="page-title">🤖 {% if is_hindi %}जेमिनी एआई प्रश्नोत्तरी जनरेटर{% else %}Gemini AI Quiz Generator{% endif %}</div>
+<div class="page-title">{% if is_hindi %}प्रश्नोत्तरी निर्माता{% else %}Quiz Builder{% endif %}</div>
 <p class="page-subtitle">
     {% if is_hindi %}
-    SOP पीडीएफ या टेक्स्ट अपलोड करें, जेमिनी एआई स्वचालित रूप से MCQ प्रश्न उत्पन्न करेगा।
+    SOP पीडीएफ या टेक्स्ट अपलोड करें, MCQs स्वचालित रूप से उत्पन्न करें।
     {% else %}
-    Upload an SOP PDF or paste text, and Gemini AI will automatically generate MCQs.
+    Upload an SOP PDF or paste text to generate MCQs automatically.
     {% endif %}
 </p>
 

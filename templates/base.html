@@ -56,7 +56,7 @@
 
             <a href="{% url 'generate_ai_quiz' %}" class="sidebar-link {% if url_name == 'generate_ai_quiz' %}active{% endif %}">
                 <svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
-                {% if is_hindi %}AI प्रश्नोत्तरी{% else %}AI Quiz Generator{% endif %}
+                {% if is_hindi %}प्रश्नोत्तरी निर्माता{% else %}Quiz Builder{% endif %}
             </a>
 
             <a href="{% url 'hr_dashboard' %}" class="sidebar-link {% if url_name == 'hr_dashboard' %}active{% endif %}">

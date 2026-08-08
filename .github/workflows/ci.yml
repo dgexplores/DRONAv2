@@ -32,18 +32,3 @@ jobs:
 
       - name: Collect static (build check)
         run: python manage.py collectstatic --noinput --settings=srms_drona.test_settings
-
-  frontend-build:
-    name: Landing page static build
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: landing
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate static assets
-        run: |
-          test -f index.html && echo "index.html OK"
-          test -f styles.css && echo "styles.css OK"
-          test -f app.js && echo "app.js OK"
-          test -f assets/logo-192.png && echo "icons OK"
