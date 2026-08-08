@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="{% static 'manifest.json' %}">
-    <link rel="apple-touch-icon" href="{% static 'img/icon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/logo.png' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
@@ -21,7 +21,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo">S</div>
+            <div class="sidebar-logo"><img src="{% static 'img/logo.png' %}" alt="SRMS Drona logo"></div>
             <div>
                 <span class="sidebar-brand-name">SRMS Drona</span>
                 <span class="sidebar-brand-sub">{% if is_hindi %}सीखने का मंच{% else %}Learning Platform{% endif %}</span>
