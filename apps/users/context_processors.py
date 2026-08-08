@@ -1,3 +1,6 @@
+from django.conf import settings
+
+
 def language_context(request):
     """
     Provides UI language (English/Hindi) dictionary to all templates.
@@ -6,4 +9,5 @@ def language_context(request):
     return {
         'UI_LANG': lang,
         'is_hindi': lang == 'hi',
+        'is_debug': settings.DEBUG,
     }

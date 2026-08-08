@@ -35,7 +35,7 @@ urlpatterns = [
     path('language/toggle/', user_views.toggle_language, name='toggle_language'),
 
     # Password Reset
-    path('password-reset/', auth_views.PasswordResetView.as_view(
+    path('password-reset/', user_views.RateLimitedPasswordResetView.as_view(
         template_name='users/password_reset_form.html',
         email_template_name='users/password_reset_email.html',
         subject_template_name='users/password_reset_subject.txt',
@@ -44,7 +44,7 @@ urlpatterns = [
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(
         template_name='users/password_reset_done.html',
     ), name='password_reset_done'),
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+    path('reset/<uidb64>/<token>/', user_views.RateLimitedPasswordResetConfirmView.as_view(
         template_name='users/password_reset_confirm.html',
         success_url=reverse_lazy('password_reset_complete'),
     ), name='password_reset_confirm'),

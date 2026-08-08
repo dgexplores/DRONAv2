@@ -74,12 +74,14 @@
                 Don't have an account? <a href="{% url 'register' %}">Create Account</a>
             </div>
 
+            {% if is_debug %}
             <div class="login-hint">
                 <strong>Demo Credentials</strong><br>
                 Staff: <code>EMP001</code> / <code>drona123</code><br>
                 Trainer: <code>EMP010</code> / <code>drona123</code><br>
-                Admin: <code>ADMIN001</code> / <code>Dr0n@#2026</code>
+                Admin: <code>ADMIN001</code> / <code>drona123</code>
             </div>
+            {% endif %}
         </div>
     </div>
 

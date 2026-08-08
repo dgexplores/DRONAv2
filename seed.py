@@ -3,6 +3,8 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'srms_drona.settings')
 django.setup()
 
+SEED_ADMIN_PASSWORD = os.environ.get('SEED_ADMIN_PASSWORD', 'Admin12345')
+
 from apps.users.models import StaffUser, Department
 from apps.courses.models import Category, Course, Module, Lesson, Enrollment, LessonProgress
 from apps.quizzes.models import Quiz, Question, Choice, QuizAttempt
@@ -31,11 +33,11 @@ def create_super_admin():
             email='admin@srms.ac.in',
             first_name='Super',
             last_name='Admin',
-            password='drona123',
+            password=SEED_ADMIN_PASSWORD,
             role='admin',
             designation='System Administrator'
         )
-        print("Super Admin created: ADMIN001 / drona123")
+        print(f"Super Admin created: ADMIN001 / {SEED_ADMIN_PASSWORD}")
     return StaffUser.objects.get(employee_id='ADMIN001')
 
 def create_staff(dept):
@@ -390,7 +392,7 @@ def run():
 
     print("=== Seed complete ===")
     print("Login credentials:")
-    print("  Admin:     ADMIN001 / drona123")
+    print("  Admin:     ADMIN001 / " + SEED_ADMIN_PASSWORD)
     print("  HOD/Train: EMP010   / drona123")
     print("  Staff:     EMP001-EMP006 / drona123")
 

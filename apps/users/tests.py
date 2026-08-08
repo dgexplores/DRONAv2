@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from apps.users.models import Department, StaffUser
 
 
@@ -56,6 +57,7 @@ class RegistrationApprovalTests(TestCase):
         )
 
     def test_register_creates_inactive_user(self):
+        cache.clear()
         resp = self.client.post(reverse('register'), {
             'employee_id': 'EMP777', 'first_name': 'New', 'last_name': 'User',
             'email': 'new@srms.ac.in', 'department': self.dept.id,
@@ -68,6 +70,7 @@ class RegistrationApprovalTests(TestCase):
         self.assertEqual(user.role, 'staff')
 
     def test_register_rejects_duplicate_employee_id(self):
+        cache.clear()
         StaffUser.objects.create_user(
             employee_id="EMP778", username="emp778",
             email="a@b.com", password="pass12345", role="staff",
@@ -196,3 +199,29 @@ class ClerkAuthTests(TestCase):
             resp = self.client.post(reverse('clerk_login'), {'token': 'bad.token'})
         self.assertEqual(resp.status_code, 302)
         self.assertNotIn('_auth_user_id', self.client.session)
+
+
+class SecurityHeadersTests(TestCase):
+    def test_csp_and_security_headers_present(self):
+        resp = self.client.get(reverse('login'))
+        self.assertIn('Content-Security-Policy', resp.headers)
+        self.assertIn('Referrer-Policy', resp.headers)
+        self.assertIn('Permissions-Policy', resp.headers)
+        self.assertIn("object-src 'none'", resp.headers['Content-Security-Policy'])
+        self.assertIn("frame-ancestors 'self'", resp.headers['Content-Security-Policy'])
+
+
+class RegisterRateLimitTests(TestCase):
+    def test_register_ratelimited_after_limit(self):
+        cache.clear()
+        url = reverse('register')
+        payload = {
+            'employee_id': 'EMP999', 'first_name': 'Rate', 'last_name': 'Limit',
+            'email': 'rate@srms.ac.in', 'password1': 'secret123', 'password2': 'secret123',
+        }
+        # Trigger the per-IP rate limit: 3 allowed, the 4th should be limited.
+        for i in range(3):
+            self.client.post(url, {**payload, 'employee_id': f'EMP99{i}', 'email': f'rate{i}@srms.ac.in'})
+        resp = self.client.post(url, {**payload, 'employee_id': 'EMPRATE', 'email': 'rateX@srms.ac.in'})
+        self.assertEqual(resp.status_code, 429)
+        self.assertIn("Too many sign-up attempts", resp.content.decode())

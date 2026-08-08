@@ -7,11 +7,15 @@ logger = logging.getLogger(__name__)
 scheduler = None
 
 def start():
-    """Start the APScheduler background scheduler. Safe to call multiple times."""
+    """Start the APScheduler background scheduler. Safe to call multiple times.
+
+    Opt-in via SRMS_RUN_SCHEDULER=1 so multi-worker production deployments
+    (gunicorn) do not start a scheduler in every worker and double-send emails.
+    """
     global scheduler
     from django.conf import settings
-    if settings.DEBUG and not settings.SRMS_RUN_SCHEDULER:
-        logger.info("Scheduler disabled in debug mode (set SRMS_RUN_SCHEDULER=1 to enable).")
+    if not getattr(settings, 'SRMS_RUN_SCHEDULER', False):
+        logger.info("Scheduler disabled (set SRMS_RUN_SCHEDULER=1 to enable).")
         return
     if scheduler is not None:
         return

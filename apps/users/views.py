@@ -2,16 +2,26 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponse
 from django.conf import settings
 from django.db.models import Sum
+from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from django.utils.translation import gettext_lazy as _
+
+import logging
+logger = logging.getLogger(__name__)
+
 from apps.users.models import StaffUser, Department
 from apps.users.forms import RegistrationForm
 from apps.users.badges import get_user_badges
 
 LOGIN_MAX_RATE = '5/5m'  # max 5 attempts per IP per 5 minutes
+REGISTER_MAX_RATE = '3/1h'  # max 3 self-signups per IP per hour (anti-spam)
+RESET_MAX_RATE = '3/1h'  # max 3 password-reset requests per IP per hour
 
 
 def get_client_ip(group, request):
@@ -19,6 +29,35 @@ def get_client_ip(group, request):
     if xff:
         return xff.split(',')[0].strip()
     return request.META.get('REMOTE_ADDR', '')
+
+
+def _send_approval_email(user, approved):
+    """Notify a staff member that their registration was approved or rejected."""
+    if not user.email:
+        return
+    base = settings.SRMS_BASE_URL.rstrip('/')
+    if approved:
+        subject = "Your SRMS Drona account is active"
+        message = (
+            f"Dear {user.first_name or user.employee_id},\n\n"
+            "Your SRMS Drona account has been approved by an administrator.\n"
+            "You can now sign in and start your training.\n\n"
+            f"Sign in here: {base}/login/\n"
+            "Forgot your password? Use the 'Forgot password?' link on the login page.\n\n"
+            "Regards,\nSRMS Learning & HR Team"
+        )
+    else:
+        subject = "Your SRMS Drona registration"
+        message = (
+            f"Dear {user.first_name or user.employee_id},\n\n"
+            "Your SRMS Drona registration request has not been approved.\n"
+            "If you believe this is an error, please contact the SRMS HR / admin team.\n\n"
+            "Regards,\nSRMS Learning & HR Team"
+        )
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+    except Exception:
+        logger.exception("Approval email failed for %s", user.employee_id)
 
 
 @ratelimit(key=get_client_ip, rate=LOGIN_MAX_RATE, method='POST', block=False)
@@ -32,6 +71,11 @@ def login_view(request):
             _("Too many failed login attempts. Please wait a few minutes and try again."),
         )
         return render(request, 'users/login.html', status=429)
+
+    context = {
+        'clerk_publishable_key': settings.CLERK_PUBLISHABLE_KEY,
+        'clerk_enabled': bool(settings.CLERK_PUBLISHABLE_KEY),
+    }
 
     if request.method == 'POST':
         employee_id = request.POST.get('employee_id', '').strip()
@@ -54,16 +98,16 @@ def login_view(request):
                 return redirect('dashboard')
         messages.error(request, _("Invalid Employee ID or Password. Please try again."))
 
-    context = {
-        'clerk_publishable_key': settings.CLERK_PUBLISHABLE_KEY,
-        'clerk_enabled': bool(settings.CLERK_PUBLISHABLE_KEY),
-    }
     return render(request, 'users/login.html', context)
 
-@ratelimit(key=get_client_ip, rate=LOGIN_MAX_RATE, method='POST', block=False)
+@ratelimit(key=get_client_ip, rate=REGISTER_MAX_RATE, method='POST', block=False)
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
+
+    if getattr(request, 'limited', False):
+        messages.error(request, _("Too many sign-up attempts. Please try again later."))
+        return render(request, 'users/register.html', {'form': RegistrationForm(request.POST)}, status=429)
 
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
@@ -105,6 +149,7 @@ def approve_user(request, user_id):
     target.is_active = True
     target.save()
     messages.success(request, f"{target.get_full_name() or target.employee_id} approved and can now sign in.")
+    _send_approval_email(target, approved=True)
     return redirect('hr_dashboard')
 
 @login_required
@@ -118,9 +163,38 @@ def reject_user(request, user_id):
         messages.error(request, _("Only pending (inactive) accounts can be rejected."))
         return redirect('hr_dashboard')
 
+    _send_approval_email(target, approved=False)
     target.delete()
     messages.warning(request, f"Registration request for {name} rejected and removed.")
     return redirect('hr_dashboard')
+
+@method_decorator(ratelimit(key=get_client_ip, rate=RESET_MAX_RATE, method='POST', block=False), name='dispatch')
+class RateLimitedPasswordResetView(PasswordResetView):
+    """Password reset form with per-IP rate limiting (anti email-bombing)."""
+
+    def form_valid(self, form):
+        if getattr(self.request, 'limited', False):
+            messages.error(
+                self.request,
+                _("Too many password reset requests. Please wait and try again later."),
+            )
+            return self.render_to_response(self.get_context_data(form=form))
+        return super().form_valid(form)
+
+
+@method_decorator(ratelimit(key=get_client_ip, rate=RESET_MAX_RATE, method='POST', block=False), name='dispatch')
+class RateLimitedPasswordResetConfirmView(PasswordResetConfirmView):
+    """Password reset token confirmation with per-IP rate limiting."""
+
+    def form_valid(self, form):
+        if getattr(self.request, 'limited', False):
+            messages.error(
+                self.request,
+                _("Too many reset attempts. Please wait and try again later."),
+            )
+            return self.render_to_response(self.get_context_data(form=form))
+        return super().form_valid(form)
+
 
 def logout_view(request):
     logout(request)
