@@ -159,6 +159,7 @@ EMAIL_PORT = int(os.getenv('SMTP_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('SMTP_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('SMTP_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASSWORD', '')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SRMS Drona <no-reply@srms.ac.in>')
 SRMS_BASE_URL = os.getenv('SRMS_BASE_URL', 'http://127.0.0.1:8000')
 

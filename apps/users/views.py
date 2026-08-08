@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+import threading
+
 from django.core.mail import send_mail
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -58,6 +60,20 @@ def _send_approval_email(user, approved):
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
     except Exception:
         logger.exception("Approval email failed for %s", user.employee_id)
+
+
+def _send_approval_email_async(user_id, approved):
+    """Fire-and-forget approval email so the admin request never blocks on SMTP."""
+    def _job():
+        try:
+            from apps.users.models import StaffUser
+            user = StaffUser.objects.get(id=user_id)
+        except StaffUser.DoesNotExist:
+            return
+        _send_approval_email(user, approved)
+
+    t = threading.Thread(target=_job, daemon=True)
+    t.start()
 
 
 @ratelimit(key=get_client_ip, rate=LOGIN_MAX_RATE, method='POST', block=False)
@@ -149,7 +165,7 @@ def approve_user(request, user_id):
     target.is_active = True
     target.save()
     messages.success(request, f"{target.get_full_name() or target.employee_id} approved and can now sign in.")
-    _send_approval_email(target, approved=True)
+    _send_approval_email_async(target.pk, approved=True)
     return redirect('hr_dashboard')
 
 @login_required
@@ -163,7 +179,7 @@ def reject_user(request, user_id):
         messages.error(request, _("Only pending (inactive) accounts can be rejected."))
         return redirect('hr_dashboard')
 
-    _send_approval_email(target, approved=False)
+    _send_approval_email_async(target.pk, approved=False)
     target.delete()
     messages.warning(request, f"Registration request for {name} rejected and removed.")
     return redirect('hr_dashboard')
