@@ -192,11 +192,9 @@ code {
   width: 42px;
   height: 42px;
   flex-shrink: 0;
-  border-radius: var(--r-md);
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: var(--brand-900);
-  font-weight: 800;
-  font-size: 1.35rem;
+  border-radius: 50%;
+  background: transparent;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,8 +204,8 @@ code {
 .sidebar-logo img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  border-radius: inherit;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .sidebar-brand-name {
@@ -1284,7 +1282,7 @@ table.data tr:hover td {
   height: 68px;
   background: linear-gradient(135deg, var(--brand-700), var(--brand-600));
   color: #fff;
-  border-radius: var(--r-lg);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1297,7 +1295,8 @@ table.data tr:hover td {
 .login-brand .logo-circle img {
   width: 68px;
   height: 68px;
-  object-fit: contain;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .login-brand h1 {
