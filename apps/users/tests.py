@@ -151,6 +151,14 @@ class LanguageToggleTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "पाठ्यक्रम", status_code=200)
 
+    def test_toggle_works_for_anonymous_via_session(self):
+        self.client.logout()
+        resp = self.client.get(reverse('toggle_language'), {'lang': 'hi'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(self.client.session.get('django_language'), 'hi')
+        resp = self.client.get(reverse('login'))
+        self.assertContains(resp, "English")
+
 
 class ClerkAuthTests(TestCase):
     def setUp(self):

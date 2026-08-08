@@ -11,6 +11,11 @@
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
+    <div class="login-lang">
+        <a href="{% url 'toggle_language' %}?lang={% if is_hindi %}en{% else %}hi{% endif %}" class="lang-toggle">
+            {% if is_hindi %}English{% else %}हिंदी{% endif %}
+        </a>
+    </div>
     <div class="login-page">
         <div class="login-card">
             <div class="login-brand">

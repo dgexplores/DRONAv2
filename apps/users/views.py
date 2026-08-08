@@ -276,13 +276,13 @@ def _manager_profile(request):
     }
     return render(request, 'users/profile.html', context)
 
-@login_required
 def toggle_language(request):
     new_lang = request.GET.get('lang', 'en')
     if new_lang in ['en', 'hi']:
-        request.user.preferred_language = new_lang
-        request.user.save()
         request.session['django_language'] = new_lang
+        if request.user.is_authenticated:
+            request.user.preferred_language = new_lang
+            request.user.save()
     next_url = request.META.get('HTTP_REFERER', 'dashboard')
     return redirect(next_url)
 
