@@ -20,6 +20,12 @@ through an HR analytics console — all under strict role-based access control (
   No lockout, no enumeration leaks.
 - **Admin provisions HR / HOD accounts** — super admin creates trainer accounts directly (no signup
   needed); those HR/HOD accounts get approval rights **and** the full management console.
+- **Certificate directory** — super admin and HR/HOD see exactly who completed which certificate,
+  with a search box (employee ID / name / email) plus filters by department and course.
+- **Per-student course assignment** — assign a specific employee to a course, separate from the
+  existing department-wide bulk-enroll.
+- **Editable training calendar** — super admin and HR/HOD add/edit/delete sessions directly on the
+  calendar grid (regular staff still only view it).
 - **Category → Course → Module → Lesson** hierarchy with **auto-enrollment** into mandatory courses
   by department.
 - **Video progress tracking** — watch position saved on a 10s heartbeat; per-course progress %
@@ -75,37 +81,84 @@ through an HR analytics console — all under strict role-based access control (
 - **CSP + security headers** via `srms_drona.middleware.SecurityHeadersMiddleware`
   (Referrer-Policy, Permissions-Policy, nosniff, frame-ancestors, `object-src 'none'`).
 - **Anti-enumeration** login: pending/inactive accounts return a generic error message.
+- **Role-gated manager views** — certificate directory, course assignment, and calendar editing
+  honor the same single `_can_manage`/`_is_manager` check (super admin + HR/HOD), so there is no
+  divergent role logic to bypass.
 - **Background email** — approval/reminder emails send on a daemon thread with `EMAIL_TIMEOUT`,
   so SMTP stalls never block an admin action or a request.
-- **Demo credentials below are for a fresh seed only** — always override with strong passwords.
+- **Demo credentials below are for a fresh seed only** — production override them with strong
+  passwords via env vars. Never publish a password that matches a live account.
 
 > ⚠️ If you ever share an admin password in a chat/log, rotate it: update the `DJANGO_ADMIN_PASSWORD`
 > env var in Railway, then redeploy. The `set_admin_password` command applies it automatically.
 
 ---
 
-## 🚀 Quick Start (Local)
+## 🚀 Quick Start (Local) — step by step
 
-Prereqs: Python 3.12+.
+> **What you're doing:** clone the repo, create an isolated Python virtual environment, install
+> the dependencies, create the database schema, load demo data, and run the dev server. You end
+> up with a fully working app at `http://127.0.0.1:8000/`.
+
+Prereqs: **Python 3.12+** and **Git**.
+
+### 1. Get the code
 
 ```bash
 git clone git@github.com:dgexplores/DRONAv2.git
 cd DRONAv2
+```
 
+### 2. Create and activate a virtual environment
+
+A virtual environment keeps this project's dependencies isolated from your system Python —
+so installing them here won't affect other projects or require admin rights.
+
+```bash
 python3 -m venv venv
-source venv/bin/activate                # Windows: .\venv\Scripts\activate
+source venv/bin/activate        # Windows: .\venv\Scripts\activate
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-cp .env.example .env                    # edit: add GEMINI_API_KEY etc. (optional)
+### 4. Configure local environment (optional)
 
+Copy the example env file and edit it. Only `GEMINI_API_KEY` is needed for AI quiz generation;
+everything else has safe defaults for local development.
+
+```bash
+cp .env.example .env            # then edit settings as needed
+```
+
+### 5. Set up the database
+
+`migrate` builds the tables (Postgres schema when `DATABASE_URL` is set, otherwise SQLite).
+
+```bash
 ./venv/bin/python manage.py migrate
-./venv/bin/python seed.py               # load demo departments, staff, courses, quizzes
+```
+
+### 6. Load demo data
+
+`seed.py` creates departments, demo staff accounts, courses/quizzes, and the super admin.
+
+```bash
+./venv/bin/python seed.py
+```
+
+### 7. Run the dev server
+
+```bash
 ./venv/bin/python manage.py runserver
 ```
 
-Open http://127.0.0.1:8000/
+Open **http://127.0.0.1:8000/** in your browser.
 
-### Demo accounts (seed only)
+### Demo accounts (seed only — local / fresh environments)
 
 | Role | Employee ID | Password |
 |---|---|---|
@@ -114,7 +167,9 @@ Open http://127.0.0.1:8000/
 | Staff | `EMP001`–`EMP006` | `drona123` |
 
 Seed password values come from `SEED_ADMIN_PASSWORD` (env, default `Admin12345`) and `drona123`
-for staff. Override `SEED_ADMIN_PASSWORD` for your own seed.
+for staff. Override `SEED_ADMIN_PASSWORD` for your own seed. The live deployment uses a rotated
+admin password from `DJANGO_ADMIN_PASSWORD` (see Production below) — never reuse the seed admin
+password in production.
 
 ---
 
@@ -136,19 +191,48 @@ for staff. Override `SEED_ADMIN_PASSWORD` for your own seed.
 
 ---
 
-## ☁️ Deploy to Railway (backend)
+## ☁️ Production deployment on Railway (backend) — step by step
 
-1. Push the repo to GitHub.
-2. Railway → **New Project → Deploy from GitHub repo**.
-3. Add a **PostgreSQL** plugin (Railway auto-sets `DATABASE_URL`).
-4. Set service env vars (see table below).
-5. Railway auto-detects the **Procfile** (gunicorn) + `runtime.txt`.
-6. Migrate + seed once:
-   ```bash
-   railway run python manage.py migrate
-   railway run python seed.py            # optional demo data
-   ```
-7. Set `DJANGO_ADMIN_PASSWORD` to rotate the super-admin password.
+> **What's happening:** Railway builds the repo, installs Django on a Python runtime, connects it to
+> a managed PostgreSQL, runs migrations, and serves it behind HTTPS with the single-worker gunicorn
+> command from `Procfile`. GitHub Actions deploys automatically on every push to `main`.
+>
+> **Live app (deployed):** https://dronav2-production.up.railway.app — **landing:**
+> https://landing-two-phi-95.vercel.app
+
+### 1. Push to GitHub
+
+```bash
+git add .
+git commit -m "feat: your change"
+git push origin main
+```
+
+### 2. Create the project and service on Railway
+
+1. **Railway → New Project → Deploy from GitHub repo**, select this repo.
+2. Add a **PostgreSQL** plugin — Railway auto-sets `DATABASE_URL`.
+
+### 3. Set environment variables
+
+Railway → your service → **Variables**. See the table below. **Debug** must be off and
+`ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS` must include the app URL, or HTTPS form posts (login,
+enroll, approval) will be rejected.
+
+### 4. Deploy
+
+Railway auto-detects the **Procfile** (gunicorn) + `runtime.txt`. If the plugin didn't run them,
+migrate + seed once:
+
+```bash
+railway run python manage.py migrate
+railway run python seed.py            # optional demo data
+```
+
+### 5. Rotate the admin password
+
+Set `DJANGO_ADMIN_PASSWORD` and redeploy. The `set_admin_password` management command applies it
+on startup, so the live super-admin password is always environment-managed, never a seed default.
 
 ### Env vars (Railway)
 
@@ -205,8 +289,9 @@ Migrations run on every backend deployment.
 ```
 
 `test_settings.py` forces an in-memory DB, disables the scheduler, and clears the Gemini key so
-AI tests use the offline rule-based generator. The full suite (50 tests) covers auth, RBAC,
-approval flow, rate limiting, quizzes, certificates, and analytics.
+AI tests use the offline rule-based generator. The full suite (63 tests) covers auth, RBAC,
+approval flow, rate limiting, quizzes, certificates, the certificate directory + filters,
+per-student assignment, calendar manager gating, and analytics.
 
 ---
 
