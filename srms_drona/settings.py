@@ -165,3 +165,23 @@ SRMS_BASE_URL = os.getenv('SRMS_BASE_URL', 'http://127.0.0.1:8000')
 # ---- APScheduler email reminders ----
 SRMS_RUN_SCHEDULER = os.getenv('SRMS_RUN_SCHEDULER', '0') == '1'
 SRMS_REMINDER_INTERVAL_HOURS = int(os.getenv('SRMS_REMINDER_INTERVAL_HOURS', '24'))
+
+# ---- Logging (console for Railway/CI visibility) ----
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'INFO',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'apscheduler': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'apps.notifications': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+}
