@@ -38,6 +38,16 @@ class AuditLog(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [models.Index(fields=['-created_at']), models.Index(fields=['action'])]
+
+    @classmethod
+    def prune(cls, days=180):
+        """Delete rows older than `days`. Returns deleted count."""
+        from django.utils import timezone
+        from datetime import timedelta
+        cutoff = timezone.now() - timedelta(days=max(1, int(days)))
+        deleted, _ = cls.objects.filter(created_at__lt=cutoff).delete()
+        return deleted
 
     def __str__(self):
         return f"{self.created_at:%Y-%m-%d %H:%M} {self.actor} {self.action} {self.target_type}:{self.target_id}"

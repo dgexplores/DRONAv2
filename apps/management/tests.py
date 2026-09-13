@@ -157,6 +157,18 @@ class AuditLogTests(TestCase):
         self.client.post(reverse('approve_user', args=[pending.id]))
         self.assertTrue(AuditLog.objects.filter(action='approve_user', target_id='PEND1').exists())
 
+    def test_prune_deletes_only_stale(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        from apps.management.models import AuditLog
+        old = AuditLog.objects.create(action='bulk_enroll', detail='old')
+        AuditLog.objects.filter(pk=old.pk).update(created_at=timezone.now() - timedelta(days=200))
+        fresh = AuditLog.objects.create(action='bulk_enroll', detail='fresh')
+        deleted = AuditLog.prune(days=180)
+        self.assertEqual(deleted, 1)
+        self.assertFalse(AuditLog.objects.filter(pk=old.pk).exists())
+        self.assertTrue(AuditLog.objects.filter(pk=fresh.pk).exists())
+
 
 class ReminderDedupTests(TestCase):
     def test_second_run_skips_recently_reminded(self):

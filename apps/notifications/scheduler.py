@@ -26,6 +26,12 @@ def start():
         id='send_pending_reminders',
         replace_existing=True,
     )
+    scheduler.add_job(
+        prune_auditlog_job,
+        trigger=IntervalTrigger(days=1),
+        id='prune_auditlog',
+        replace_existing=True,
+    )
     scheduler.start()
     logger.info("SRMS Drona APScheduler started.")
 
@@ -75,3 +81,13 @@ def send_reminders_job():
             logger.error(f"Reminder email failed for {user.employee_id}: {e}")
 
     logger.info(f"Sent {sent} reminder emails.")
+
+
+def prune_auditlog_job(days=180):
+    """Daily retention prune for AuditLog. Best-effort, never raises."""
+    try:
+        from apps.management.models import AuditLog
+        deleted = AuditLog.prune(days=days)
+        logger.info(f"Pruned {deleted} audit rows older than {days} days.")
+    except Exception as e:
+        logger.error(f"Audit prune failed: {e}")
