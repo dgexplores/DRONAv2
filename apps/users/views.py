@@ -179,6 +179,11 @@ def approve_user(request, user_id):
 
     target.is_active = True
     target.save()
+    try:
+        from apps.management.models import log_audit
+        log_audit(request.user, 'approve_user', target, f"Approved {target.employee_id}")
+    except Exception:
+        pass
     messages.success(request, f"{target.get_full_name() or target.employee_id} approved and can now sign in.")
     _send_approval_email_async(target.pk, approved=True)
     return redirect('hr_dashboard')
@@ -196,6 +201,11 @@ def reject_user(request, user_id):
         return redirect('hr_dashboard')
 
     _send_approval_email_async(target.pk, approved=False)
+    try:
+        from apps.management.models import log_audit
+        log_audit(request.user, 'reject_user', target, f"Rejected {target.employee_id}")
+    except Exception:
+        pass
     target.delete()
     messages.warning(request, f"Registration request for {name} rejected and removed.")
     return redirect('hr_dashboard')

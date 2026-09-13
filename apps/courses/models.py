@@ -72,6 +72,7 @@ class Enrollment(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     progress_percent = models.IntegerField(default=0)
     watch_seconds = models.PositiveIntegerField(default=0, help_text="Total active learning time watched (seconds)")
+    last_reminded_at = models.DateTimeField(null=True, blank=True, help_text="Last reminder email sent (dedup)")
 
     class Meta:
         unique_together = ('staff_user', 'course')

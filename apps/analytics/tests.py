@@ -43,4 +43,5 @@ class AnalyticsAccessTests(TestCase):
         resp = self.client.get(reverse('export_staff_csv'))
         self.assertEqual(resp.status_code, 200)
         self.assertIn('text/csv', resp['Content-Type'])
-        self.assertTrue(resp.content.startswith(b'Employee ID'))
+        content = b''.join(resp.streaming_content)
+        self.assertTrue(content.startswith(b'Employee ID'))

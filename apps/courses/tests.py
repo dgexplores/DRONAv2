@@ -158,3 +158,34 @@ class TrainingCalendarManagerTests(TestCase):
         resp = self.client.get(self.manager_flag_route)
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(resp.context['is_manager'])
+
+
+class SopDocumentGateTests(TestCase):
+    def setUp(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self.dept = Department.objects.create(name="IT", code="ITG")
+        self.cat = Category.objects.create(name="Safety")
+        self.course = Course.objects.create(title="Gated", description="d", category=self.cat, is_mandatory=True)
+        self.module = Module.objects.create(course=self.course, title="M", order=1)
+        pdf = SimpleUploadedFile("sop.pdf", b"%PDF-1.4 gated", content_type="application/pdf")
+        self.lesson = Lesson.objects.create(module=self.module, title="SOP", order=1, lesson_type='pdf', pdf_file=pdf)
+        self.staff = StaffUser.objects.create_user(
+            employee_id="EMPG1", username="empg1", email="g1@y.com",
+            password="pass12345", role="staff", department=self.dept
+        )
+        self.other = StaffUser.objects.create_user(
+            employee_id="EMPG2", username="empg2", email="g2@y.com",
+            password="pass12345", role="staff", department=self.dept
+        )
+
+    def test_unenrolled_denied(self):
+        self.client.login(employee_id='EMPG2', password='pass12345')
+        resp = self.client.get(reverse('sop_document', args=[self.lesson.id]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_enrolled_allowed(self):
+        Enrollment.objects.create(staff_user=self.staff, course=self.course)
+        self.client.login(employee_id='EMPG1', password='pass12345')
+        resp = self.client.get(reverse('sop_document', args=[self.lesson.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')

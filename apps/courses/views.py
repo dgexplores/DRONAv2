@@ -181,6 +181,28 @@ def lesson_view(request, lesson_id):
     return render(request, 'courses/lesson.html', context)
 
 @login_required
+def sop_document_view(request, lesson_id):
+    """Permission-checked SOP PDF serve. Enrolled staff or managers only.
+
+    Replaces direct /media/ links for SOPs. Direct media remains login-gated
+    as defense-in-depth; this view enforces enrollment-level auth.
+    """
+    from django.http import FileResponse, Http404
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    course = lesson.module.course
+    is_manager = bool(getattr(request.user, 'is_manager', False))
+    if not is_manager:
+        if not Enrollment.objects.filter(staff_user=request.user, course=course).exists():
+            raise Http404("Not enrolled in this course.")
+    if not lesson.pdf_file:
+        raise Http404("No SOP document for this lesson.")
+    try:
+        return FileResponse(lesson.pdf_file.open('rb'), content_type='application/pdf')
+    except FileNotFoundError:
+        raise Http404("SOP file not found.")
+
+
+@login_required
 def save_lesson_progress(request, lesson_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'invalid method'}, status=405)

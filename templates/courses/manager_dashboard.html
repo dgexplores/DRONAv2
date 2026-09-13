@@ -106,7 +106,7 @@
 
 {% block scripts %}
 {% if is_super %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
     // Super admin sees the completion-focused bar chart too.
     var ctx = document.getElementById('managerChart');
     if (ctx && typeof Chart !== 'undefined') {

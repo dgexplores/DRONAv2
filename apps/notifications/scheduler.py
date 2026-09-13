@@ -33,15 +33,22 @@ def send_reminders_job():
     """Send reminder emails to staff with incomplete mandatory training."""
     from django.core.mail import send_mail
     from django.conf import settings
+    from django.db.models import Q
+    from django.utils import timezone
+    from datetime import timedelta
     from apps.courses.models import Enrollment
 
-    # Only mandatory courses, oldest first, deterministic order. Caps spam to 50/run.
+    interval_hours = getattr(settings, 'SRMS_REMINDER_INTERVAL_HOURS', 24)
+    cutoff = timezone.now() - timedelta(hours=interval_hours)
+    # Dedup: only enrollments never reminded or reminded before cutoff.
+    # Only mandatory courses, oldest first, deterministic order. Caps 50/run.
     pending = (Enrollment.objects
                .filter(is_completed=False, course__is_mandatory=True, staff_user__is_active=True)
+               .filter(Q(last_reminded_at__isnull=True) | Q(last_reminded_at__lt=cutoff))
                .select_related('staff_user', 'course')
                .filter(staff_user__email__isnull=False)
                .exclude(staff_user__email='')
-               .order_by('enrolled_at', 'id')[:50])
+               .order_by('last_reminded_at', 'enrolled_at', 'id')[:50])
 
     sent = 0
     for enrollment in pending:
@@ -62,6 +69,7 @@ def send_reminders_job():
         )
         try:
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+            Enrollment.objects.filter(pk=enrollment.pk).update(last_reminded_at=timezone.now())
             sent += 1
         except Exception as e:
             logger.error(f"Reminder email failed for {user.employee_id}: {e}")

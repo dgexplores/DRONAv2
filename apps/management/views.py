@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 from apps.users.models import StaffUser, Department
 from apps.courses.models import Course, Module, Lesson, Enrollment, Category, TrainingSession
 from apps.quizzes.models import Quiz
+from apps.management.models import log_audit
 from apps.management.forms import (
     CreateUserForm, CourseForm, ModuleForm, LessonForm, EnrollForm, AssignStaffForm, TrainingSessionForm,
 )
@@ -106,6 +107,7 @@ def course_delete(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     if request.method == 'POST':
         title = course.title
+        log_audit(request.user, 'course_delete', course, f"Deleted course '{title}' id={course_id}")
         course.delete()
         messages.warning(request, f"Course '{title}' deleted.")
         return redirect('mgmt_course_list')
@@ -169,6 +171,7 @@ def module_delete(request, module_id):
     module = get_object_or_404(Module, id=module_id)
     course_id = module.course.id
     if request.method == 'POST':
+        log_audit(request.user, 'module_delete', module, f"Deleted module '{module.title}' id={module_id}")
         module.delete()
         messages.warning(request, "Module deleted.")
     return redirect('mgmt_course_detail', course_id=course_id)
@@ -221,6 +224,7 @@ def lesson_delete(request, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
     course_id = lesson.module.course.id
     if request.method == 'POST':
+        log_audit(request.user, 'lesson_delete', lesson, f"Deleted lesson '{lesson.title}' id={lesson_id}")
         lesson.delete()
         messages.warning(request, "Lesson deleted.")
     return redirect('mgmt_course_detail', course_id=course_id)
@@ -258,6 +262,7 @@ def bulk_enroll(request):
                 scope = f"{department.name} ({total} staff)"
             else:
                 scope = f"all departments ({total} staff)"
+            log_audit(request.user, 'bulk_enroll', course, f"Bulk enrolled {created} new, {already} existing ({scope})")
             messages.success(
                 request,
                 f"Enrolled {created} staff into '{course.title}'. {already} were already enrolled ({scope}).",
@@ -281,6 +286,7 @@ def assign_staff(request):
             staff = form.cleaned_data['staff_user']
             course = form.cleaned_data['course']
             _, was_created = Enrollment.objects.get_or_create(staff_user=staff, course=course)
+            log_audit(request.user, 'assign_staff', course, f"Assigned {staff.employee_id} to '{course.title}' created={was_created}")
             if was_created:
                 messages.success(
                     request,
@@ -357,6 +363,7 @@ def session_delete(request, session_id):
         return redirect_resp
     session = get_object_or_404(TrainingSession, id=session_id)
     if request.method == 'POST':
+        log_audit(request.user, 'session_delete', session, f"Deleted session '{session.title}' id={session_id}")
         session.delete()
         messages.warning(request, "Training session deleted.")
     return redirect('mgmt_session_list')
@@ -438,6 +445,7 @@ def import_staff(request):
                 created += 1
 
         result = {'created': created, 'skipped': skipped, 'errors': errors}
+        log_audit(request.user, 'import_staff', None, f"Imported {created}, skipped {skipped}, errors {len(errors)}")
         messages.success(request, f"Imported {created} staff ({skipped} skipped).")
         if errors:
             messages.warning(request, f"{len(errors)} rows had problems.")
@@ -485,6 +493,7 @@ def create_user(request):
             f"Account created for {data['first_name'] or data['employee_id']} "
             f"({data['role']}). Initial password: {password} — share it only with the user.",
         )
+        log_audit(request.user, 'create_user', user, f"Provisioned {user.employee_id} role={user.role}")
         return redirect('mgmt_home')
 
     return render(request, 'management/user_create.html', {'form': form})

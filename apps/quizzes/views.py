@@ -65,7 +65,12 @@ def submit_quiz_view(request, quiz_id):
             enrollment, _ = Enrollment.objects.get_or_create(staff_user=request.user, course=course)
             if passed and enrollment.progress_percent >= 100:
                 host = request.get_host()
-                generate_certificate_pdf(request.user, course, request_host=host)
+                cert = generate_certificate_pdf(request.user, course, request_host=host)
+                try:
+                    from apps.management.models import log_audit
+                    log_audit(request.user, 'certificate_issued', cert, f"Issued {cert.certificate_id} for {course.title}")
+                except Exception:
+                    pass
                 messages.success(request, f"Congratulations! You passed with {score_percent}% and earned your official SRMS Verified Certificate!")
             elif passed:
                 messages.success(request, f"You passed the quiz with {score_percent}%! Complete remaining video/PDF lessons to receive your certificate.")

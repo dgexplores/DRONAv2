@@ -28,7 +28,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ request.csp_nonce }}">
 (function () {
     var type = document.querySelector('#id_lesson_type');
     var video = document.querySelector('#id_video_url');

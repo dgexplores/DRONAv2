@@ -20,7 +20,7 @@
 </div>
 {% elif lesson.lesson_type == 'pdf' and lesson.pdf_file %}
 <div class="pdf-viewer">
-    <iframe class="pdf-frame" src="{{ lesson.pdf_file.url }}"></iframe>
+    <iframe class="pdf-frame" src="{% url 'sop_document' lesson.id %}"></iframe>
 </div>
 {% elif lesson.sop_text %}
 <div class="pdf-viewer" style="padding: 2rem;">
@@ -74,7 +74,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 (function () {
     var video = document.getElementById('lesson-video');
     if (!video) return;
