@@ -196,8 +196,9 @@ class ClerkAuthTests(TestCase):
             resp = self.client.post(reverse('clerk_login'), {'token': 'valid.jwt.token'})
         self.assertEqual(resp.status_code, 302)
         created = StaffUser.objects.get(email='newuser@srms.ac.in')
-        self.assertTrue(created.is_active)
-        self.assertEqual(int(self.client.session['_auth_user_id']), created.pk)
+        # New SSO accounts start inactive pending admin approval (matches signup policy).
+        self.assertFalse(created.is_active)
+        self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_clerk_rejects_invalid_token(self):
         from clerk_backend_api.security.types import TokenVerificationError, TokenVerificationErrorReason

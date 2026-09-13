@@ -35,11 +35,13 @@ def send_reminders_job():
     from django.conf import settings
     from apps.courses.models import Enrollment
 
+    # Only mandatory courses, oldest first, deterministic order. Caps spam to 50/run.
     pending = (Enrollment.objects
-               .filter(is_completed=False)
+               .filter(is_completed=False, course__is_mandatory=True, staff_user__is_active=True)
                .select_related('staff_user', 'course')
                .filter(staff_user__email__isnull=False)
-               .exclude(staff_user__email='')[:50])
+               .exclude(staff_user__email='')
+               .order_by('enrolled_at', 'id')[:50])
 
     sent = 0
     for enrollment in pending:

@@ -46,5 +46,18 @@ class StaffUser(AbstractUser):
     USERNAME_FIELD = 'employee_id'
     REQUIRED_FIELDS = ['username', 'email', 'first_name', 'last_name']
 
+    @property
+    def is_manager(self):
+        """Single source for manager check: trainer/admin or Django staff/superuser."""
+        return (
+            self.role in ('admin', 'trainer')
+            or self.is_superuser
+            or self.is_staff
+        )
+
+    @property
+    def is_super_admin(self):
+        return self.is_superuser or self.role == 'admin'
+
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.employee_id}) - {self.get_role_display()}"

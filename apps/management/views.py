@@ -20,7 +20,8 @@ from apps.management.forms import (
 
 
 def _can_manage(user):
-    return user.role in ('admin', 'trainer') or user.is_superuser
+    # Central RBAC: StaffUser.is_manager covers trainer/admin/staff/superuser.
+    return bool(getattr(user, 'is_manager', False))
 
 
 def _require_manager(request):
@@ -244,6 +245,7 @@ def bulk_enroll(request):
 
             created = 0
             already = 0
+            staff_ids = list(staff.values_list('id', flat=True))
             for user in staff:
                 _, was_created = Enrollment.objects.get_or_create(staff_user=user, course=course)
                 if was_created:
@@ -251,10 +253,11 @@ def bulk_enroll(request):
                 else:
                     already += 1
 
+            total = len(staff_ids)
             if department:
-                scope = f"{department.name} ({staff.count() + already + created} staff)"
+                scope = f"{department.name} ({total} staff)"
             else:
-                scope = f"all departments ({staff.count() + already + created} staff)"
+                scope = f"all departments ({total} staff)"
             messages.success(
                 request,
                 f"Enrolled {created} staff into '{course.title}'. {already} were already enrolled ({scope}).",
@@ -368,51 +371,71 @@ def import_staff(request):
     result = None
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
-        decoded = csv_file.read().decode('utf-8-sig')
+        # Bound upload: 2MB, max 500 rows. Prevents DoS via huge CSV.
+        if csv_file.size > 2 * 1024 * 1024:
+            messages.error(request, "CSV too large. Max 2MB.")
+            return render(request, 'management/staff_import.html', {'result': None})
+        try:
+            decoded = csv_file.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            messages.error(request, "CSV must be UTF-8 encoded.")
+            return render(request, 'management/staff_import.html', {'result': None})
         reader = csv.DictReader(decoded.splitlines())
 
         created = 0
         skipped = 0
         errors = []
-        for row_num, row in enumerate(reader, start=2):
-            employee_id = (row.get('employee_id') or '').strip().upper()
-            first_name = (row.get('first_name') or '').strip()
-            last_name = (row.get('last_name') or '').strip()
-            email = (row.get('email') or '').strip()
-            dept_code = (row.get('department') or row.get('department_code') or '').strip()
-            designation = (row.get('designation') or '').strip()
-            role = (row.get('role') or 'staff').strip().lower()
+        from django.db import transaction
+        with transaction.atomic():
+            for row_num, row in enumerate(reader, start=2):
+                if row_num > 502:  # header + 500 rows
+                    errors.append("Row limit 500 exceeded; remaining rows ignored.")
+                    break
+                employee_id = (row.get('employee_id') or '').strip().upper()
+                first_name = (row.get('first_name') or '').strip()
+                last_name = (row.get('last_name') or '').strip()
+                email = (row.get('email') or '').strip()
+                dept_code = (row.get('department') or row.get('department_code') or '').strip().upper()
+                designation = (row.get('designation') or '').strip()
+                role = (row.get('role') or 'staff').strip().lower()
 
-            if not employee_id or not first_name or not email:
-                errors.append(f"Row {row_num}: missing employee_id/first_name/email.")
-                continue
-            if StaffUser.objects.filter(employee_id=employee_id).exists():
-                skipped += 1
-                continue
-
-            department = None
-            if dept_code:
-                department = Department.objects.filter(code=dept_code).first()
-                if department is None:
-                    errors.append(f"Row {row_num}: unknown department code '{dept_code}'.")
+                if not employee_id or not first_name or not email:
+                    errors.append(f"Row {row_num}: missing employee_id/first_name/email.")
+                    continue
+                if StaffUser.objects.filter(employee_id=employee_id).exists():
+                    skipped += 1
+                    continue
+                if StaffUser.objects.filter(email__iexact=email).exists():
+                    errors.append(f"Row {row_num}: duplicate email '{email}'.")
                     continue
 
-            if role not in dict(StaffUser.ROLE_CHOICES):
-                role = 'staff'
+                department = None
+                if dept_code:
+                    department = Department.objects.filter(code=dept_code).first()
+                    if department is None:
+                        errors.append(f"Row {row_num}: unknown department code '{dept_code}'.")
+                        continue
 
-            StaffUser.objects.create_user(
-                username=employee_id,
-                employee_id=employee_id,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                department=department,
-                designation=designation,
-                role=role,
-                password=employee_id,
-                is_active=True,
-            )
-            created += 1
+                if role not in dict(StaffUser.ROLE_CHOICES):
+                    role = 'staff'
+
+                # Random temp password; admin must share via secure channel or use password reset.
+                temp_password = ''.join(
+                    secrets.choice(string.ascii_letters + string.digits) for _ in range(12)
+                )
+                StaffUser.objects.create_user(
+                    username=employee_id,
+                    employee_id=employee_id,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    department=department,
+                    designation=designation,
+                    role=role,
+                    password=temp_password,
+                    is_active=True,
+                )
+                created += 1
 
         result = {'created': created, 'skipped': skipped, 'errors': errors}
         messages.success(request, f"Imported {created} staff ({skipped} skipped).")

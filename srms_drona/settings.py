@@ -13,7 +13,13 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-)4*0dtz+)3g^hrq2q82
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',')
+# Fail fast in production if secrets not configured. Prevents insecure-default boot.
+if not DEBUG:
+    _insecure_default = 'django-insecure-)4*0dtz+)3g^hrq2q82^@yazj*o92yyf8r5sxfx+35c0r9bodf'
+    if os.getenv('DJANGO_SECRET_KEY', '') in ('', _insecure_default):
+        raise ValueError('DJANGO_SECRET_KEY must be set to a strong random value when DJANGO_DEBUG=False')
+
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',') if h.strip()] or ['*']
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     'DJANGO_CSRF_TRUSTED_ORIGINS',
@@ -41,6 +47,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'srms_drona.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

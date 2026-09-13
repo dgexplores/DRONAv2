@@ -36,7 +36,9 @@ def hr_dashboard_view(request):
 
     total_staff_count = StaffUser.objects.count()
     total_courses_count = Course.objects.count()
-    total_cert_count = Enrollment.objects.filter(is_completed=True).count()
+    from apps.certificates.models import Certificate as _Cert
+    total_cert_count = _Cert.objects.count()
+    total_completed_enrollments = Enrollment.objects.filter(is_completed=True).count()
     avg_quiz_score = QuizAttempt.objects.aggregate(Avg('score'))['score__avg'] or 0.0
     total_learning_hours = (Enrollment.objects.aggregate(Sum('watch_seconds'))['watch_seconds__sum'] or 0) / 3600
 
@@ -50,6 +52,7 @@ def hr_dashboard_view(request):
         'total_staff_count': total_staff_count,
         'total_courses_count': total_courses_count,
         'total_cert_count': total_cert_count,
+        'total_completed_enrollments': total_completed_enrollments,
         'avg_quiz_score': round(avg_quiz_score, 1),
         'total_learning_hours': round(total_learning_hours, 1),
         'recent_attempts': recent_attempts,

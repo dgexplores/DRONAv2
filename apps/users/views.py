@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
+from django.db import transaction, close_old_connections
 import threading
 
 from django.core.mail import send_mail
@@ -65,15 +68,25 @@ def _send_approval_email(user, approved):
 def _send_approval_email_async(user_id, approved):
     """Fire-and-forget approval email so the admin request never blocks on SMTP."""
     def _job():
+        # Fresh DB connection in worker thread; avoids sharing test/request connection.
+        close_old_connections()
         try:
             from apps.users.models import StaffUser
             user = StaffUser.objects.get(id=user_id)
         except StaffUser.DoesNotExist:
             return
         _send_approval_email(user, approved)
+        close_old_connections()
 
-    t = threading.Thread(target=_job, daemon=True)
-    t.start()
+    def _spawn():
+        t = threading.Thread(target=_job, daemon=True)
+        t.start()
+
+    # Defer until after commit so worker sees committed row (fixes sqlite locked + race).
+    try:
+        transaction.on_commit(_spawn)
+    except Exception:
+        _spawn()
 
 
 @ratelimit(key=get_client_ip, rate=LOGIN_MAX_RATE, method='POST', block=False)
@@ -94,8 +107,9 @@ def login_view(request):
     }
 
     if request.method == 'POST':
-        employee_id = request.POST.get('employee_id', '').strip()
-        password = request.POST.get('password', '').strip()
+        employee_id = request.POST.get('employee_id', '').strip().upper()
+        # Do not strip password: spaces can be significant.
+        password = request.POST.get('password', '')
 
         user = None
         try:
@@ -109,7 +123,7 @@ def login_view(request):
                 login(request, candidate)
                 messages.success(request, f"Welcome back, {candidate.first_name or candidate.employee_id}!")
                 next_url = request.POST.get('next') or request.GET.get('next') or ''
-                if next_url.startswith('/') and not next_url.startswith('//'):
+                if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
                     return redirect(next_url)
                 return redirect('dashboard')
         messages.error(request, _("Invalid Employee ID or Password. Please try again."))
@@ -153,6 +167,7 @@ def register_view(request):
     return render(request, 'users/register.html', {'form': form})
 
 @login_required
+@require_POST
 def approve_user(request, user_id):
     if request.user.role not in ('admin', 'trainer') and not request.user.is_superuser:
         return HttpResponse(_("Unauthorized"), status=403)
@@ -169,6 +184,7 @@ def approve_user(request, user_id):
     return redirect('hr_dashboard')
 
 @login_required
+@require_POST
 def reject_user(request, user_id):
     if request.user.role not in ('admin', 'trainer') and not request.user.is_superuser:
         return HttpResponse(_("Unauthorized"), status=403)
@@ -263,14 +279,17 @@ def _manager_profile(request):
         return qs if is_super or not dept else qs.filter(staff_user__department=dept)
 
     scope_label = "all departments" if is_super else (dept.name if dept else "department")
+    enrollments_scoped = enrollment_qs()
     context = {
         'staff_user': staff_user,
         'is_manager': True,
         'is_super': is_super,
         'scope_label': scope_label,
         'active_staff': staff_qs().count(),
-        'completed_count': enrollment_qs().filter(is_completed=True).count(),
-        'enrollment_count': Course.objects.filter(enrollments__in=enrollment_qs()).distinct().count(),
+        'completed_count': enrollments_scoped.filter(is_completed=True).count(),
+        # Courses with enrollments in scope (labelled Courses in UI).
+        'enrollment_count': Course.objects.filter(enrollments__in=enrollments_scoped).distinct().count(),
+        'total_enrollments': enrollments_scoped.count(),
         'cert_count': (Certificate.objects.count()
                        if is_super else Certificate.objects.filter(staff_user__department=dept).count()),
     }
@@ -282,9 +301,11 @@ def toggle_language(request):
         request.session['django_language'] = new_lang
         if request.user.is_authenticated:
             request.user.preferred_language = new_lang
-            request.user.save()
-    next_url = request.META.get('HTTP_REFERER', 'dashboard')
-    return redirect(next_url)
+            request.user.save(update_fields=['preferred_language'])
+    next_url = request.META.get('HTTP_REFERER', '')
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
+    return redirect('dashboard')
 
 def clerk_login_view(request):
     """Exchange a verified Clerk session token for a Django session.

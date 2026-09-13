@@ -1,10 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+from django.db.models import F
 import json
 from datetime import datetime as dt, timedelta as td
 
@@ -179,43 +181,53 @@ def lesson_view(request, lesson_id):
     return render(request, 'courses/lesson.html', context)
 
 @login_required
-@csrf_exempt
 def save_lesson_progress(request, lesson_id):
-    if request.method == 'POST':
+    if request.method != 'POST':
+        return JsonResponse({'status': 'invalid method'}, status=405)
+    try:
+        data = json.loads(request.body)
+        position = data.get('position', 0)
+        completed = data.get('completed', False)
+
+        lesson = get_object_or_404(Lesson, id=lesson_id)
+        # Only enrolled staff may record progress.
         try:
-            data = json.loads(request.body)
-            position = data.get('position', 0)
-            completed = data.get('completed', False)
+            enrollment = Enrollment.objects.get(staff_user=request.user, course=lesson.module.course)
+        except Enrollment.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Not enrolled in this course.'}, status=403)
 
-            lesson = get_object_or_404(Lesson, id=lesson_id)
-            # Only enrolled staff may record progress.
-            try:
-                enrollment = Enrollment.objects.get(staff_user=request.user, course=lesson.module.course)
-            except Enrollment.DoesNotExist:
-                return JsonResponse({'status': 'error', 'message': 'Not enrolled in this course.'}, status=403)
+        # Bound position: 0 .. lesson duration. Prevents negative / huge spoofing.
+        try:
+            position = int(position)
+        except (TypeError, ValueError):
+            position = 0
+        max_position = max(0, (lesson.duration_minutes or 0) * 60)
+        position = max(0, min(position, max_position))
 
-            progress, _ = LessonProgress.objects.get_or_create(enrollment=enrollment, lesson=lesson)
-            progress.last_position_seconds = int(position)
-            if completed:
-                progress.is_completed = True
-            progress.save()
+        progress, _ = LessonProgress.objects.get_or_create(enrollment=enrollment, lesson=lesson)
+        progress.last_position_seconds = position
+        if completed:
+            progress.is_completed = True
+        progress.save()
 
-            # Accumulate active learning time (watched seconds this heartbeat).
-            watched = data.get('watched', 0)
-            try:
-                watched = max(0, int(watched))
-            except (TypeError, ValueError):
-                watched = 0
-            if watched:
-                enrollment.watch_seconds += watched
-                enrollment.save(update_fields=['watch_seconds'])
+        # Clamp heartbeat to 0..30s to prevent watch-time inflation.
+        watched = data.get('watched', 0)
+        try:
+            watched = int(watched)
+        except (TypeError, ValueError):
+            watched = 0
+        watched = max(0, min(watched, 30))
+        if watched:
+            Enrollment.objects.filter(pk=enrollment.pk).update(watch_seconds=F('watch_seconds') + watched)
+            enrollment.refresh_from_db(fields=['watch_seconds'])
 
+        with transaction.atomic():
+            enrollment = Enrollment.objects.select_for_update().get(pk=enrollment.pk)
             enrollment.update_progress()
 
-            return JsonResponse({'status': 'success', 'progress_percent': enrollment.progress_percent})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-    return JsonResponse({'status': 'invalid method'}, status=405)
+        return JsonResponse({'status': 'success', 'progress_percent': enrollment.progress_percent})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
 @login_required
@@ -250,6 +262,7 @@ def training_calendar(request):
 
 
 @login_required
+@require_POST
 def enroll_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     if course.is_mandatory:

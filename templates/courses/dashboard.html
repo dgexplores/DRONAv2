@@ -110,9 +110,12 @@
         </div>
         <div class="course-card-footer">
             <span class="lesson-duration">{{ course.get_total_lessons }} {% if is_hindi %}पाठ{% else %}lessons{% endif %}</span>
-            <a href="{% url 'enroll_course' course.id %}" class="btn btn-success btn-sm">
-                {% if is_hindi %}नामांकन{% else %}Enroll{% endif %}
-            </a>
+            <form method="post" action="{% url 'enroll_course' course.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-sm">
+                    {% if is_hindi %}नामांकन{% else %}Enroll{% endif %}
+                </button>
+            </form>
         </div>
     </div>
     {% endfor %}

@@ -99,21 +99,30 @@ def generate_ai_quiz(request):
     if request.method == 'POST':
         module_id = request.POST.get('module_id')
         sop_text = request.POST.get('sop_text', '').strip()
-        num_questions = int(request.POST.get('num_questions', 5))
+        try:
+            num_questions = int(request.POST.get('num_questions', 5))
+        except (TypeError, ValueError):
+            num_questions = 5
+        num_questions = max(1, min(num_questions, 10))
 
         module = get_object_or_404(Module, id=module_id)
 
-        # If PDF uploaded, extract text with pypdf
+        # If PDF uploaded, extract text with pypdf (bounded: 5MB, 20 pages)
         if 'pdf_file' in request.FILES:
             pdf_file = request.FILES['pdf_file']
+            if pdf_file.size > 5 * 1024 * 1024:
+                messages.error(request, "PDF too large. Max 5MB.")
+                return render(request, 'quizzes/ai_quiz_generator.html', {'modules': modules})
             try:
                 import pypdf
                 reader = pypdf.PdfReader(pdf_file)
                 extracted_text = ""
-                for page in reader.pages:
+                for page in reader.pages[:20]:
                     extracted_text += page.extract_text() or ""
+                    if len(extracted_text) > 12000:
+                        break
                 if extracted_text:
-                    sop_text = extracted_text
+                    sop_text = extracted_text[:12000]
             except Exception as e:
                 messages.error(request, f"Failed to extract text from PDF: {e}")
 

@@ -85,13 +85,13 @@ class Enrollment(models.Model):
                 enrollment=self,
                 is_completed=True
             ).count()
-            self.progress_percent = int((completed / total_lessons) * 100)
+            self.progress_percent = max(0, min(100, int((completed / total_lessons) * 100)))
         
         if self.progress_percent >= 100 and not self.is_completed:
             self.is_completed = True
             from django.utils import timezone
             self.completed_at = timezone.now()
-        self.save()
+        self.save(update_fields=['progress_percent', 'is_completed', 'completed_at'])
 
     def __str__(self):
         return f"{self.staff_user.employee_id} enrolled in {self.course.title} ({self.progress_percent}%)"
@@ -126,6 +126,12 @@ class TrainingSession(models.Model):
 
     class Meta:
         ordering = ['date', 'start_time']
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.end_time and self.end_time <= self.start_time:
+            raise ValidationError({'end_time': 'End time must be after start time.'})
 
     def __str__(self):
         return f"{self.title} ({self.date})"
