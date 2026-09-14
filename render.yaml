@@ -1,0 +1,38 @@
+# Render blueprint for DRONAv2 demo (free web + external Neon Postgres).
+# Dashboard: New → Blueprint → select repo. Set DATABASE_URL to your Neon URL.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: dronav2
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: >-
+      python manage.py migrate --noinput &&
+      python manage.py createcachetable rate_limit_cache || true;
+      gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /health/
+    envVars:
+      - key: DJANGO_DEBUG
+        value: false
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: https://dronav2.onrender.com
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: True
+      # --- Set these in Dashboard → Environment (secrets) ---
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SRMS_BASE_URL
+        sync: false
+      - key: DJANGO_ADMIN_PASSWORD
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
