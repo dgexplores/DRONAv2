@@ -1,3 +1,6 @@
+import os
+from unittest import mock
+
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -82,6 +85,19 @@ class GeminiServiceTests(TestCase):
         self.assertTrue(report.used_fallback)
         self.assertEqual(report.source, 'fallback')
         self.assertIn('AI unavailable', report.summary())
+
+    def test_missing_api_key_is_logged_not_silent(self):
+        """Regression guard: an unset GEMINI_API_KEY used to degrade every quiz
+        to the rule-based fallback with no trace in the logs, so an operator
+        could not tell a healthy deployment from a misconfigured one."""
+        without_key = {k: v for k, v in os.environ.items() if k != 'GEMINI_API_KEY'}
+        with mock.patch.dict(os.environ, without_key, clear=True):
+            with self.assertLogs('apps.quizzes.gemini_services', level='WARNING') as captured:
+                generate_quiz_from_text(self.module, "text", num_questions=3)
+        self.assertTrue(
+            any('GEMINI_API_KEY is not set' in line for line in captured.output),
+            f"expected a warning about the missing key; got: {captured.output}",
+        )
 
     def test_fallback_honours_the_requested_count(self):
         """Regression guard: the pool used to be 5, so 6-10 silently yielded 5."""

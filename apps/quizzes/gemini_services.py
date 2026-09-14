@@ -222,7 +222,14 @@ def generate_quiz_from_text(module, text_content, num_questions=5):
 
     questions = []
     api_key = os.environ.get("GEMINI_API_KEY")
-    if api_key:
+    if not api_key:
+        # Without this line an unset key degrades every quiz to the rule-based
+        # fallback with no trace in the logs -- operators cannot tell a healthy
+        # deployment from a misconfigured one. See ENGINEERING.md, silent fallback.
+        logger.warning(
+            "GEMINI_API_KEY is not set; quiz %s will use the rule-based fallback.", quiz.pk
+        )
+    else:
         questions, report.model = _generate_with_gemini(
             api_key, module, text_content, requested, report
         )
@@ -232,6 +239,10 @@ def generate_quiz_from_text(module, text_content, num_questions=5):
     if not questions:
         questions = _generate_fallback_questions(module.title, text_content, requested)
         report.source = 'fallback'
+        logger.warning(
+            "Quiz %s fell back to rule-based questions (%s created, %s requested).",
+            quiz.pk, len(questions), requested,
+        )
 
     for item in questions:
         question = Question.objects.create(
