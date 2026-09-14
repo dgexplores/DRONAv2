@@ -1,36 +1,59 @@
-# Render blueprint for DRONAv2 demo (free web + external Neon Postgres).
+# Render Blueprint for SRMS Drona (DRONAv2) -- free web service + external Neon Postgres.
 #
 # ############################################################################
-# # WARNING — THIS FILE DOES NOT CONTROL THE LIVE SERVICE.                   #
+# # STATUS: PREPARED, NOT YET ACTIVE.                                        #
 # #                                                                          #
-# # The `dronav2` service was created MANUALLY in the Render dashboard and    #
-# # is NOT Blueprint-managed. Editing this file changes NOTHING in            #
-# # production. This already bit us: the `set -e` fix below sat inert while   #
-# # prod kept running `A && B || true; C`, and only the live boot logs        #
-# # revealed it (2026-09-14).                                                #
+# # The `DRONAv2` service is currently MANUALLY configured and is NOT        #
+# # Blueprint-managed, so editing this file does NOT change production.      #
+# # This already bit us once: a `set -e` fix sat inert in this file while    #
+# # production kept running `A && B || true; C`, and only the live boot      #
+# # logs revealed it. See ENGINEERING.md trap 4.10.                          #
 # #                                                                          #
-# # Apply changes to the service too, then verify against the running one:    #
-# #   render services update srv-dajkh37qj5pc73e038i0 --start-command '...'   #
-# #   render deploys create srv-dajkh37qj5pc73e038i0 --confirm                #
-# #   render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text             #
-# #                                                                          #
-# # Treat this file as documentation until the service is converted to        #
-# # Blueprint management. See ENGINEERING.md trap 4.10.                       #
+# # Every field below has been aligned with the live service so that         #
+# # adopting this Blueprint is a no-op. Read MIGRATION before activating.    #
 # ############################################################################
 #
-# Dashboard: New → Blueprint → select repo. Set DATABASE_URL to your Neon URL.
+# MIGRATION -- dashboard-only, the CLI cannot create a Blueprint:
+#   1. Dashboard -> New > Blueprint -> Connect this repo, branch `main`.
+#   2. Review the change preview. It MUST show the existing `DRONAv2` service
+#      being updated, NOT a new service. If it offers to create something like
+#      `DRONAv2-xxxx`, STOP -- the name did not match and you would end up with
+#      a second, duplicate service.
+#   3. Set the Blueprint's **Auto Sync to No** before the first sync, so nothing
+#      is applied without an explicit click.
+#   4. Deploy the Blueprint, then verify against the running service:
+#        render services -o json
+#        render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text
+#
+# ROLLBACK -- low risk by design:
+#   * Syncing a Blueprint NEVER deletes an existing resource.
+#   * Disconnecting the Blueprint leaves the service running as-is.
+#   * To back out: set Auto Sync to No (or disconnect), then re-apply any
+#     setting you want changed via the dashboard or `render services update`.
+#   The service and its URL are never destroyed by this process.
+#
 # Docs: https://render.com/docs/blueprint-spec
 services:
   - type: web
-    name: dronav2
+    # Must match the live service name EXACTLY. A mismatch makes Render create a
+    # second service instead of adopting this one.
+    name: DRONAv2
     runtime: python
     plan: free
+    # Cannot be modified after creation -- must match the live region.
+    region: oregon
+    repo: https://github.com/dgexplores/DRONAv2
+    branch: main
+    # `autoDeployTrigger: commit` is the current form of `autoDeploy: true`,
+    # which is deprecated.
+    autoDeployTrigger: commit
+    numInstances: 1
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
     # set -e aborts the boot on the first failed step. The previous
     # `A && B || true; gunicorn ...` form swallowed a failed migrate and started
     # gunicorn against a broken schema, which then reported healthy while every
-    # query failed. set_admin_password is also wired in here (it was declared as
-    # an env var but never invoked, so the rotation never happened on Render);
+    # query failed. set_admin_password is wired in here because it was declared
+    # as an env var but never invoked, so the rotation never happened on Render;
     # it exits 0 when DJANGO_ADMIN_PASSWORD is unset.
     startCommand: >-
       set -e;
@@ -39,9 +62,13 @@ services:
       python manage.py set_admin_password;
       gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
     healthCheckPath: /health/
+    # `previews` is omitted on purpose: the live service has preview generation
+    # disabled, and omitting the field disables it.
     envVars:
       - key: DJANGO_DEBUG
         value: false
+      # generateValue creates a 256-bit value ONLY if none already exists, so
+      # adopting this Blueprint does not rotate the live secret key.
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_ALLOWED_HOSTS
@@ -50,7 +77,9 @@ services:
         value: https://dronav2.onrender.com
       - key: DJANGO_SECURE_SSL_REDIRECT
         value: True
-      # --- Set these in Dashboard → Environment (secrets) ---
+      # --- Secrets: set in Dashboard -> Environment. Render IGNORES `sync: false`
+      # --- entries when updating an existing Blueprint, so a sync can never
+      # --- overwrite a value already set on the live service.
       - key: DATABASE_URL
         sync: false
       - key: GEMINI_API_KEY

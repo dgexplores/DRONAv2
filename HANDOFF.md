@@ -81,9 +81,45 @@ Verified live in the boot logs:
 13:58:57  [INFO] Starting gunicorn 26.0.0      <- gunicorn
 ```
 
-**Permanent fix (recommended):** convert the service to Blueprint-managed so `render.yaml`
-becomes the source of truth. Until that happens, **any `render.yaml` edit must also be applied
-via the CLI or dashboard**, or it is a no-op.
+### The permanent fix: activate Blueprint management
+
+`render.yaml` has been **rebuilt to mirror the live service field-by-field**, so adopting it is a
+no-op. This is a dashboard step — the CLI cannot create a Blueprint.
+
+**Pre-flight (already passing).** `render blueprints validate` reveals whether a Blueprint would
+*adopt* the existing service or *create a duplicate*: the `plan.services` list names services that
+would be **created**, so an **absent/empty list means adoption**.
+
+```bash
+render blueprints validate render.yaml
+# -> {"plan": {"totalActions": 1}, "valid": true}     # no "services" key = ADOPTS. Good.
+```
+
+> ⚠️ **The name must be the display name `DRONAv2`, not the slug `dronav2`.** Matching is
+> case-sensitive and uses the service's *name*. Verified empirically against all five services in
+> the account: every existing name adopts; `dronav2` (lowercase) and any invented name are listed
+> under `services`, i.e. they would **create a second, duplicate service**.
+
+**Migration steps:**
+1. Dashboard → **New > Blueprint** → connect `dgexplores/DRONAv2`, branch `main`.
+2. Read the change preview. It must show the **existing** `DRONAv2` service being updated.
+3. Set the Blueprint's **Auto Sync to No** before the first sync.
+4. Deploy, then verify against the running service (never against the file):
+   `render services -o json` and `render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text`.
+
+**Why the risk is low** (from Render's own docs, checked 2026-09-14):
+- `name` matching an existing service **applies config to that service** — it does not recreate it.
+- **Syncing a Blueprint never deletes an existing resource**, even if you remove it from the file
+  or disconnect the Blueprint.
+- `generateValue: true` generates a value **only if none exists**, so the live `DJANGO_SECRET_KEY`
+  is **not** rotated (this was my first worry — the docs disproved it).
+- `sync: false` env vars are **ignored on update**, so no secret can be overwritten by a sync.
+- Omitted env vars are **preserved**; omitted `plan` / `numInstances` / `previews` **retain** the
+  current values or default to a matching state.
+
+**Rollback:** set Auto Sync to No (or disconnect the Blueprint). The service and its URL survive.
+Re-apply any setting you want changed via the dashboard or `render services update`. Nothing is
+destroyed by this process.
 
 > Side finding: `set_admin_password` printed "ADMIN001 password rotated.", which proves
 > `DJANGO_ADMIN_PASSWORD` **is** set on Render. That rotation had never once executed before.

@@ -169,6 +169,23 @@ render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text | grep -E "Running '
 A config change does **not** auto-deploy; run `render deploys create <service-id> --confirm`.
 The right long-term fix is to convert the service to Blueprint-managed so the file is truthful.
 
+**Before adopting a Blueprint, pre-flight it.** `render blueprints validate` reports the services
+it would **create** under `plan.services`. An absent/empty list means it will **adopt** the
+existing service instead — which is what you want.
+
+```bash
+render blueprints validate render.yaml
+# {"plan": {"totalActions": 1}, "valid": true}   <- no "services" key = ADOPTS. Safe.
+# {"plan": {"services": ["dronav2"], ...}}       <- would CREATE a duplicate. STOP.
+```
+
+⚠️ The `name` must match the service's **display name** (`DRONAv2`), and matching is
+**case-sensitive**. The lowercase slug (`dronav2`) does *not* match and would create a **second,
+duplicate service**. Verified empirically across all five services in the account: every real
+name adopts; the slug and invented names are listed as to-be-created.
+
+Also note a service-config change never triggers a deploy on its own.
+
 **4.11 Secrets are write-only through the CLI.**
 There is no command to read a service's env vars, and `render ssh` needs a key registered on the
 account. Do not assume a variable is set because it appears in `render.yaml` — that file is inert
