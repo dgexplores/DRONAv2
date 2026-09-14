@@ -14,14 +14,41 @@ and you are current.
 |---|---|
 | Working tree | clean (`git status --porcelain` empty) |
 | Branch | `main`, in sync with `origin/main` |
-| HEAD | `ac34e32` — *fix: log when GEMINI_API_KEY is unset instead of degrading silently* |
-| CI | green — run `34850005290` on Python 3.12 (~29–33s) |
+| HEAD | `1a5fa22` — *ci: bump actions to current majors, clear Node 20 deprecation* |
+| CI | green — run `34854209674`, zero annotations (Node 20 warning cleared) |
 | Test suite | 108 tests, all passing; ship gate run twice consecutively |
 | Deployed | **live on Render** — service `dronav2`, deploy `dep-dajvqb0ae00c73bjjeug` (2026-09-14 13:59Z) |
 | Health | `https://dronav2.onrender.com/health/` → `200 ok` |
 
 The 9 defect classes found in the audit are fixed, committed, pushed, and CI-verified.
 Nothing is half-finished. The items below are *follow-ups*, not incomplete work.
+
+---
+
+## 1a. Production verification (2026-09-14, session 2)
+
+The security fixes were verified **against the running service**, not just in tests. All
+read-only probes:
+
+| Probe | Result | Verdict |
+|---|---|---|
+| `GET /media/certificates/<file>.pdf` (anonymous) | `302` → `/login/?next=...` | ✅ never `200` |
+| `GET /media/sop_documents/sop.pdf` (anonymous) | `302` → `/login/` | ✅ never `200` |
+| `GET /media/../srms_drona/settings.py` | `404` | ✅ traversal rejected |
+| `GET /media/....//srms_drona/settings.py` | `302` → login (404 once authed) | ✅ no leak |
+| `GET /` `/certificates/` `/analytics/` `/manage/` | `302` → `/login/` | ✅ auth enforced |
+| `GET /verify/<bogus>/` | `200`, renders "Certificate Not Found" | ✅ no data leak |
+| `GET /verify/<img src=x onerror=...>` | reflected **HTML-escaped** | ✅ no XSS |
+| `Host: evil.com` | `403` | ✅ `ALLOWED_HOSTS` not `*` |
+| HTTP → HTTPS | `301` | ✅ `SECURE_SSL_REDIRECT` |
+| Security headers | CSP+nonce, HSTS `preload`, `Secure` cookie, `nosniff`, `DENY` | ✅ all present |
+| `/health/` | `200 ok` | ✅ |
+
+Boot sequence on the live service confirms all four start steps run:
+`migrate` → `createcachetable` → `set_admin_password` (`ADMIN001 password rotated.`) → `gunicorn`.
+
+> Minor, non-security nit: `/verify/<bogus>/` returns `200` rather than `404`. Defensible for a
+> "query result" page; left alone deliberately.
 
 ---
 
@@ -123,10 +150,11 @@ Applied and verified on 2026-09-14. Production now runs the `set -e` start comma
 `set_admin_password` executes. **See §2** — the redeploy alone would *not* have applied the
 fix, because `render.yaml` is not wired to the service. The start command was set via the CLI.
 
-### 7. GitHub Actions Node.js deprecation — low priority
-`actions/checkout@v4` and `actions/setup-python@v5` target Node.js 20, which GitHub is
-force-running on Node 24 with a warning. Harmless today.
-**Action:** bump to the current major versions when convenient.
+### 7. ✅ DONE — GitHub Actions Node.js deprecation
+Bumped `actions/checkout` v4 → **v7** and `actions/setup-python` v5 → **v7** (current majors,
+verified against upstream tags). CI run `34854209674` passed with **zero annotations** — the
+Node 20 deprecation warning is gone. The Railway workflow's stale "Render deploys via Blueprint"
+comment was corrected at the same time.
 
 ---
 
@@ -204,12 +232,13 @@ The context limit is a real constraint. The strategy that keeps this project saf
 
 ## 7. Suggested next actions, in priority order
 
-1. ✅ ~~Trigger a Render redeploy~~ — **done**, and the fix is verified live. *(item 6)*
-2. **Convert `dronav2` to a Blueprint-managed service** so `render.yaml` stops being a lie.
-   Until then, every `render.yaml` edit is a no-op. *(§2 — highest structural risk)*
-3. **Confirm `GEMINI_API_KEY`** by generating a quiz and reading the logs — now self-answering
+1. ✅ ~~Trigger a Render redeploy~~ — **done**, fix verified live in the boot logs. *(item 6)*
+2. ✅ ~~Bump the GitHub Actions versions~~ — **done**, CI green with zero annotations. *(item 7)*
+3. **Convert `dronav2` to a Blueprint-managed service** so `render.yaml` stops being a lie.
+   Until then, every `render.yaml` edit is a no-op. *(§2 — highest structural risk; needs a
+   decision, because Render may not adopt a manually-created service cleanly)*
+4. **Confirm `GEMINI_API_KEY`** by generating a quiz and reading the logs — now self-answering
    thanks to the new logging. *(§3)*
-4. Align the local Python venv to 3.12. *(item 5)*
-5. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
-6. Optionally bump the GitHub Actions versions. *(item 7)*
+5. Align the local Python venv to 3.12. *(item 5)*
+6. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
 7. Optionally delete the 37 local media artifacts. *(item 4)*
