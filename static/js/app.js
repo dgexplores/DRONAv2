@@ -82,14 +82,23 @@
       watchedSinceSave = 0;
     });
 
-    // Save on page unload
+    // Save on page unload (keepalive fetch preserves CSRF header; sendBeacon cannot)
     window.addEventListener('beforeunload', function () {
       if (lessonVideo.currentTime > 0) {
-        navigator.sendBeacon(saveUrl, new Blob([JSON.stringify({
-          position: Math.floor(lessonVideo.currentTime),
-          completed: false,
-          watched: watchedSinceSave
-        })], { type: 'application/json' }));
+        fetch(saveUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          credentials: 'same-origin',
+          keepalive: true,
+          body: JSON.stringify({
+            position: Math.floor(lessonVideo.currentTime),
+            completed: false,
+            watched: watchedSinceSave
+          })
+        }).catch(function () {});
       }
     });
   }

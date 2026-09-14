@@ -117,6 +117,18 @@
 </div>
 {% endif %}
 
+{% if is_manager and page_obj and page_obj.paginator.num_pages > 1 %}
+<div style="display:flex; gap:0.5rem; align-items:center; margin-top:1rem; flex-wrap:wrap;">
+    {% if page_obj.has_previous %}
+    <a class="btn btn-secondary btn-sm" href="?q={{ query }}&dept={{ selected_dept }}&course={{ selected_course }}&page={{ page_obj.previous_page_number }}">← Prev</a>
+    {% endif %}
+    <span style="color:var(--muted); font-size:0.9rem;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a class="btn btn-secondary btn-sm" href="?q={{ query }}&dept={{ selected_dept }}&course={{ selected_course }}&page={{ page_obj.next_page_number }}">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
 {% else %}
 <div class="alert alert-info">
     {% if is_manager %}

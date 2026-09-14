@@ -10,6 +10,20 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from apps.certificates.models import Certificate
 
+def _build_verify_url(request_host="127.0.0.1:8000", cert_id=""):
+    """Build https-aware verify URL. Prefers SRMS_BASE_URL so prod QR uses https."""
+    from django.conf import settings as _s
+    base = (getattr(_s, 'SRMS_BASE_URL', '') or '').rstrip('/')
+    if base:
+        # Ensure scheme present; default to https in production.
+        if '://' not in base:
+            base = f"https://{base}"
+        return f"{base}/verify/{cert_id}/"
+    host = (request_host or '127.0.0.1:8000').strip()
+    scheme = 'https' if ('railway.app' in host or 'srms.ac.in' in host) else 'http'
+    return f"{scheme}://{host}/verify/{cert_id}/"
+
+
 def generate_certificate_pdf(staff_user, course, request_host="127.0.0.1:8000"):
     cert, created = Certificate.objects.get_or_create(
         staff_user=staff_user,
@@ -22,7 +36,7 @@ def generate_certificate_pdf(staff_user, course, request_host="127.0.0.1:8000"):
     pdf_path = os.path.join(pdf_dir, pdf_filename)
 
     # 1. Generate QR Code
-    verify_url = f"http://{request_host}/verify/{cert.certificate_id}/"
+    verify_url = _build_verify_url(request_host, cert.certificate_id)
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_M,

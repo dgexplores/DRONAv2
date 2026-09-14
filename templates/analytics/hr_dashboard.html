@@ -35,6 +35,13 @@
         <div class="stat-icon gold">🏆</div>
         <div>
             <div class="stat-value" data-count="{{ total_cert_count }}">{{ total_cert_count }}</div>
+            <div class="stat-label">{% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon violet">🏁</div>
+        <div>
+            <div class="stat-value" data-count="{{ total_completed_enrollments }}">{{ total_completed_enrollments }}</div>
             <div class="stat-label">{% if is_hindi %}पूर्ण नामांकन{% else %}Completed Enrollments{% endif %}</div>
         </div>
     </div>
@@ -172,6 +179,17 @@
         </tbody>
     </table>
 </div>
+{% if pending_page and pending_page.paginator.num_pages > 1 %}
+<div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.75rem;">
+    {% if pending_page.has_previous %}
+    <a class="btn btn-secondary btn-sm" href="?pending_page={{ pending_page.previous_page_number }}">← Prev</a>
+    {% endif %}
+    <span style="color:var(--muted); font-size:0.9rem;">Page {{ pending_page.number }} of {{ pending_page.paginator.num_pages }}</span>
+    {% if pending_page.has_next %}
+    <a class="btn btn-secondary btn-sm" href="?pending_page={{ pending_page.next_page_number }}">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
 {% endif %}
 
 <a href="{% url 'export_staff_csv' %}" class="btn btn-primary">⬇️ {% if is_hindi %}CSV रिपोर्ट निर्यात करें{% else %}Export CSV Report{% endif %}</a>
@@ -180,7 +198,7 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
+<script nonce="{{ request.csp_nonce }}">
 (function () {
     var ctx = document.getElementById('completionChart');
     if (!ctx || typeof Chart === 'undefined') return;

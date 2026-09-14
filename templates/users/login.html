@@ -91,7 +91,7 @@
     </div>
 
     <script src="{% static 'js/app.js' %}"></script>
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         (function () {
             var tabs = document.querySelectorAll('.login-tab');
             var panels = {
@@ -113,7 +113,7 @@
 
     {% if clerk_enabled %}
     <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"></script>
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         (function () {
             var key = "{{ clerk_publishable_key }}";
             window.Clerk.load({ publishableKey: key }).then(function () {

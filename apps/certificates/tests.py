@@ -21,8 +21,9 @@ class CertificateTests(TestCase):
         self.client.login(employee_id='EMP400', password='pass12345')
 
     def test_certificate_id_format(self):
+        from django.utils import timezone
         cert = Certificate.objects.create(staff_user=self.user, course=self.course)
-        self.assertTrue(cert.certificate_id.startswith("SRMS-CERT-2026-"))
+        self.assertTrue(cert.certificate_id.startswith(f"SRMS-CERT-{timezone.now().year}-"))
 
     def test_pdf_generation(self):
         cert = generate_certificate_pdf(self.user, self.course, request_host="example.com")
@@ -50,7 +51,8 @@ class CertificateTests(TestCase):
         resp = self.client.get(reverse('download_certificate', args=[cert.certificate_id]))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp['Content-Type'], 'application/pdf')
-        self.assertTrue(resp.content.startswith(b'%PDF'))
+        content = b''.join(resp.streaming_content)
+        self.assertTrue(content.startswith(b'%PDF'))
 
 
 class ManagerCertificateDirectoryTests(TestCase):

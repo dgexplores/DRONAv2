@@ -58,6 +58,7 @@ urlpatterns = [
     path('courses/<int:course_id>/enroll/', course_views.enroll_course, name='enroll_course'),
     path('lessons/<int:lesson_id>/', course_views.lesson_view, name='lesson_view'),
     path('lessons/<int:lesson_id>/progress/', course_views.save_lesson_progress, name='save_lesson_progress'),
+    path('sop/<int:lesson_id>/', course_views.sop_document_view, name='sop_document'),
     path('training-calendar/', course_views.training_calendar, name='training_calendar'),
 
     # Quizzes & AI Generator
@@ -82,13 +83,14 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 else:
-    # Serve uploaded media (lesson SOP PDFs, certificate PDFs) in production.
-    # WhiteNoise only serves static files, not media uploads.
+    # Serve uploaded media in production behind auth. Prevents unauthenticated
+    # guessing of /media/certificates/*.pdf and SOP docs. Long-term: object storage + signed URLs.
     from django.views.static import serve as media_serve
+    from django.contrib.auth.decorators import login_required
     urlpatterns += [
         path(
             f'{settings.MEDIA_URL.lstrip("/")}<path:path>',
-            media_serve,
+            login_required(media_serve),
             {'document_root': settings.MEDIA_ROOT},
         )
     ]

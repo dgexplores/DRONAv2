@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, FileResponse
 from django.db.models import Q
+from django.core.paginator import Paginator
 import os
 from django.conf import settings
 
@@ -11,7 +12,7 @@ from apps.users.models import Department
 from apps.courses.models import Course
 
 def _is_manager(user):
-    return user.role in ('trainer', 'admin') or user.is_superuser or user.is_staff
+    return bool(getattr(user, 'is_manager', False))
 
 @login_required
 def my_certificates_view(request):
@@ -38,15 +39,19 @@ def my_certificates_view(request):
 
         certs = certs.order_by('-issued_at')
 
+        paginator = Paginator(certs, 50)
+        page_obj = paginator.get_page(request.GET.get('page'))
+
         context = {
-            'certificates': certs,
+            'certificates': page_obj,
+            'page_obj': page_obj,
             'is_manager': True,
             'departments': Department.objects.all().order_by('name'),
             'courses_offered': Course.objects.all().order_by('title'),
             'query': q,
             'selected_dept': dept_id,
             'selected_course': course_id,
-            'all_cert_count': certs.count(),
+            'all_cert_count': paginator.count,
         }
         return render(request, 'certificates/my_certificates.html', context)
 
@@ -82,8 +87,9 @@ def download_certificate_pdf(request, cert_id):
         certificate.refresh_from_db()
 
     if certificate.pdf_file and os.path.exists(certificate.pdf_file.path):
-        with open(certificate.pdf_file.path, 'rb') as f:
-            response = HttpResponse(f.read(), content_type='application/pdf')
-            response['Content-Disposition'] = f'inline; filename="{certificate.certificate_id}.pdf"'
-            return response
+        return FileResponse(
+            open(certificate.pdf_file.path, 'rb'),
+            content_type='application/pdf',
+            filename=f"{certificate.certificate_id}.pdf",
+        )
     raise Http404("Certificate PDF not found.")

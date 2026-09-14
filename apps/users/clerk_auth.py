@@ -66,7 +66,9 @@ class ClerkAuthenticationBackend(BaseBackend):
             first_name=first,
             last_name=last,
             role='staff',
-            is_active=True,
+            # Match self-signup policy: new SSO accounts start inactive,
+            # require admin/trainer approval before sign-in.
+            is_active=False,
         )
         user.set_unusable_password()
         user.save()
