@@ -1,4 +1,23 @@
 # Render blueprint for DRONAv2 demo (free web + external Neon Postgres).
+#
+# ############################################################################
+# # WARNING — THIS FILE DOES NOT CONTROL THE LIVE SERVICE.                   #
+# #                                                                          #
+# # The `dronav2` service was created MANUALLY in the Render dashboard and    #
+# # is NOT Blueprint-managed. Editing this file changes NOTHING in            #
+# # production. This already bit us: the `set -e` fix below sat inert while   #
+# # prod kept running `A && B || true; C`, and only the live boot logs        #
+# # revealed it (2026-09-14).                                                #
+# #                                                                          #
+# # Apply changes to the service too, then verify against the running one:    #
+# #   render services update srv-dajkh37qj5pc73e038i0 --start-command '...'   #
+# #   render deploys create srv-dajkh37qj5pc73e038i0 --confirm                #
+# #   render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text             #
+# #                                                                          #
+# # Treat this file as documentation until the service is converted to        #
+# # Blueprint management. See ENGINEERING.md trap 4.10.                       #
+# ############################################################################
+#
 # Dashboard: New → Blueprint → select repo. Set DATABASE_URL to your Neon URL.
 # Docs: https://render.com/docs/blueprint-spec
 services:

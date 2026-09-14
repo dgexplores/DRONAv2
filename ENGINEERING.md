@@ -133,8 +133,9 @@ silently returned 5. Slice a constant against a request and you get a silent cei
 count you promised.
 
 **4.6 Hardcoded model lists rot.**
-`GEMINI_MODELS` degrades to the fallback as Google retires versions, with no signal. Pin with the
-`GEMINI_MODEL` env var when a version disappears rather than editing code under pressure.
+`DEFAULT_GEMINI_MODELS` degrades to the fallback as Google retires versions, with no signal. Pin
+with the `GEMINI_MODEL` env var when a version disappears rather than editing code under
+pressure. An unset `GEMINI_API_KEY` is also logged as a warning — never let a fallback be silent.
 
 **4.7 `django.conf.urls.static.static()` only exists when `DEBUG=True`.**
 Routes added in that block cannot be exercised by a normal test run. Test the view function
@@ -149,6 +150,29 @@ than a password in a template.
 `test_save_progress_updates_enrollment` originally asserted that POSTing `completed: true` yields
 100% — it encoded the vulnerability as the specification. When a test looks like it is describing
 what the code does rather than what the product promises, stop and check the product promise.
+
+**4.10 `render.yaml` does not control the live service.**
+The `dronav2` service was created **manually** in the Render dashboard and has **no blueprint
+linkage**. Editing `render.yaml` therefore changes **nothing** in production — it is documentation
+that looks like configuration. This already bit us: the `set -e` / `set_admin_password` fix sat
+inert in the repo while production kept running `A && B || true; C`, and only reading the live
+boot logs revealed it.
+
+Apply service-config changes with the CLI, and verify against the running service:
+
+```bash
+render services update srv-dajkh37qj5pc73e038i0 --start-command '...' --confirm
+render services -o json | python3 -c "import json,sys; [print(e['service']['serviceDetails']['envSpecificDetails']['startCommand']) for e in json.load(sys.stdin) if e['service']['id']=='srv-dajkh37qj5pc73e038i0']"
+render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text | grep -E "Running '|gunicorn"
+```
+
+A config change does **not** auto-deploy; run `render deploys create <service-id> --confirm`.
+The right long-term fix is to convert the service to Blueprint-managed so the file is truthful.
+
+**4.11 Secrets are write-only through the CLI.**
+There is no command to read a service's env vars, and `render ssh` needs a key registered on the
+account. Do not assume a variable is set because it appears in `render.yaml` — that file is inert
+(trap 4.10). Prove it from behaviour and logs instead.
 
 ---
 
@@ -181,19 +205,27 @@ Copy this into the PR description.
 - [ ] Any new response path checked for leaked exception text or secrets?
 - [ ] Any new inline `<script>` carrying the CSP nonce?
 - [ ] Does the README still describe reality? (Counts, workflow triggers, deploy target.)
+- [ ] If `render.yaml` was edited: was the change **also** applied to the service and verified
+  in the live boot logs? (Trap 4.10 — the file alone is a no-op.)
 - [ ] Does the test run leave the working tree clean?
 
 ---
 
 ## 7. Deployment rules
 
-- **Render is the live target** (`render.yaml`). Railway config is kept in sync but unused.
+- **Render is the live target.** Service `dronav2` = `srv-dajkh37qj5pc73e038i0`.
+  ⚠️ **`render.yaml` is inert** — the service is manually configured, not Blueprint-managed, so
+  editing the file does not change production. See trap 4.10. Apply changes via the CLI and verify
+  against the running service.
 - Start commands run under `set -e`. Steps are separated by `;`, not chained with `&&`/`||`.
 - Every start command must run, in order: `migrate` → `createcachetable` → `set_admin_password`
   → `gunicorn`. `createcachetable` is idempotent (exit 0 when the table exists), so it is safe on
-  every boot.
+  every boot. `set_admin_password` exits 0 when the password env var is unset or ADMIN001 is
+  missing, so it cannot wedge a boot.
 - `DJANGO_ADMIN_PASSWORD` is applied by `set_admin_password`; it is not enough to declare the env
-  var.
+  var. Confirmed set on Render 2026-09-14 (`ADMIN001 password rotated.` in the boot logs).
+- A service-config change does **not** trigger a deploy. Run
+  `render deploys create <service-id> --confirm` afterwards.
 - The scheduler runs in exactly one worker (`SRMS_RUN_SCHEDULER=1`) or reminders are sent
   multiple times.
 - Never commit a secret. `.env` is git-ignored; deploy secrets live in the platform.
