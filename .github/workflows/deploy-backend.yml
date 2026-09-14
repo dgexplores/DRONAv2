@@ -1,19 +1,9 @@
 name: Deploy Backend to Railway
 
-# Triggers on every push to main AFTER CI passes.
+# Triggers manually only. Railway trial expired; Render deploys via Blueprint.
+# Re-enable push trigger if Railway is ever reactivated.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/**'
-      - 'srms_drona/**'
-      - 'static/**'
-      - 'templates/**'
-      - 'requirements.txt'
-      - 'Procfile'
-      - 'runtime.txt'
-      - 'railway.toml'
-      - 'seed.py'
+  workflow_dispatch:
 
 jobs:
   deploy:
