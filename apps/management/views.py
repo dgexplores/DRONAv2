@@ -12,12 +12,22 @@ import datetime as _datetime
 logger = logging.getLogger(__name__)
 
 from apps.users.models import StaffUser, Department
+from apps.users.services import send_password_setup_emails_async
 from apps.courses.models import Course, Module, Lesson, Enrollment, Category, TrainingSession
 from apps.quizzes.models import Quiz
 from apps.management.models import log_audit
 from apps.management.forms import (
     CreateUserForm, CourseForm, ModuleForm, LessonForm, EnrollForm, AssignStaffForm, TrainingSessionForm,
 )
+
+
+def _random_password(length=12):
+    """Generate a throwaway password that is never shown, logged, or returned.
+
+    Kept usable on purpose: Django's PasswordResetForm refuses to issue a token
+    for accounts without a usable password, which would break the setup email.
+    """
+    return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
 def _can_manage(user):
@@ -392,6 +402,7 @@ def import_staff(request):
         created = 0
         skipped = 0
         errors = []
+        created_ids = []
         from django.db import transaction
         with transaction.atomic():
             for row_num, row in enumerate(reader, start=2):
@@ -426,11 +437,9 @@ def import_staff(request):
                 if role not in dict(StaffUser.ROLE_CHOICES):
                     role = 'staff'
 
-                # Random temp password; admin must share via secure channel or use password reset.
-                temp_password = ''.join(
-                    secrets.choice(string.ascii_letters + string.digits) for _ in range(12)
-                )
-                StaffUser.objects.create_user(
+                # Throwaway password, never displayed or logged. The user sets
+                # their own via the setup link emailed after the import commits.
+                new_user = StaffUser.objects.create_user(
                     username=employee_id,
                     employee_id=employee_id,
                     first_name=first_name,
@@ -439,14 +448,22 @@ def import_staff(request):
                     department=department,
                     designation=designation,
                     role=role,
-                    password=temp_password,
+                    password=_random_password(),
                     is_active=True,
                 )
+                created_ids.append(new_user.pk)
                 created += 1
 
         result = {'created': created, 'skipped': skipped, 'errors': errors}
         log_audit(request.user, 'import_staff', None, f"Imported {created}, skipped {skipped}, errors {len(errors)}")
+        send_password_setup_emails_async(created_ids)
         messages.success(request, f"Imported {created} staff ({skipped} skipped).")
+        if created:
+            messages.info(
+                request,
+                f"Password setup links have been emailed to {created} new "
+                f"{'account' if created == 1 else 'accounts'}.",
+            )
         if errors:
             messages.warning(request, f"{len(errors)} rows had problems.")
 
@@ -467,9 +484,8 @@ def create_user(request):
     form = CreateUserForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         data = form.cleaned_data
-        password = data.get('password') or ''.join(
-            secrets.choice(string.ascii_letters + string.digits) for _ in range(12)
-        )
+        supplied_password = data.get('password') or ''
+        name = data['first_name'] or data['employee_id']
         try:
             user = StaffUser.objects.create_user(
                 username=data['employee_id'],
@@ -480,7 +496,10 @@ def create_user(request):
                 department=data['department'],
                 designation=data['designation'],
                 role=data['role'],
-                password=password,
+                # Always usable so a setup link can be issued. When the admin did
+                # not choose a password we generate one that is never displayed,
+                # logged, or written into the session-backed message store.
+                password=supplied_password or _random_password(),
                 is_active=True,
             )
         except Exception:
@@ -488,11 +507,28 @@ def create_user(request):
             messages.error(request, _("Could not create the account. Check for duplicate Employee ID or email."))
             return render(request, 'management/user_create.html', {'form': form})
 
-        messages.success(
-            request,
-            f"Account created for {data['first_name'] or data['employee_id']} "
-            f"({data['role']}). Initial password: {password} — share it only with the user.",
-        )
+        if supplied_password:
+            # The admin already knows this value; echoing it back would persist a
+            # plaintext password in the session store and the rendered page.
+            messages.success(
+                request,
+                f"Account created for {name} ({data['role']}). "
+                "Share the password you entered over a secure channel.",
+            )
+        elif user.email:
+            send_password_setup_emails_async([user.pk])
+            messages.success(
+                request,
+                f"Account created for {name} ({data['role']}). "
+                f"A password-setup link has been emailed to {user.email}.",
+            )
+        else:
+            messages.warning(
+                request,
+                f"Account created for {name} ({data['role']}), but no email address "
+                "was supplied, so no setup link could be sent. Add an email address "
+                "and use 'Forgot password' to issue one.",
+            )
         log_audit(request.user, 'create_user', user, f"Provisioned {user.employee_id} role={user.role}")
         return redirect('mgmt_home')
 

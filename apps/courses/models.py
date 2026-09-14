@@ -98,14 +98,70 @@ class Enrollment(models.Model):
         return f"{self.staff_user.employee_id} enrolled in {self.course.title} ({self.progress_percent}%)"
 
 class LessonProgress(models.Model):
+    # Fraction of a video's duration that must be watched before the lesson
+    # counts as complete. Deliberately not 1.0: the player heartbeats in ~10s
+    # steps, so the final partial step would leave a legitimately-watched
+    # lesson just under 100% and block the certificate.
+    COMPLETION_RATIO = 0.9
+    # Upper bound on a single heartbeat, in seconds. Stops a hand-crafted
+    # request from crediting an entire video in one call.
+    HEARTBEAT_MAX_SECONDS = 30
+
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE, related_name='lesson_progresses')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='progresses')
     is_completed = models.BooleanField(default=False)
     last_position_seconds = models.PositiveIntegerField(default=0)
+    watched_seconds = models.PositiveIntegerField(
+        default=0,
+        help_text="Server-accumulated watch time for this lesson (seconds)",
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('enrollment', 'lesson')
+
+    @property
+    def lesson_duration_seconds(self):
+        return max(0, (self.lesson.duration_minutes or 0) * 60)
+
+    @property
+    def requires_watch_time(self):
+        """True when completion can be verified from watch time.
+
+        Video lessons with a known duration can be verified. PDF lessons and
+        lessons with a missing/zero duration cannot, so they fall back to an
+        explicit acknowledgement rather than auto-completing on zero.
+        """
+        return self.lesson.lesson_type == 'video' and self.lesson_duration_seconds > 0
+
+    @property
+    def required_watch_seconds(self):
+        return int(self.lesson_duration_seconds * self.COMPLETION_RATIO)
+
+    def register_watch(self, seconds):
+        """Accumulate watch time server-side and derive completion.
+
+        The running total is capped at the lesson duration, so repeated
+        heartbeats can never inflate it past one full viewing. Returns the
+        number of seconds actually credited (0 once the cap is reached).
+        """
+        try:
+            seconds = int(seconds)
+        except (TypeError, ValueError):
+            seconds = 0
+        seconds = max(0, min(seconds, self.HEARTBEAT_MAX_SECONDS))
+
+        before = self.watched_seconds
+        self.watched_seconds = min(before + seconds, self.lesson_duration_seconds)
+        credited = self.watched_seconds - before
+
+        if self.watched_seconds >= self.required_watch_seconds:
+            self.is_completed = True
+        return credited
+
+    def acknowledge(self):
+        """Complete a lesson that cannot be watch-verified (e.g. a PDF SOP)."""
+        self.is_completed = True
 
     def __str__(self):
         return f"{self.enrollment.staff_user.employee_id} - {self.lesson.title}: {'Completed' if self.is_completed else 'In Progress'}"

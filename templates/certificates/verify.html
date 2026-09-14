@@ -17,15 +17,7 @@
         <div class="lesson-list">
             <div class="lesson-item">
                 <div class="lesson-icon">👤</div>
-                <div><strong>{{ certificate.staff_user.get_full_name }}</strong></div>
-            </div>
-            <div class="lesson-item">
-                <div class="lesson-icon">🪪</div>
-                <div>{% if is_hindi %}कर्मचारी आईडी:{% else %}Employee ID:{% endif %} <strong>{{ certificate.staff_user.employee_id }}</strong></div>
-            </div>
-            <div class="lesson-item">
-                <div class="lesson-icon">🏢</div>
-                <div>{{ certificate.staff_user.department.name|default:"General" }}</div>
+                <div><strong>{{ display_name }}</strong></div>
             </div>
             <div class="lesson-item">
                 <div class="lesson-icon">📚</div>
@@ -40,6 +32,13 @@
                 <div class="cert-id">{{ certificate.certificate_id }}</div>
             </div>
         </div>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-top: 1rem;">
+            {% if is_hindi %}
+            नाम आंशिक रूप से दिखाया गया है। पूरा नाम, कर्मचारी आईडी और विभाग प्रमाणपत्र पीडीएफ पर अंकित हैं।
+            {% else %}
+            The name is partially shown. The full name, Employee ID, and department appear on the certificate PDF itself.
+            {% endif %}
+        </p>
     </div>
     {% else %}
     <div class="verify-icon invalid">✗</div>

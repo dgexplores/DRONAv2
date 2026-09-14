@@ -58,9 +58,28 @@ def my_certificates_view(request):
     certificates = Certificate.objects.filter(staff_user=request.user).select_related('course')
     return render(request, 'certificates/my_certificates.html', {'certificates': certificates, 'is_manager': False})
 
+
+def _masked_name(user):
+    """First name plus last initial.
+
+    The verification page is public by design -- it is what the QR code on a
+    printed certificate resolves to -- so it must confirm a match without
+    publishing a full staff roster to anyone who holds a certificate ID.
+    """
+    first = (user.first_name or '').strip()
+    last = (user.last_name or '').strip()
+    if first and last:
+        return f"{first} {last[0].upper()}."
+    if first:
+        return first
+    if last:
+        return f"{last[0].upper()}."
+    return "SRMS staff member"
+
+
 def verify_certificate_view(request, cert_id):
     try:
-        certificate = Certificate.objects.select_related('staff_user', 'course', 'staff_user__department').get(certificate_id=cert_id)
+        certificate = Certificate.objects.select_related('staff_user', 'course').get(certificate_id=cert_id)
         is_valid = True
     except Certificate.DoesNotExist:
         certificate = None
@@ -70,6 +89,7 @@ def verify_certificate_view(request, cert_id):
         'cert_id': cert_id,
         'certificate': certificate,
         'is_valid': is_valid,
+        'display_name': _masked_name(certificate.staff_user) if certificate else '',
     }
     return render(request, 'certificates/verify.html', context)
 

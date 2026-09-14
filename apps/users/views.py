@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -9,7 +9,6 @@ import threading
 
 from django.core.mail import send_mail
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponse
 from django.conf import settings
 from django.db.models import Sum
@@ -20,7 +19,7 @@ from django.utils.translation import gettext_lazy as _
 import logging
 logger = logging.getLogger(__name__)
 
-from apps.users.models import StaffUser, Department
+from apps.users.models import StaffUser
 from apps.users.forms import RegistrationForm
 from apps.users.badges import get_user_badges
 
@@ -111,21 +110,22 @@ def login_view(request):
         # Do not strip password: spaces can be significant.
         password = request.POST.get('password', '')
 
-        user = None
-        try:
-            candidate = StaffUser.objects.get(employee_id=employee_id)
-        except StaffUser.DoesNotExist:
-            candidate = None
-
-        if candidate is not None and candidate.check_password(password):
-            if candidate.is_active:
-                candidate.backend = 'django.contrib.auth.backends.ModelBackend'
-                login(request, candidate)
-                messages.success(request, f"Welcome back, {candidate.first_name or candidate.employee_id}!")
-                next_url = request.POST.get('next') or request.GET.get('next') or ''
-                if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
-                    return redirect(next_url)
-                return redirect('dashboard')
+        # authenticate() runs AUTHENTICATION_BACKENDS and, critically, hashes the
+        # supplied password even when the account does not exist. The previous
+        # hand-rolled lookup returned early when no user matched, so an unknown
+        # Employee ID was measurably faster to reject than a wrong password --
+        # an enumeration oracle sitting behind a deliberately generic error
+        # message. ModelBackend.user_can_authenticate() returns False for
+        # inactive accounts, so pending signups still fall through to the
+        # generic error and nothing else about the flow changes.
+        user = authenticate(request, username=employee_id, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Welcome back, {user.first_name or user.employee_id}!")
+            next_url = request.POST.get('next') or request.GET.get('next') or ''
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                return redirect(next_url)
+            return redirect('dashboard')
         messages.error(request, _("Invalid Employee ID or Password. Please try again."))
 
     return render(request, 'users/login.html', context)

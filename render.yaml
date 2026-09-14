@@ -7,9 +7,17 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    # set -e aborts the boot on the first failed step. The previous
+    # `A && B || true; gunicorn ...` form swallowed a failed migrate and started
+    # gunicorn against a broken schema, which then reported healthy while every
+    # query failed. set_admin_password is also wired in here (it was declared as
+    # an env var but never invoked, so the rotation never happened on Render);
+    # it exits 0 when DJANGO_ADMIN_PASSWORD is unset.
     startCommand: >-
-      python manage.py migrate --noinput &&
-      python manage.py createcachetable rate_limit_cache || true;
+      set -e;
+      python manage.py migrate --noinput;
+      python manage.py createcachetable rate_limit_cache;
+      python manage.py set_admin_password;
       gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
     healthCheckPath: /health/
     envVars:

@@ -23,6 +23,9 @@ media/
 .idea/
 .DS_Store
 
+# WorkBuddy AI agent state (local tooling metadata, not application code)
+.workbuddy-ai/
+
 # Vercel
 .vercel/
 

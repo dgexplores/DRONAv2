@@ -5,8 +5,11 @@ A full-featured, production-ready skill-learning and performance-tracking platfo
 watch SOP videos, take AI-generated quizzes, earn QR-verified certificates, and are managed
 through an HR analytics console — all under strict role-based access control (RBAC).
 
-> Built to spec (Project Plan + System Workflow). Deployed on Railway (Django), with
-> GitHub Actions CI/CD and zero-cost single-worker hosting.
+> Built to spec (Project Plan + System Workflow). Deployed on **Render** (Django) against a
+> managed Postgres, with GitHub Actions CI and zero-cost single-worker hosting.
+>
+> **Before changing anything here, read [`ENGINEERING.md`](ENGINEERING.md)** — it records the
+> invariants this project depends on and the traps that have already bitten us.
 
 ---
 
@@ -28,12 +31,15 @@ through an HR analytics console — all under strict role-based access control (
   calendar grid (regular staff still only view it).
 - **Category → Course → Module → Lesson** hierarchy with **auto-enrollment** into mandatory courses
   by department.
-- **Video progress tracking** — watch position saved on a 10s heartbeat; per-course progress %
-  drives completion.
-- **AI quiz generator** — Google **Gemini** turns an SOP PDF/text into MCQs with answer keys
-  (offline rule-based fallback when no key is set).
+- **Video progress tracking** — watch position saved on a 10s heartbeat. Lesson completion is
+  **derived server-side** from accumulated watch time (90% of the lesson duration), never from a
+  client-supplied flag, so progress cannot be forged from the browser console.
+- **AI quiz generator** — Google **Gemini** turns an SOP PDF/text into MCQs with answer keys.
+  When the API is unavailable the offline rule-based generator runs, and the admin is **told** —
+  template questions are never presented as AI-generated.
 - **70% pass threshold + retries** — fair, measurable skill verification.
-- **QR-verified certificates** — ReportLab renders the PDF, a QR code links to `/verify/<id>/`.
+- **QR-verifiable certificates** — ReportLab renders the PDF; the QR code resolves to a public
+  `/verify/<id>/` page that confirms authenticity while masking the holder's surname.
 - **HR analytics dashboard** — Chart.js visualizations + **CSV export**.
 - **Hindi / English UI toggle**.
 - **PWA** — manifest + service worker, installable to home screen, works as an app.
@@ -50,41 +56,60 @@ through an HR analytics console — all under strict role-based access control (
 | **Backend** | Python 3.12 · Django 6 · custom `StaffUser` model |
 | **Database** | PostgreSQL (Railway-managed; SQLite fallback for local) |
 | **Frontend** | Server-rendered HTML · custom design-system CSS · vanilla JS · mobile-first |
-| **AI** | Google Gemini (`gemini-3.5-flash`) — MCQ generation from SOP PDF/text |
+| **AI** | Google Gemini — MCQ generation from SOP PDF/text (candidates in `GEMINI_MODELS`; pin one with `GEMINI_MODEL`) |
 | **PDF / QR** | ReportLab + qrcode — verifiable certificates |
 | **Scheduler** | APScheduler — email reminders |
 | **Auth** | Django auth + optional Clerk SSO (JWT) |
-| **Hosting** | Railway (app) |
-| **CI/CD** | GitHub Actions (CI + deploy backend) |
+| **Hosting** | Render (app) + external Postgres. `Procfile` / `railway.toml` are kept in sync but Railway is no longer the live target |
+| **CI/CD** | GitHub Actions — CI on every push and PR; backend deploy is `workflow_dispatch` only |
 
 ---
 
 ## 🚀 Live Deployment
 
-| Service | URL |
+| Service | Where it comes from |
 |---|---|
-| **App (Django backend)** | https://dronav2-production.up.railway.app |
+| **App (Django backend)** | `render.yaml` — service `dronav2`, configured for `https://dronav2.onrender.com` |
+| **Landing page (static)** | Deployed separately from `landing/` (Vercel — see `landing/vercel.json`) |
+
+> **Railway is no longer the live target** — its trial expired. `Procfile` and `railway.toml` are
+> still valid and are kept in sync, but the active deployment path is Render. The Railway deploy
+> workflow (`.github/workflows/deploy-backend.yml`) is manual-only for this reason.
 
 ---
 
 ## 🔐 Security model
 
 - **Secrets never committed.** `.env`/`.env.local` are git-ignored. Deploy secrets
-  (`DJANGO_SECRET_KEY`, SMTP creds, `GEMINI_API_KEY`, tokens) live only in Railway env vars /
-  GitHub Actions secrets.
-- **Admin password is environment-managed**, not hardcoded: on every deploy a management command
-  reads `DJANGO_ADMIN_PASSWORD` and rotates the super-admin password (`apps/users/management/commands/set_admin_password.py`).
-  No plaintext credentials are stored in this repo.
+  (`DJANGO_SECRET_KEY`, SMTP creds, `GEMINI_API_KEY`, tokens) live only in Render/Railway env
+  vars and GitHub Actions secrets.
+- **Production config fails fast.** With `DJANGO_DEBUG=False`, the settings module raises on an
+  empty or default `DJANGO_SECRET_KEY` **and** on `DJANGO_ALLOWED_HOSTS=*`, so a misconfigured
+  deploy refuses to boot instead of serving wide open. Covered by tests.
+- **Admin password is environment-managed**, not hardcoded: `set_admin_password` reads
+  `DJANGO_ADMIN_PASSWORD` and rotates the super-admin password. It is wired into **all three**
+  start commands (`Procfile`, `railway.toml`, `render.yaml`). No plaintext credentials are
+  stored in this repo.
+- **No plaintext passwords are ever displayed.** Provisioning either uses the password the admin
+  typed, or generates one that is never rendered, logged, or stored in the session-backed message
+  store — the user sets their own via an emailed setup link (`apps/users/services.py`).
+- **Media is authorised per file.** The production `/media/` route is not a blanket
+  `login_required`: certificate PDFs require ownership (or a manager role) and SOP documents
+  require enrollment, so guessing a filename gets a 404.
 - **Rate limiting** (`django-ratelimit`) on login, registration, and password reset — per IP —
   mitigates brute force and email bombing.
 - **CSP + security headers** via `srms_drona.middleware.SecurityHeadersMiddleware`
-  (Referrer-Policy, Permissions-Policy, nosniff, frame-ancestors, `object-src 'none'`).
-- **Anti-enumeration** login: pending/inactive accounts return a generic error message.
+  (per-request nonce for inline scripts, Referrer-Policy, Permissions-Policy, nosniff,
+  frame-ancestors, `object-src 'none'`). Inline `<script>` tags must carry
+  `nonce="{{ request.csp_nonce }}"` or the browser will block them.
+- **Anti-enumeration** login: pending/inactive accounts return a generic error message, and login
+  goes through `authenticate()` so an unknown Employee ID costs the same as a wrong password
+  (Django hashes a dummy value) — the message and the timing both stay generic.
 - **Role-gated manager views** — certificate directory, course assignment, and calendar editing
   honor the same single `_can_manage`/`_is_manager` check (super admin + HR/HOD), so there is no
   divergent role logic to bypass.
-- **Background email** — approval/reminder emails send on a daemon thread with `EMAIL_TIMEOUT`,
-  so SMTP stalls never block an admin action or a request.
+- **Background email** — approval/reminder/setup emails send on a daemon thread after commit with
+  `EMAIL_TIMEOUT`, so SMTP stalls never block a request.
 - **Demo credentials below are for a fresh seed only** — production override them with strong
   passwords via env vars. Never publish a password that matches a live account.
 
@@ -190,13 +215,26 @@ password in production.
 
 ---
 
-## ☁️ Production deployment on Railway (backend) — step by step
+## ☁️ Production deployment on Render (backend) — the live target
 
-> **What's happening:** Railway builds the repo, installs Django on a Python runtime, connects it to
-> a managed PostgreSQL, runs migrations, and serves it behind HTTPS with the single-worker gunicorn
-> command from `Procfile`. GitHub Actions deploys automatically on every push to `main`.
+> **What's happening:** Render builds the repo from `render.yaml`, installs Django on a Python
+> runtime, connects to your external Postgres via `DATABASE_URL`, runs migrations, rotates the
+> admin password, and serves behind HTTPS with the single-worker gunicorn command.
 >
-> **Live app (deployed):** https://dronav2-production.up.railway.app
+> **To deploy:** Render Dashboard → **New → Blueprint** → select this repo. Then set the
+> `sync: false` secrets (`DATABASE_URL`, `GEMINI_API_KEY`, `SRMS_BASE_URL`,
+> `DJANGO_ADMIN_PASSWORD`, `SMTP_USER`, `SMTP_PASSWORD`) under Dashboard → Environment.
+
+The start command runs under `set -e`, so a failed migration **aborts the boot** instead of
+starting against a broken schema. Do not reintroduce the `A && B || true; gunicorn …` form — the
+`|| true` swallows the failure and the app reports healthy while every query fails.
+
+---
+
+## ☁️ Production deployment on Railway (legacy — no longer the live target)
+
+> The Railway trial expired. `Procfile` and `railway.toml` are kept in sync and remain valid, but
+> the CD workflow is now manual-only. Use the Render section above for the active path.
 
 ### 1. Push to GitHub
 
@@ -258,12 +296,16 @@ on startup, so the live super-admin password is always environment-managed, neve
 
 ## 🚦 CI/CD (GitHub Actions)
 
-Three workflows in `.github/workflows/`:
+Two workflows in `.github/workflows/`:
 
-| Workflow | File | Job |
-|---|---|---|
-| **CI** | `.github/workflows/ci.yml` | Django system check + full test suite + `collectstatic` |
-| **CD – Backend** | `.github/workflows/deploy-backend.yml` | Deploys Django to Railway (`railway up`) |
+| Workflow | File | Trigger | Job |
+|---|---|---|---|
+| **CI** | `.github/workflows/ci.yml` | push to `main`, every PR | Django system check · missing-migration check · full test suite · `collectstatic` · `compileall` |
+| **Deploy backend** | `.github/workflows/deploy-backend.yml` | **manual** (`workflow_dispatch`) | Deploys Django to Railway (`railway up`) |
+
+> **Railway CD is manual-only.** The Railway trial expired and Render is now the live target, so
+> the push trigger was removed. Render deploys from `render.yaml` on its own. Re-add the push
+> trigger only if Railway is reactivated.
 
 ### Required GitHub Secrets
 
@@ -272,8 +314,6 @@ Three workflows in `.github/workflows/`:
 | `RAILWAY_TOKEN` | Railway Dashboard → Account → Tokens | Backend CD |
 | `RAILWAY_SERVICE_ID` | Railway service → Settings → Service ID | Backend CD |
 | `RAILWAY_PROJECT_ID` | Railway project → Settings → Project ID | Backend CD |
-
-Backend CD triggers on backend-path changes. Migrations run on every backend deployment.
 
 ---
 
@@ -284,9 +324,28 @@ Backend CD triggers on backend-path changes. Migrations run on every backend dep
 ```
 
 `test_settings.py` forces an in-memory DB, disables the scheduler, and clears the Gemini key so
-AI tests use the offline rule-based generator. The full suite (63 tests) covers auth, RBAC,
-approval flow, rate limiting, quizzes, certificates, the certificate directory + filters,
-per-student assignment, calendar manager gating, and analytics.
+AI tests use the offline rule-based generator. It also swaps in `LocMemCache` (an in-memory DB
+cannot host the `DatabaseCache` backend) and MD5 password hashing for speed.
+
+**The suite is 107 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
+rate limiting, quizzes, certificates, the certificate directory + filters, per-student
+assignment, calendar manager gating, and analytics — plus the regression guards added for the
+defects fixed in `ENGINEERING.md`:
+
+| Guard | What it prevents |
+|---|---|
+| `test_forged_completion_flag_is_ignored_for_video` | Earning a certificate by POSTing `completed: true` |
+| `test_single_heartbeat_cannot_credit_whole_video` | Inflating watch time in one request |
+| `test_other_staff_cannot_fetch_someone_elses_certificate` | Reading another staff member's certificate PDF from `/media/` |
+| `test_media_route_blocks_unenrolled_sop` | Bypassing the enrollment check on SOP documents |
+| `test_unknown_employee_id_still_runs_the_password_hasher` | Timing-based Employee ID enumeration |
+| `test_supplied_password_is_never_echoed_back` | Plaintext passwords reaching the page or session |
+| `test_import_schedules_one_batched_setup_job` | Imported staff who can never sign in |
+| `test_fallback_honours_the_requested_count` | Silently returning 5 questions when 10 were asked |
+| `test_insecure_default_secret_key_is_rejected` | Booting production on dev defaults |
+
+Tests write generated PDFs to a temporary `MEDIA_ROOT` (not the repo's `media/`), so a test run
+leaves the working tree untouched.
 
 ---
 
@@ -295,20 +354,25 @@ per-student assignment, calendar manager gating, and analytics.
 ```
 DRONAv2/
 ├── apps/
-│   ├── users/          # StaffUser, Department, auth, approval views, rate limiting
-│   ├── courses/        # Category, Course, Module, Lesson, Enrollment, Progress
+│   ├── users/          # StaffUser, Department, auth, approval views, rate limiting,
+│   │                   #   services.py (post-commit hooks + password-setup email)
+│   ├── courses/        # Category, Course, Module, Lesson, Enrollment, LessonProgress
 │   ├── quizzes/        # Quiz, Question, Choice, Attempt + Gemini service
 │   ├── certificates/   # Certificate model + PDF/QR builder
 │   ├── analytics/      # HR dashboard + CSV export
-│   ├── management/     # Admin management console
+│   ├── management/     # Admin management console + AuditLog
 │   └── notifications/  # APScheduler email reminders
-├── srms_drona/         # Settings, URLs, middleware, test_settings
+├── srms_drona/         # Settings, URLs, middleware, protected_media, test_settings
 ├── static/             # CSS (design system), JS, manifest.json, sw.js, icons, videos/
 ├── templates/          # Server-rendered HTML templates
-├── media/              # Runtime uploads (cert PDFs, SOP PDFs)
-├── .github/workflows/  # CI + backend deploy pipeline
+├── landing/            # Static marketing site (deployed separately via Vercel)
+├── media/              # Runtime uploads (cert PDFs, SOP PDFs) — git-ignored
+├── .github/workflows/  # ci.yml + deploy-backend.yml (manual)
+├── ENGINEERING.md      # Invariants, review checklist, known traps — read before changing
+├── render.yaml         # Active deployment (Render blueprint)
+├── Procfile            # Railway web command (kept in sync, currently unused)
+├── railway.toml        # Railway config (kept in sync, currently unused)
 ├── seed.py             # Demo data loader
-├── Procfile            # Railway web command (gunicorn, single worker)
 └── requirements.txt
 ```
 

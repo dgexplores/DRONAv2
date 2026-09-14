@@ -20,7 +20,9 @@
   if (lessonVideo) {
     var lessonId = lessonVideo.getAttribute('data-lesson-id');
     var saveUrl = '/lessons/' + lessonId + '/progress/';
-    var lastSaved = 0;
+    // Seed from the saved resume point so the first heartbeat after a resume
+    // reports only newly-watched time, not the whole skipped-back position.
+    var lastSaved = parseInt(lessonVideo.getAttribute('data-resume') || '0', 10) || 0;
     var watchedSinceSave = 0;
     var saveTimer = null;
 

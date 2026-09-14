@@ -13,18 +13,25 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-)4*0dtz+)3g^hrq2q82
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 
-# Fail fast in production if secrets not configured. Prevents insecure-default boot.
-if not DEBUG:
-    _insecure_default = 'django-insecure-)4*0dtz+)3g^hrq2q82^@yazj*o92yyf8r5sxfx+35c0r9bodf'
-    if os.getenv('DJANGO_SECRET_KEY', '') in ('', _insecure_default):
-        raise ValueError('DJANGO_SECRET_KEY must be set to a strong random value when DJANGO_DEBUG=False')
-
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',') if h.strip()] or ['*']
 
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    'DJANGO_CSRF_TRUSTED_ORIGINS',
-    'https://dronav2-production.up.railway.app,https://*.railway.app,http://localhost:8000,http://localhost:8080',
-).split(',')
+# Deployment origins belong in the environment, not in source: a hardcoded live
+# host couples this file to one deployment and ships it to every fork.
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in os.getenv(
+        'DJANGO_CSRF_TRUSTED_ORIGINS',
+        'http://localhost:8000,http://localhost:8080',
+    ).split(',') if origin.strip()
+]
+
+# Fail fast on an insecure production boot instead of serving with dev defaults.
+_INSECURE_DEFAULT_SECRET_KEY = 'django-insecure-)4*0dtz+)3g^hrq2q82^@yazj*o92yyf8r5sxfx+35c0r9bodf'
+
+if not DEBUG:
+    if os.getenv('DJANGO_SECRET_KEY', '') in ('', _INSECURE_DEFAULT_SECRET_KEY):
+        raise ValueError('DJANGO_SECRET_KEY must be set to a strong random value when DJANGO_DEBUG=False')
+    if ALLOWED_HOSTS == ['*']:
+        raise ValueError('DJANGO_ALLOWED_HOSTS must list explicit hostnames when DJANGO_DEBUG=False')
 
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -9,6 +9,12 @@ from apps.quizzes.gemini_services import generate_quiz_from_text
 @login_required
 def take_quiz_view(request, course_id):
     course = get_object_or_404(Course, id=course_id)
+    # Learners must be enrolled; managers may preview any course.
+    if not request.user.is_manager and not Enrollment.objects.filter(
+        staff_user=request.user, course=course
+    ).exists():
+        messages.error(request, "You are not enrolled in this course.")
+        return redirect('dashboard')
     quiz = Quiz.objects.filter(course=course).first()
     
     if not quiz:
@@ -33,6 +39,13 @@ def take_quiz_view(request, course_id):
 def submit_quiz_view(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)
     course = quiz.course or (quiz.module.course if quiz.module else None)
+
+    # Same gate as take_quiz_view: submitting used to auto-enroll the caller.
+    if course and not request.user.is_manager and not Enrollment.objects.filter(
+        staff_user=request.user, course=course
+    ).exists():
+        messages.error(request, "You are not enrolled in this course.")
+        return redirect('dashboard')
 
     if request.method == 'POST':
         questions = quiz.questions.prefetch_related('choices').all()
@@ -134,8 +147,16 @@ def generate_ai_quiz(request):
         if not sop_text:
             sop_text = f"Standard Operating Procedure for {module.title} at SRMS Campus."
 
-        quiz = generate_quiz_from_text(module, sop_text, num_questions=num_questions)
-        messages.success(request, f"Gemini AI Quiz generated with {quiz.questions.count()} MCQs for '{module.title}'!")
+        quiz, report = generate_quiz_from_text(module, sop_text, num_questions=num_questions)
+        # Never let template output pass as AI-generated content: the admin
+        # decides whether to publish it.
+        notify = messages.warning if report.used_fallback else messages.success
+        notify(request, f"Quiz for '{module.title}': {report.summary()}")
+        if report.is_short:
+            messages.warning(
+                request,
+                f"Only {report.created} of {report.requested} requested questions could be generated.",
+            )
         return redirect('admin:quizzes_quiz_change', quiz.id)
 
     return render(request, 'quizzes/ai_quiz_generator.html', {'modules': modules})

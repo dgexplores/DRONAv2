@@ -83,14 +83,10 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 else:
-    # Serve uploaded media in production behind auth. Prevents unauthenticated
-    # guessing of /media/certificates/*.pdf and SOP docs. Long-term: object storage + signed URLs.
-    from django.views.static import serve as media_serve
-    from django.contrib.auth.decorators import login_required
+    # Serve uploaded media in production. protected_media authorises each file:
+    # certificate PDFs require ownership, SOP documents require enrollment.
+    # Long-term: object storage + signed URLs.
+    from srms_drona.views import protected_media
     urlpatterns += [
-        path(
-            f'{settings.MEDIA_URL.lstrip("/")}<path:path>',
-            login_required(media_serve),
-            {'document_root': settings.MEDIA_ROOT},
-        )
+        path(f'{settings.MEDIA_URL.lstrip("/")}<path:path>', protected_media),
     ]

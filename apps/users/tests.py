@@ -33,6 +33,33 @@ class AuthTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Invalid")
 
+    def test_unknown_employee_id_still_runs_the_password_hasher(self):
+        """An unknown ID must cost the same as a wrong password.
+
+        Regression guard for the enumeration oracle: the previous hand-rolled
+        lookup returned early when no user matched, so response time leaked
+        whether an Employee ID existed even though the message was generic.
+        ModelBackend hashes a dummy password to equalise the cost.
+        """
+        from unittest import mock
+        with mock.patch.object(StaffUser, 'set_password') as set_password:
+            resp = self.client.post(reverse('login'), {
+                'employee_id': 'NOSUCHID', 'password': 'whatever123'
+            })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Invalid Employee ID or Password")
+        self.assertTrue(
+            set_password.called,
+            "ModelBackend must hash a dummy password for unknown accounts",
+        )
+
+    def test_login_is_case_insensitive_on_employee_id(self):
+        resp = self.client.post(reverse('login'), {
+            'employee_id': '  emp100  ', 'password': 'pass12345'
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.staff.pk)
+
     def test_dashboard_requires_login(self):
         resp = self.client.get(reverse('dashboard'))
         self.assertEqual(resp.status_code, 302)
@@ -234,3 +261,56 @@ class RegisterRateLimitTests(TestCase):
         resp = self.client.post(url, {**payload, 'employee_id': 'EMPRATE', 'email': 'rateX@srms.ac.in'})
         self.assertEqual(resp.status_code, 429)
         self.assertIn("Too many sign-up attempts", resp.content.decode())
+
+
+class ProductionSettingsGuardTests(TestCase):
+    """Settings must refuse to boot with dev defaults in production.
+
+    Exercised in a subprocess because the guard runs at import time and cannot
+    be triggered by re-importing inside an already-initialised interpreter.
+    """
+
+    INSECURE_DEFAULT_KEY = 'django-insecure-)4*0dtz+)3g^hrq2q82^@yazj*o92yyf8r5sxfx+35c0r9bodf'
+    STRONG_KEY = 'a-sufficiently-long-random-value-for-tests'
+
+    def _import_settings(self, **env_overrides):
+        import os
+        import subprocess
+        import sys
+        from django.conf import settings as dj_settings
+
+        env = dict(os.environ)
+        # Explicit values win over any developer .env, which load_dotenv()
+        # would otherwise fill in and mask the guard.
+        env.update(env_overrides)
+        return subprocess.run(
+            [sys.executable, '-c', 'import srms_drona.settings'],
+            cwd=str(dj_settings.BASE_DIR),
+            env=env, capture_output=True, text=True, timeout=60,
+        )
+
+    def test_insecure_default_secret_key_is_rejected(self):
+        result = self._import_settings(
+            DJANGO_DEBUG='False',
+            DJANGO_SECRET_KEY=self.INSECURE_DEFAULT_KEY,
+            DJANGO_ALLOWED_HOSTS='example.com',
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('DJANGO_SECRET_KEY', result.stderr)
+
+    def test_wildcard_allowed_hosts_is_rejected(self):
+        result = self._import_settings(
+            DJANGO_DEBUG='False',
+            DJANGO_SECRET_KEY=self.STRONG_KEY,
+            DJANGO_ALLOWED_HOSTS='*',
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('DJANGO_ALLOWED_HOSTS', result.stderr)
+
+    def test_explicit_production_config_loads(self):
+        result = self._import_settings(
+            DJANGO_DEBUG='False',
+            DJANGO_SECRET_KEY=self.STRONG_KEY,
+            DJANGO_ALLOWED_HOSTS='example.com',
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)

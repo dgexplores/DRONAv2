@@ -130,6 +130,112 @@ class CreateAccountTests(TestCase):
         })
         self.assertEqual(StaffUser.objects.filter(employee_id='ADMIN8').count(), 1)
 
+    def test_supplied_password_is_never_echoed_back(self):
+        """The admin's password must not reach the page or the message store.
+
+        Regression guard: the view used to render "Initial password: ..." into a
+        Django message, which persisted a plaintext credential in the
+        session-backed message store and the HTML response.
+        """
+        self.client.login(employee_id='ADMIN8', password='pass12345')
+        secret = 'Sup3rSecret!23'
+        resp = self.client.post(reverse('mgmt_create_user'), {
+            'employee_id': 'HR010', 'first_name': 'Ritu', 'last_name': 'Arora',
+            'email': 'ritu2@srms.ac.in', 'department': self.dept.pk,
+            'designation': 'HR Manager', 'role': 'trainer', 'password': secret,
+        })
+        self.assertRedirects(resp, reverse('mgmt_home'))
+        # Cookies carry queued messages; the rendered page carries the rest.
+        self.assertNotIn(secret, str(resp.cookies))
+        page = self.client.get(reverse('mgmt_home'))
+        self.assertNotIn(secret.encode(), page.content)
+        # ...but the password the admin chose still works.
+        self.assertTrue(StaffUser.objects.get(employee_id='HR010').check_password(secret))
+
+    def test_provisioning_without_password_schedules_setup_link(self):
+        """No admin-chosen password means the user picks their own via email."""
+        from unittest import mock
+        self.client.login(employee_id='ADMIN8', password='pass12345')
+        with mock.patch('apps.management.views.send_password_setup_emails_async') as sched:
+            resp = self.client.post(reverse('mgmt_create_user'), {
+                'employee_id': 'HR013', 'first_name': 'Auto', 'last_name': 'Gen',
+                'email': 'auto2@srms.ac.in', 'role': 'staff',
+            })
+        self.assertRedirects(resp, reverse('mgmt_home'))
+        user = StaffUser.objects.get(employee_id='HR013')
+        self.assertTrue(user.has_usable_password(), "reset tokens need a usable password")
+        sched.assert_called_once_with([user.pk])
+
+    def test_provisioning_with_password_does_not_schedule_link(self):
+        from unittest import mock
+        self.client.login(employee_id='ADMIN8', password='pass12345')
+        with mock.patch('apps.management.views.send_password_setup_emails_async') as sched:
+            self.client.post(reverse('mgmt_create_user'), {
+                'employee_id': 'HR014', 'first_name': 'Manual', 'last_name': 'Pw',
+                'email': 'manual@srms.ac.in', 'role': 'staff', 'password': 'Chosen@12345',
+            })
+        sched.assert_not_called()
+
+    def test_password_setup_email_carries_a_reset_link(self):
+        """Exercises the real send path synchronously, without the worker thread."""
+        from django.core import mail
+        from apps.users.services import send_password_setup_email
+        mail.outbox = []
+        user = StaffUser.objects.create_user(
+            employee_id='HR012', username='hr012', email='setup@srms.ac.in',
+            password='x', role='staff', is_active=True,
+        )
+        send_password_setup_email(user)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['setup@srms.ac.in'])
+        self.assertIn('/reset/', mail.outbox[0].body)
+
+
+class StaffImportTests(TestCase):
+    def setUp(self):
+        self.admin = StaffUser.objects.create_user(
+            employee_id="ADMIN7", username="admin7",
+            email="admin7@srms.ac.in", password="pass12345",
+            role="admin", is_staff=True, is_superuser=True,
+        )
+        self.client.login(employee_id='ADMIN7', password='pass12345')
+
+    def _csv(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        body = (
+            b"employee_id,first_name,last_name,email\n"
+            b"IMP001,Imp,One,imp1@srms.ac.in\n"
+            b"IMP002,Imp,Two,imp2@srms.ac.in\n"
+        )
+        return SimpleUploadedFile("staff.csv", body, content_type="text/csv")
+
+    def test_import_creates_active_accounts(self):
+        resp = self.client.post(reverse('mgmt_staff_import'), {'csv_file': self._csv()})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(StaffUser.objects.filter(employee_id__in=['IMP001', 'IMP002']).count(), 2)
+        for emp in ('IMP001', 'IMP002'):
+            user = StaffUser.objects.get(employee_id=emp)
+            self.assertTrue(user.is_active)
+            self.assertTrue(user.has_usable_password())
+
+    def test_import_schedules_one_batched_setup_job(self):
+        """Imported staff must receive a way to set a password.
+
+        Regression guard: imported accounts were created with a random password
+        that was never shown to anyone, so they could never sign in.
+        """
+        from unittest import mock
+        with mock.patch('apps.management.views.send_password_setup_emails_async') as sched:
+            self.client.post(reverse('mgmt_staff_import'), {'csv_file': self._csv()})
+        sched.assert_called_once()
+        ids = sched.call_args[0][0]
+        self.assertEqual(len(ids), 2, "both imported accounts need a setup link")
+
+    def test_import_never_renders_a_password(self):
+        resp = self.client.post(reverse('mgmt_staff_import'), {'csv_file': self._csv()})
+        for user in StaffUser.objects.filter(employee_id__in=['IMP001', 'IMP002']):
+            self.assertNotIn(user.password.encode(), resp.content)
+
 
 class AuditLogTests(TestCase):
     def setUp(self):

@@ -8,11 +8,23 @@ from django.utils.dateparse import parse_date
 from django.db import transaction
 from django.db.models import F
 import json
+import logging
 from datetime import datetime as dt, timedelta as td
 
 from apps.courses.models import Course, Category, Module, Lesson, Enrollment, LessonProgress, TrainingSession
 from apps.users.models import Department, StaffUser
 from apps.certificates.models import Certificate
+
+logger = logging.getLogger(__name__)
+
+
+def _as_int(value, default=0):
+    """Coerce untrusted JSON input to int without raising."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
 
 @login_required
 def dashboard_view(request):
@@ -208,9 +220,6 @@ def save_lesson_progress(request, lesson_id):
         return JsonResponse({'status': 'invalid method'}, status=405)
     try:
         data = json.loads(request.body)
-        position = data.get('position', 0)
-        completed = data.get('completed', False)
-
         lesson = get_object_or_404(Lesson, id=lesson_id)
         # Only enrolled staff may record progress.
         try:
@@ -219,37 +228,41 @@ def save_lesson_progress(request, lesson_id):
             return JsonResponse({'status': 'error', 'message': 'Not enrolled in this course.'}, status=403)
 
         # Bound position: 0 .. lesson duration. Prevents negative / huge spoofing.
-        try:
-            position = int(position)
-        except (TypeError, ValueError):
-            position = 0
+        position = _as_int(data.get('position', 0))
         max_position = max(0, (lesson.duration_minutes or 0) * 60)
         position = max(0, min(position, max_position))
 
         progress, _ = LessonProgress.objects.get_or_create(enrollment=enrollment, lesson=lesson)
         progress.last_position_seconds = position
-        if completed:
-            progress.is_completed = True
-        progress.save()
 
-        # Clamp heartbeat to 0..30s to prevent watch-time inflation.
-        watched = data.get('watched', 0)
-        try:
-            watched = int(watched)
-        except (TypeError, ValueError):
-            watched = 0
-        watched = max(0, min(watched, 30))
-        if watched:
-            Enrollment.objects.filter(pk=enrollment.pk).update(watch_seconds=F('watch_seconds') + watched)
-            enrollment.refresh_from_db(fields=['watch_seconds'])
+        if progress.requires_watch_time:
+            # Completion is derived from server-accumulated watch time only.
+            # The client-supplied `completed` flag is deliberately ignored here
+            # so a hand-crafted request cannot mint a certificate.
+            credited = progress.register_watch(data.get('watched', 0))
+            if credited:
+                Enrollment.objects.filter(pk=enrollment.pk).update(
+                    watch_seconds=F('watch_seconds') + credited
+                )
+        elif data.get('completed'):
+            # PDF lessons and lessons with no duration cannot be verified by
+            # watch time; an explicit acknowledgement is the honest floor.
+            progress.acknowledge()
+
+        progress.save()
 
         with transaction.atomic():
             enrollment = Enrollment.objects.select_for_update().get(pk=enrollment.pk)
             enrollment.update_progress()
 
-        return JsonResponse({'status': 'success', 'progress_percent': enrollment.progress_percent})
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        return JsonResponse({
+            'status': 'success',
+            'progress_percent': enrollment.progress_percent,
+            'lesson_completed': progress.is_completed,
+        })
+    except Exception:
+        logger.exception("Failed to save progress for lesson %s", lesson_id)
+        return JsonResponse({'status': 'error', 'message': 'Could not save progress.'}, status=400)
 
 
 @login_required
