@@ -166,6 +166,18 @@ render services -o json | python3 -c "import json,sys; [print(e['service']['serv
 render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text | grep -E "Running '|gunicorn"
 ```
 
+Better, use the script that does all of this for you — it reads `render.yaml`, applies it, then
+verifies against the running service:
+
+```bash
+python scripts/apply_render_config.py                    # dry run
+python scripts/apply_render_config.py --apply --deploy   # apply and deploy
+```
+
+It reports fields it cannot apply rather than skipping them silently: `runtime` (the CLI refuses
+it: "cannot switch runtimes via the CLI"), `region` (immutable), `numInstances` (no flag), and
+`envVars` (no env-var flag on `services update`).
+
 A config change does **not** auto-deploy; run `render deploys create <service-id> --confirm`.
 The right long-term fix is to convert the service to Blueprint-managed so the file is truthful.
 

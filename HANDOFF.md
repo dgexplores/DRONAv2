@@ -81,7 +81,36 @@ Verified live in the boot logs:
 13:58:57  [INFO] Starting gunicorn 26.0.0      <- gunicorn
 ```
 
-### The permanent fix: activate Blueprint management
+### The permanent fix: make `render.yaml` authoritative
+
+There are two ways. **Option A works today and needs no dashboard.**
+
+#### Option A — apply `render.yaml` via the CLI (available now)
+
+`scripts/apply_render_config.py` reads `render.yaml` and pushes it onto the live service with
+`render services update`. After this, **`render.yaml` is the source of truth**: edit it, run the
+script, done.
+
+```bash
+python scripts/apply_render_config.py              # dry run -- shows the exact command
+python scripts/apply_render_config.py --apply      # update the service
+python scripts/apply_render_config.py --apply --deploy   # and trigger a deploy
+```
+
+It verifies against the running service afterwards (never trusts the file), and **reports anything
+it cannot apply rather than skipping it silently**:
+
+| Field | Why it can't be applied |
+|---|---|
+| `runtime` | The CLI refuses outright: *"cannot switch runtimes via the CLI"* |
+| `region` | Immutable after creation |
+| `numInstances` | No CLI flag exists |
+| `envVars` | `services update` has no env-var flag; secrets live in the dashboard |
+| `autoDeployTrigger: off` | Only `--auto-deploy` (enable) exists; disable in the dashboard |
+
+Note a config change never auto-deploys — use `--deploy` or run `render deploys create`.
+
+#### Option B — adopt a Blueprint (the "proper" IaC route)
 
 `render.yaml` has been **rebuilt to mirror the live service field-by-field**, so adopting it is a
 no-op. This is a dashboard step — the CLI cannot create a Blueprint.
