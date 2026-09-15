@@ -107,6 +107,25 @@ render blueprints validate render.yaml
 4. Deploy, then verify against the running service (never against the file):
    `render services -o json` and `render logs -r srv-dajkh37qj5pc73e038i0 --limit 200 -o text`.
 
+**Before step 1 — close the env-var unknown.** `render.yaml` cannot be checked against the live
+env vars from the CLI (secrets are write-only). `scripts/verify_render_env.py` does it over the
+API and prints **names only, never values**:
+
+```bash
+export RENDER_API_KEY=rnd_...    # Dashboard > Account Settings > API Keys
+python scripts/verify_render_env.py
+# exit 0 = exact match; 1 = mismatch (see report); 2 = could not run
+```
+
+This matters because Render's docs warn that any option omitted from the Blueprint gets a
+default that "almost definitely differs". An undeclared env var is *preserved* on adoption, so it
+is not dangerous — but the file would then be incomplete.
+
+**Known limitation:** creating a Blueprint is **not** possible via the API or CLI. The public API
+exposes only `GET /blueprints`, `POST /blueprints/validate`, `GET|PATCH|DELETE
+/blueprints/{id}` and `GET /blueprints/{id}/syncs` — there is no create endpoint (verified
+against Render's OpenAPI spec, 131 paths). Creation is dashboard-only by design.
+
 **Why the risk is low** (from Render's own docs, checked 2026-09-14):
 - `name` matching an existing service **applies config to that service** — it does not recreate it.
 - **Syncing a Blueprint never deletes an existing resource**, even if you remove it from the file
