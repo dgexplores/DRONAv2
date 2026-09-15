@@ -54,9 +54,9 @@ through an HR analytics console — all under strict role-based access control (
 | Layer | Technology |
 |---|---|
 | **Backend** | Python 3.12 · Django 6 · custom `StaffUser` model |
-| **Database** | PostgreSQL (Railway-managed; SQLite fallback for local) |
+| **Database** | PostgreSQL (external, e.g. Neon, via `DATABASE_URL`; SQLite fallback for local) |
 | **Frontend** | Server-rendered HTML · custom design-system CSS · vanilla JS · mobile-first |
-| **AI** | Google Gemini — MCQ generation from SOP PDF/text (candidates in `GEMINI_MODELS`; pin one with `GEMINI_MODEL`) |
+| **AI** | Google Gemini — MCQ generation from SOP PDF/text (candidates in `DEFAULT_GEMINI_MODELS`; pin one with `GEMINI_MODEL`) |
 | **PDF / QR** | ReportLab + qrcode — verifiable certificates |
 | **Scheduler** | APScheduler — email reminders |
 | **Auth** | Django auth + optional Clerk SSO (JWT) |
@@ -67,10 +67,22 @@ through an HR analytics console — all under strict role-based access control (
 
 ## 🚀 Live Deployment
 
+**https://dronav2.onrender.com**
+
 | Service | Where it comes from |
 |---|---|
-| **App (Django backend)** | `render.yaml` — service `dronav2`, configured for `https://dronav2.onrender.com` |
+| **App (Django backend)** | Render service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`) at `https://dronav2.onrender.com` |
 | **Landing page (static)** | Deployed separately from `landing/` (Vercel — see `landing/vercel.json`) |
+
+> ### ⚠️ `render.yaml` does NOT control the live service
+>
+> The service was created **manually** in the Render dashboard and is **not Blueprint-managed**, so
+> **editing `render.yaml` changes nothing in production.** This already caused one incident: the
+> `set -e` start-command fix sat inert in the file while production kept running
+> `A && B || true; C`, and only the live boot logs revealed it.
+>
+> To change service config, use `scripts/apply_render_config.py` (reads `render.yaml` and pushes it
+> via the CLI) or `render services update`. See `ENGINEERING.md` trap 4.10 and `HANDOFF.md` §2.
 
 > **Railway is no longer the live target** — its trial expired. `Procfile` and `railway.toml` are
 > still valid and are kept in sync, but the active deployment path is Render. The Railway deploy
@@ -113,8 +125,16 @@ through an HR analytics console — all under strict role-based access control (
 - **Demo credentials below are for a fresh seed only** — production override them with strong
   passwords via env vars. Never publish a password that matches a live account.
 
-> ⚠️ If you ever share an admin password in a chat/log, rotate it: update the `DJANGO_ADMIN_PASSWORD`
-> env var in Railway, then redeploy. The `set_admin_password` command applies it automatically.
+> ⚠️ If you ever share an admin password in a chat/log, rotate it: update the
+> `DJANGO_ADMIN_PASSWORD` env var **on Render** (Dashboard → `DRONAv2` → Environment), then
+> redeploy. The `set_admin_password` command applies it automatically on boot:
+>
+> ```bash
+> render deploys create srv-dajkh37qj5pc73e038i0 --confirm
+> ```
+>
+> You do not need the old password — rotation overwrites it. The value is a **secret** and cannot
+> be read back: Render env vars are write-only, so keep it in a password manager.
 
 ---
 
@@ -217,17 +237,70 @@ password in production.
 
 ## ☁️ Production deployment on Render (backend) — the live target
 
-> **What's happening:** Render builds the repo from `render.yaml`, installs Django on a Python
-> runtime, connects to your external Postgres via `DATABASE_URL`, runs migrations, rotates the
-> admin password, and serves behind HTTPS with the single-worker gunicorn command.
->
-> **To deploy:** Render Dashboard → **New → Blueprint** → select this repo. Then set the
-> `sync: false` secrets (`DATABASE_URL`, `GEMINI_API_KEY`, `SRMS_BASE_URL`,
-> `DJANGO_ADMIN_PASSWORD`, `SMTP_USER`, `SMTP_PASSWORD`) under Dashboard → Environment.
+> **What's happening:** Render builds the repo on a Python runtime, installs the dependencies,
+> connects to external Postgres via `DATABASE_URL`, runs migrations, rotates the admin password,
+> and serves behind HTTPS with a single-worker gunicorn command.
+
+> ⚠️ The service exists **already** and is **not** Blueprint-managed — do not run
+> "New → Blueprint" against this repo unless you intend to *adopt* the existing service, and
+> even then read `HANDOFF.md` §2 first (the `name` must be `DRONAv2`, or Render creates a
+> duplicate). For a fresh environment, `render.yaml` is ready to use.
+
+**Deploy** — push to `main` (auto-deploy is on), or trigger one explicitly:
+
+```bash
+render deploys create srv-dajkh37qj5pc73e038i0 --confirm
+```
+
+**Change service config** — `render.yaml` is inert, so edit it and run:
+
+```bash
+python scripts/apply_render_config.py                    # dry run: shows the exact command
+python scripts/apply_render_config.py --apply            # push it to the service
+python scripts/apply_render_config.py --apply --deploy   # and deploy
+```
+
+It applies `buildCommand`, `startCommand`, `healthCheckPath`, `plan`, `branch`, `repo`,
+`rootDir`, `previews` and `autoDeployTrigger`, then **verifies against the running service**.
+Anything it cannot set is reported, never silently skipped:
+
+| Field | Why |
+|---|---|
+| `runtime` | The CLI refuses it — "cannot switch runtimes via the CLI" |
+| `region` | Immutable after creation |
+| `numInstances` | No CLI flag exists |
+| `envVars` | `services update` has no env-var flag — set secrets in the dashboard |
+| `autoDeployTrigger: off` | Only `--auto-deploy` (enable) exists |
 
 The start command runs under `set -e`, so a failed migration **aborts the boot** instead of
 starting against a broken schema. Do not reintroduce the `A && B || true; gunicorn …` form — the
 `|| true` swallows the failure and the app reports healthy while every query fails.
+
+### Env vars (Render)
+
+Set these under **Dashboard → `DRONAv2` → Environment**. They are secrets and cannot be read
+back through the CLI, so treat a password manager as the source of truth.
+
+| Variable | Notes |
+|---|---|
+| `DATABASE_URL` | External Postgres (e.g. Neon) connection string |
+| `DJANGO_SECRET_KEY` | Long random string |
+| `DJANGO_DEBUG` | `False` |
+| `DJANGO_ALLOWED_HOSTS` | `.onrender.com` |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://dronav2.onrender.com` |
+| `DJANGO_SECURE_SSL_REDIRECT` | `True` |
+| `GEMINI_API_KEY` | Live AI quiz generation; if unset, quizzes fall back to rule-based questions and **a warning is logged** |
+| `SRMS_BASE_URL` | `https://dronav2.onrender.com` |
+| `DJANGO_ADMIN_PASSWORD` | Super-admin password; applied on every boot by `set_admin_password` |
+| `SMTP_USER` / `SMTP_PASSWORD` | Reminder + password-reset emails |
+| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_JWT_AUDIENCE` | Optional Clerk SSO |
+
+To check whether `render.yaml` declares every env var the live service actually has:
+
+```bash
+export RENDER_API_KEY=rnd_...    # Dashboard → Account Settings → API Keys
+python scripts/verify_render_env.py        # prints NAMES only, never values
+```
 
 ---
 
@@ -304,8 +377,9 @@ Two workflows in `.github/workflows/`:
 | **Deploy backend** | `.github/workflows/deploy-backend.yml` | **manual** (`workflow_dispatch`) | Deploys Django to Railway (`railway up`) |
 
 > **Railway CD is manual-only.** The Railway trial expired and Render is now the live target, so
-> the push trigger was removed. Render deploys from `render.yaml` on its own. Re-add the push
-> trigger only if Railway is reactivated.
+> the push trigger was removed. Render auto-deploys on push to `main` because the *service* has
+> `autoDeployTrigger: commit` — not because of `render.yaml`, which is inert (see the warning in
+> Live Deployment). Re-add the push trigger only if Railway is reactivated.
 
 ### Required GitHub Secrets
 
@@ -327,7 +401,7 @@ Two workflows in `.github/workflows/`:
 AI tests use the offline rule-based generator. It also swaps in `LocMemCache` (an in-memory DB
 cannot host the `DatabaseCache` backend) and MD5 password hashing for speed.
 
-**The suite is 107 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
+**The suite is 108 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
 rate limiting, quizzes, certificates, the certificate directory + filters, per-student
 assignment, calendar manager gating, and analytics — plus the regression guards added for the
 defects fixed in `ENGINEERING.md`:
@@ -342,6 +416,7 @@ defects fixed in `ENGINEERING.md`:
 | `test_supplied_password_is_never_echoed_back` | Plaintext passwords reaching the page or session |
 | `test_import_schedules_one_batched_setup_job` | Imported staff who can never sign in |
 | `test_fallback_honours_the_requested_count` | Silently returning 5 questions when 10 were asked |
+| `test_missing_api_key_is_logged_not_silent` | An unset `GEMINI_API_KEY` degrading to fallback with no log line |
 | `test_insecure_default_secret_key_is_rejected` | Booting production on dev defaults |
 
 Tests write generated PDFs to a temporary `MEDIA_ROOT` (not the repo's `media/`), so a test run
@@ -368,8 +443,12 @@ DRONAv2/
 ├── landing/            # Static marketing site (deployed separately via Vercel)
 ├── media/              # Runtime uploads (cert PDFs, SOP PDFs) — git-ignored
 ├── .github/workflows/  # ci.yml + deploy-backend.yml (manual)
+├── scripts/            # apply_render_config.py (push render.yaml to Render, then verify)
+│                       #   verify_render_env.py (compare live env vars, names only)
 ├── ENGINEERING.md      # Invariants, review checklist, known traps — read before changing
-├── render.yaml         # Active deployment (Render blueprint)
+├── HANDOFF.md          # Outstanding work, deploy state, how to verify from the repo
+├── render.yaml         # Render config — INERT until the service is Blueprint-managed.
+│                       #   Apply it with scripts/apply_render_config.py (see Live Deployment)
 ├── Procfile            # Railway web command (kept in sync, currently unused)
 ├── railway.toml        # Railway config (kept in sync, currently unused)
 ├── seed.py             # Demo data loader
