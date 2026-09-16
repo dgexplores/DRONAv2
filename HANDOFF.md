@@ -4,7 +4,7 @@
 context. If you are a teammate or a fresh session, read this file plus `ENGINEERING.md`
 and you are current.
 
-**Last updated:** 2026-09-14 (session 2)
+**Last updated:** 2026-09-16 (session 4 — README corrected and pushed)
 
 ---
 
@@ -13,12 +13,12 @@ and you are current.
 | Item | State |
 |---|---|
 | Working tree | clean (`git status --porcelain` empty) |
-| Branch | `main`, in sync with `origin/main` |
-| HEAD | `1a5fa22` — *ci: bump actions to current majors, clear Node 20 deprecation* |
-| CI | green — run `34854209674`, zero annotations (Node 20 warning cleared) |
+| Branch | `main`, in sync with `origin/main` (0 behind / 0 ahead) |
+| HEAD | `df6ec43` — *docs: correct README to match the live Render deployment* |
+| CI | green — run `35000917256`, 31s, success |
 | Test suite | 108 tests, all passing; ship gate run twice consecutively |
-| Deployed | **live on Render** — service `dronav2`, deploy `dep-dajvqb0ae00c73bjjeug` (2026-09-14 13:59Z) |
-| Health | `https://dronav2.onrender.com/health/` → `200 ok` |
+| Deployed | **live on Render** — service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`), deploy `dep-dakntt7lk1mc73d7gub0` (2026-09-15 17:25Z) |
+| Health | `https://dronav2.onrender.com/health/` → `200 ok`; `/` → `302`; HTTP → HTTPS `301` |
 
 The 9 defect classes found in the audit are fixed, committed, pushed, and CI-verified.
 Nothing is half-finished. The items below are *follow-ups*, not incomplete work.
@@ -318,11 +318,16 @@ The context limit is a real constraint. The strategy that keeps this project saf
 
 1. ✅ ~~Trigger a Render redeploy~~ — **done**, fix verified live in the boot logs. *(item 6)*
 2. ✅ ~~Bump the GitHub Actions versions~~ — **done**, CI green with zero annotations. *(item 7)*
-3. **Convert `dronav2` to a Blueprint-managed service** so `render.yaml` stops being a lie.
-   Until then, every `render.yaml` edit is a no-op. *(§2 — highest structural risk; needs a
-   decision, because Render may not adopt a manually-created service cleanly)*
-4. **Confirm `GEMINI_API_KEY`** by generating a quiz and reading the logs — now self-answering
+3. ✅ ~~Make `render.yaml` authoritative~~ — **done via Option A**, `scripts/apply_render_config.py`
+   now pushes `render.yaml` to the live service and verifies the result. Blueprint adoption is
+   therefore **optional**, not blocking. *(§2)*
+4. ✅ ~~Correct the README and push everything~~ — **done**, `df6ec43`, CI green, deploy live.
+   The README now states plainly that `render.yaml` is inert and documents the Render env vars.
+5. **Convert `DRONAv2` to a Blueprint-managed service** — now a *nice-to-have* rather than a
+   blocker, since the apply script closes the gap. Still needs a dashboard action, and the
+   `name` must be the display name `DRONAv2` or Render creates a duplicate. *(§2)*
+6. **Confirm `GEMINI_API_KEY`** by generating a quiz and reading the logs — now self-answering
    thanks to the new logging. *(§3)*
-5. Align the local Python venv to 3.12. *(item 5)*
-6. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
-7. Optionally delete the 37 local media artifacts. *(item 4)*
+7. Align the local Python venv to 3.12. *(item 5)*
+8. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
+9. Optionally delete the 37 local media artifacts. *(item 4)*
