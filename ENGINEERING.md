@@ -198,10 +198,40 @@ name adopts; the slug and invented names are listed as to-be-created.
 
 Also note a service-config change never triggers a deploy on its own.
 
-**4.11 Secrets are write-only through the CLI.**
-There is no command to read a service's env vars, and `render ssh` needs a key registered on the
-account. Do not assume a variable is set because it appears in `render.yaml` — that file is inert
-(trap 4.10). Prove it from behaviour and logs instead.
+**4.11 Secrets are write-only through the CLI — but NOT through the API.**
+There is no CLI command to read a service's env vars, and `render ssh` needs a key registered on
+the account. Do not assume a variable is set because it appears in `render.yaml` — that file is
+inert (trap 4.10).
+
+**However, the REST API does return values in plaintext:**
+
+```bash
+# works — returns {"envVar": {"key": "...", "value": "..."}}
+curl -H "Authorization: Bearer $RENDER_API_KEY" \
+  https://api.render.com/v1/services/srv-dajkh37qj5pc73e038i0/env-vars
+```
+
+Note the base URL must not carry a trailing slash (`https://api.render.com/v1/` + `/services…`
+becomes `v1//services…` and returns a bare `404 page not found`).
+
+The Render CLI stores a working token at `~/.render/cli.yaml` (`api.key`, mode 600, valid ~7 days).
+That token grants read access to **every secret value** — `DATABASE_URL`, `DJANGO_SECRET_KEY`,
+`DJANGO_ADMIN_PASSWORD`, `GEMINI_API_KEY` — so treat that file as equivalent to the secrets
+themselves. Use `scripts/verify_render_env.py`, which prints **names only** and never reads values
+out of the response.
+
+**4.12 An unset env var that gates a feature is a silent no-op.**
+Two production features are currently off because their variables are simply absent, and nothing
+reports it. Before assuming a feature works, check the variable is actually set (§4.11):
+
+| Variable | Unset behaviour | Consequence |
+|---|---|---|
+| `DJANGO_EMAIL_BACKEND` | defaults to `console.EmailBackend` | every email is printed to stdout instead of sent — password-reset and staff setup links are **never delivered**, yet `send_mail()` still returns `1` and the UI reports success |
+| `SRMS_RUN_SCHEDULER` | defaults to `'0'` | APScheduler never starts — no reminder emails are ever generated |
+
+This is the same class as the `GEMINI_API_KEY` defect (trap 4.6): a feature degrades silently and
+the caller cannot tell. When adding a feature gated by an env var, log at WARNING when it is
+unset, and make the failure visible at the point of use — not just in the boot logs.
 
 ---
 

@@ -212,7 +212,64 @@ render logs -r srv-dajkh37qj5pc73e038i0 --limit 500 -o text | grep -iE "GEMINI_A
 
 > This logging was **added in session 2** (`ac34e32`). Previously an unset key degraded every
 > quiz with **no log line at all**, which is why the key's status could not be determined from
-> outside. `GEMINI_API_KEY` remains the one env var whose presence is still unconfirmed.
+> outside.
+
+**✅ ANSWERED (2026-09-16): `GEMINI_API_KEY` IS set.** Read from the Render API (names only,
+values never printed) — see §3a for the method. AI quiz generation is live; it is not serving
+fallback questions.
+
+---
+
+## 3a. 🚨 NEW FINDINGS — two production features are silently disabled
+
+Reading the live env vars (method below) revealed that several variables the app expects are
+simply **absent**. Nothing reports this, because each one has a harmless-looking default.
+
+| Variable | Status | Consequence |
+|---|---|---|
+| `DJANGO_EMAIL_BACKEND` | **absent** → `console.EmailBackend` | **No email is ever delivered.** Password-reset and staff setup links are printed to stdout (Render logs) instead of sent. `send_mail()` still returns `1`, so the UI reports success. |
+| `SMTP_USER` / `SMTP_PASSWORD` | **absent** | Same as above — no SMTP credentials configured. |
+| `SRMS_RUN_SCHEDULER` | **absent** → `'0'` | **APScheduler never starts** — reminder emails are never generated at all. |
+| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_JWT_AUDIENCE` | absent | Clerk SSO is off. *This one is intended* — it is an optional feature. |
+
+Present and correct: `DATABASE_URL`, `DJANGO_ADMIN_PASSWORD`, `DJANGO_ALLOWED_HOSTS`,
+`DJANGO_CSRF_TRUSTED_ORIGINS`, `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`,
+`DJANGO_SECURE_SSL_REDIRECT`, `GEMINI_API_KEY`, `SRMS_BASE_URL`. No undeclared extras.
+
+**Why this matters:** staff onboarding depends on emailed setup links. If email is not
+delivered, **new users can never set a password** and the only way in is an admin manually
+resetting it. This is the same silent-degradation class as the old `GEMINI_API_KEY` defect
+(`ENGINEERING.md` trap 4.12).
+
+**To fix (needs a decision + credentials — not doable from the repo alone):**
+1. Choose an SMTP provider and set `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`,
+   `SMTP_USE_TLS` on the Render service.
+2. Set `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend` — **without this the
+   console backend stays active even once credentials exist.** This is the step that is easy
+   to miss.
+3. Set `SRMS_RUN_SCHEDULER=1` if reminders should run.
+4. Prove it: `python manage.py send_test_email <address>` (the command already exists), then
+   confirm delivery rather than trusting the exit code.
+
+---
+
+### 3b. How the live env vars were read (names only)
+
+The CLI has no read command, but the REST API does — and the CLI's own token works for it:
+
+```bash
+# strip the trailing slash or you get a bare "404 page not found"
+KEY=$(python3 -c "import yaml,pathlib;print(yaml.safe_load((pathlib.Path.home()/'.render'/'cli.yaml').read_text())['api']['key'])")
+curl -s -H "Authorization: Bearer $KEY" \
+  "https://api.render.com/v1/services/srv-dajkh37qj5pc73e038i0/env-vars?limit=100"
+```
+
+⚠️ **The response contains secret values in plaintext.** Never pipe this to a file, a log, or a
+commit. Prefer `scripts/verify_render_env.py`, which prints names only.
+
+> This corrects `ENGINEERING.md` trap 4.11, which said secrets are write-only. That is true of
+> the CLI commands, **not** of the API. `~/.render/cli.yaml` (mode 600) is therefore as
+> sensitive as the secrets themselves.
 
 ---
 
@@ -326,8 +383,12 @@ The context limit is a real constraint. The strategy that keeps this project saf
 5. **Convert `DRONAv2` to a Blueprint-managed service** — now a *nice-to-have* rather than a
    blocker, since the apply script closes the gap. Still needs a dashboard action, and the
    `name` must be the display name `DRONAv2` or Render creates a duplicate. *(§2)*
-6. **Confirm `GEMINI_API_KEY`** by generating a quiz and reading the logs — now self-answering
-   thanks to the new logging. *(§3)*
-7. Align the local Python venv to 3.12. *(item 5)*
-8. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
-9. Optionally delete the 37 local media artifacts. *(item 4)*
+6. 🚨 **Enable email delivery** — `DJANGO_EMAIL_BACKEND` is unset, so production sends no mail
+   and staff setup links never arrive. Needs SMTP credentials + the backend variable.
+   *(§3a — highest-impact functional gap; blocks onboarding)*
+7. **Decide whether the reminder scheduler should run** — `SRMS_RUN_SCHEDULER` is unset, so
+   APScheduler never starts. *(§3a)*
+8. ✅ ~~Confirm `GEMINI_API_KEY`~~ — **done, it is set.** *(§3)*
+9. Align the local Python venv to 3.12. *(item 5)*
+10. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
+11. Optionally delete the 37 local media artifacts. *(item 4)*
