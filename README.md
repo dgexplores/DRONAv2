@@ -49,6 +49,35 @@ through an HR analytics console — all under strict role-based access control (
 
 ---
 
+## ✅ Capabilities vs 🗺️ mapped to be made
+
+**Live in production** (`https://dronav2.onrender.com`, probed 2026-09-14 — see `HANDOFF.md` §1a):
+Employee-ID auth + RBAC · approval workflow · admin provisioning · course hierarchy with
+auto-enrollment · server-derived video progress · AI quiz generation (`GEMINI_API_KEY` confirmed
+set, not serving fallback) · 70% pass threshold · QR-verifiable certificates · certificate
+directory with search/filters · per-student assignment · editable training calendar · HR analytics
++ CSV export · Hindi/English toggle · PWA · rate limiting + CSP + anti-enumeration login.
+
+**Wired in code, OFF in production** (`HANDOFF.md` §3a — silently disabled, nothing reported it):
+Email delivery (password-reset, setup links, approvals) and the reminder scheduler. The code
+sends correctly, but the live service has no `DJANGO_EMAIL_BACKEND` (so mail prints to logs,
+never delivers) and no `SRMS_RUN_SCHEDULER` (so reminders never generate). The repo now logs a
+**WARNING** on both paths instead of failing silently — but the features stay off until the env
+vars below are set.
+
+**Mapped to be made** (ordered):
+1. **Go-live for email + scheduler** — set `SMTP_USER`/`SMTP_PASSWORD` (+ host/port/TLS),
+   `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`, `SRMS_RUN_SCHEDULER=1` on
+   the Render service, redeploy, prove with `send_test_email`. Needs SMTP credentials — not doable
+   from the repo alone. (`render.yaml` already declares all seven vars; adoption would create them.)
+2. **Adopt the Blueprint** — dashboard-only step making `render.yaml` authoritative (`HANDOFF.md` §2).
+3. **Pin/reorder Gemini models** — preview model sits third in preference order; pin a stable model
+   via `GEMINI_MODEL` before Google retires it. Optional, low priority.
+4. Deliberately **not** planned: `/verify/<bogus>/` returns `200` not `404` (a "query result" page,
+   left alone on purpose).
+
+---
+
 ## 🧰 Tech Stack
 
 | Layer | Technology |
@@ -401,7 +430,7 @@ Two workflows in `.github/workflows/`:
 AI tests use the offline rule-based generator. It also swaps in `LocMemCache` (an in-memory DB
 cannot host the `DatabaseCache` backend) and MD5 password hashing for speed.
 
-**The suite is 108 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
+**The suite is 110 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
 rate limiting, quizzes, certificates, the certificate directory + filters, per-student
 assignment, calendar manager gating, and analytics — plus the regression guards added for the
 defects fixed in `ENGINEERING.md`:
@@ -417,6 +446,8 @@ defects fixed in `ENGINEERING.md`:
 | `test_import_schedules_one_batched_setup_job` | Imported staff who can never sign in |
 | `test_fallback_honours_the_requested_count` | Silently returning 5 questions when 10 were asked |
 | `test_missing_api_key_is_logged_not_silent` | An unset `GEMINI_API_KEY` degrading to fallback with no log line |
+| `test_password_setup_email_warns_when_console_backend` | Setup links printed instead of delivered with no log line |
+| `test_disabled_scheduler_warns` | Scheduler off with only an INFO trace |
 | `test_insecure_default_secret_key_is_rejected` | Booting production on dev defaults |
 
 Tests write generated PDFs to a temporary `MEDIA_ROOT` (not the repo's `media/`), so a test run
