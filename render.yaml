@@ -77,6 +77,19 @@ services:
         value: https://dronav2.onrender.com
       - key: DJANGO_SECURE_SSL_REDIRECT
         value: True
+      # --- Email delivery (HANDOFF §3a): absent live, so no email is delivered
+      # --- and the scheduler never runs. Plain `value` entries apply on sync;
+      # --- secrets below are `sync: false` so a sync can never overwrite them.
+      - key: DJANGO_EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USE_TLS
+        value: True
+      - key: SRMS_RUN_SCHEDULER
+        value: 1
       # --- Secrets: set in Dashboard -> Environment. Render IGNORES `sync: false`
       # --- entries when updating an existing Blueprint, so a sync can never
       # --- overwrite a value already set on the live service.
