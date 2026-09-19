@@ -15,7 +15,10 @@ def start():
     global scheduler
     from django.conf import settings
     if not getattr(settings, 'SRMS_RUN_SCHEDULER', False):
-        logger.info("Scheduler disabled (set SRMS_RUN_SCHEDULER=1 to enable).")
+        # Disabled-by-default must not be silent (ENGINEERING.md trap 4.12):
+        # with SRMS_RUN_SCHEDULER unset no reminders are ever generated, so
+        # say so at WARNING, not INFO.
+        logger.warning("Scheduler disabled (set SRMS_RUN_SCHEDULER=1 to enable).")
         return
     if scheduler is not None:
         return

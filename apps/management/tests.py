@@ -190,6 +190,33 @@ class CreateAccountTests(TestCase):
         self.assertEqual(mail.outbox[0].to, ['setup@srms.ac.in'])
         self.assertIn('/reset/', mail.outbox[0].body)
 
+    def test_password_setup_email_warns_when_console_backend(self):
+        """The console backend must not send silently.
+
+        Regression guard for the silent-degradation class in ENGINEERING.md
+        trap 4.12 / HANDOFF.md §3a: with DJANGO_EMAIL_BACKEND unset, the setup
+        link is printed to stdout instead of delivered, send_mail() still
+        returns 1, and the UI reports success — so new users can never set a
+        password. The send path must say so at WARNING, mirroring the
+        GEMINI_API_KEY fallback log.
+        """
+        import contextlib
+        import io
+        from django.test import override_settings
+        from apps.users.services import send_password_setup_email
+        user = StaffUser.objects.create_user(
+            employee_id='HR015', username='hr015', email='warn@srms.ac.in',
+            password='x', role='staff', is_active=True,
+        )
+        with override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'):
+            with self.assertLogs('apps.users.services', level='WARNING') as captured:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    send_password_setup_email(user)
+        self.assertTrue(
+            any('console' in line.lower() for line in captured.output),
+            f"expected a console-backend warning, got: {captured.output}",
+        )
+
 
 class StaffImportTests(TestCase):
     def setUp(self):

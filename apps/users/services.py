@@ -67,6 +67,15 @@ def send_password_setup_email(user):
         return
 
     use_https, domain = _base_url_parts()
+    if getattr(settings, 'EMAIL_BACKEND', '') == 'django.core.mail.backends.console.EmailBackend':
+        # Without this line an unset DJANGO_EMAIL_BACKEND degrades every setup
+        # link to a stdout print with no trace in the logs -- operators cannot
+        # tell a healthy deployment from one that never delivers email.
+        # See ENGINEERING.md trap 4.12.
+        logger.warning(
+            "EMAIL_BACKEND is the console backend; password setup link for %s "
+            "will be printed, not delivered.", user.employee_id
+        )
     form.save(
         domain_override=domain,
         use_https=use_https,
