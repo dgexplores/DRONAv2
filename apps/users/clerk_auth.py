@@ -26,14 +26,21 @@ except Exception:  # pragma: no cover - package may be absent on prod build
 
 
 def clerk_enabled():
-    """SSO is on only when both the secret key and the JWT audience are set.
+    """SSO is on only when the secret key plus a token-binding check are set.
 
-    Failing closed here (rather than passing audience=None to the verifier)
-    so a missing CLERK_JWT_AUDIENCE disables SSO instead of accepting
-    audience-unchecked tokens.
+    Plain Clerk session tokens (what the login page sends via
+    `session.getToken()`) carry no custom `aud` claim — their binding claim
+    is `azp` (the Frontend API URL), checked via `authorized_parties`.
+    Failing closed here so a half-configured SSO disables itself instead of
+    accepting unbound tokens.
     """
-    return bool(getattr(settings, 'CLERK_SECRET_KEY', '')
-                and getattr(settings, 'CLERK_JWT_AUDIENCE', ''))
+    return bool(
+        getattr(settings, 'CLERK_SECRET_KEY', '')
+        and (
+            getattr(settings, 'CLERK_AUTHORIZED_PARTIES', [])
+            or getattr(settings, 'CLERK_JWT_AUDIENCE', '')
+        )
+    )
 
 
 class ClerkAuthenticationBackend(BaseBackend):
@@ -44,6 +51,7 @@ class ClerkAuthenticationBackend(BaseBackend):
         options = VerifyTokenOptions(
             secret_key=settings.CLERK_SECRET_KEY,
             audience=settings.CLERK_JWT_AUDIENCE or None,
+            authorized_parties=list(settings.CLERK_AUTHORIZED_PARTIES) or None,
         )
         try:
             payload = verify_token(clerk_token, options)

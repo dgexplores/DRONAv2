@@ -117,6 +117,12 @@ AUTH_USER_MODEL = 'users.StaffUser'
 CLERK_SECRET_KEY = os.getenv('CLERK_SECRET_KEY', '')
 CLERK_PUBLISHABLE_KEY = os.getenv('CLERK_PUBLISHABLE_KEY', '')
 CLERK_JWT_AUDIENCE = os.getenv('CLERK_JWT_AUDIENCE', '')
+# Frontend API URL(s), comma-separated (Clerk Dashboard -> API keys).
+# Verifies the session token's `azp` claim. Plain Clerk session tokens carry
+# no custom `aud` claim, so this is the operative check for them.
+CLERK_AUTHORIZED_PARTIES = [
+    p.strip() for p in os.getenv('CLERK_AUTHORIZED_PARTIES', '').split(',') if p.strip()
+]
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',

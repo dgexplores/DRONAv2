@@ -223,6 +223,7 @@ class ClerkAuthTests(TestCase):
             CLERK_SECRET_KEY='sk_test_dummy',
             CLERK_PUBLISHABLE_KEY='pk_test_dummy',
             CLERK_JWT_AUDIENCE='test-audience',
+            CLERK_AUTHORIZED_PARTIES=['https://test.clerk.accounts.dev'],
         )
         self.override.enable()
         self.addCleanup(self.override.disable)
@@ -267,10 +268,14 @@ class ClerkAuthTests(TestCase):
         self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_clerk_disabled_without_audience(self):
-        """SSO must fail closed when CLERK_JWT_AUDIENCE is unset — audience-unchecked tokens are not accepted."""
+        """SSO must fail closed when neither authorized-parties nor audience is set."""
         from django.test import override_settings
         from unittest import mock as umock
-        with override_settings(CLERK_SECRET_KEY='sk_test_dummy', CLERK_JWT_AUDIENCE=''):
+        with override_settings(
+            CLERK_SECRET_KEY='sk_test_dummy',
+            CLERK_JWT_AUDIENCE='',
+            CLERK_AUTHORIZED_PARTIES=[],
+        ):
             with umock.patch('apps.users.clerk_auth.verify_token', return_value={
                 'email': 'nonaud@srms.ac.in',
             }):
@@ -278,6 +283,30 @@ class ClerkAuthTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertNotIn('_auth_user_id', self.client.session)
         self.assertFalse(StaffUser.objects.filter(email='nonaud@srms.ac.in').exists())
+
+    def test_clerk_enabled_by_authorized_parties_alone(self):
+        """Plain session tokens carry azp, not aud — parties alone must enable SSO."""
+        from django.test import override_settings
+        from unittest import mock as umock
+        existing = StaffUser.objects.create_user(
+            employee_id="EMP302", username="emp302",
+            email="azp@srms.ac.in", password="pass12345", role="staff",
+        )
+        with override_settings(
+            CLERK_SECRET_KEY='sk_test_dummy',
+            CLERK_JWT_AUDIENCE='',
+            CLERK_AUTHORIZED_PARTIES=['https://test.clerk.accounts.dev'],
+        ):
+            with umock.patch('apps.users.clerk_auth.verify_token', return_value={
+                'email': 'azp@srms.ac.in',
+            }) as vt:
+                resp = self.client.post(reverse('clerk_login'), {'token': 'valid.jwt.token'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(int(self.client.session['_auth_user_id']), existing.pk)
+        self.assertEqual(
+            vt.call_args[0][1].authorized_parties,
+            ['https://test.clerk.accounts.dev'],
+        )
 
 
 class SecurityHeadersTests(TestCase):
