@@ -23,15 +23,17 @@
 
     {% if passed %}
         <p style="margin-bottom: 1.5rem;">🎉 {% if is_hindi %}आपने यह मूल्यांकन उत्तीर्ण किया है!{% else %}You passed this assessment!{% endif %}</p>
-        <a href="{% url 'course_detail' course.id %}" class="btn btn-primary btn-block">{% if is_hindi %}कोर्स पर वापस{% else %}Back to Course{% endif %}</a>
         {% if course %}
+        <a href="{% url 'course_detail' course.id %}" class="btn btn-primary btn-block">{% if is_hindi %}कोर्स पर वापस{% else %}Back to Course{% endif %}</a>
         <a href="{% url 'my_certificates' %}" class="btn btn-success btn-block" style="margin-top: 0.75rem;">{% if is_hindi %}प्रमाणपत्र देखें{% else %}View Certificates{% endif %}</a>
         {% endif %}
     {% else %}
         <p style="margin-bottom: 1.5rem;">
             {% if is_hindi %}आपको उत्तीर्ण होने के लिए कम से कम {{ quiz.passing_score }}% चाहिए। कृपया SOP की समीक्षा करें और पुनः प्रयास करें।{% else %}You need at least {{ quiz.passing_score }}% to pass. Please review the SOP and retry.{% endif %}
         </p>
+        {% if course %}
         <a href="{% url 'take_quiz' course.id %}" class="btn btn-gold btn-block">{% if is_hindi %}पुनः प्रयास करें{% else %}Retry Quiz{% endif %}</a>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}

@@ -37,6 +37,7 @@ class AnalyticsAccessTests(TestCase):
         self.client.login(employee_id='EMP500', password='pass12345')
         resp = self.client.get(reverse('export_staff_csv'))
         self.assertEqual(resp.status_code, 403)
+        self.assertTemplateUsed(resp, 'errors/403.html')
 
     def test_trainer_csv_export(self):
         self.client.login(employee_id='EMP501', password='pass12345')

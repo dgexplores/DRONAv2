@@ -32,7 +32,7 @@ def dashboard_view(request):
 
     # Managers (super admin / HOD / trainer) get a command-center dashboard,
     # not the learner catalogue. Return before any learner auto-enrollment.
-    is_manager = user.role in ('admin', 'trainer') or user.is_superuser or user.is_staff
+    is_manager = bool(getattr(user, 'is_manager', False))
     if is_manager:
         return _manager_dashboard(request)
 
@@ -117,7 +117,7 @@ def course_detail_view(request, course_id):
     course = get_object_or_404(Course, id=course_id)
 
     # Managers may preview any course; staff may view assigned courses or self-enroll into electives.
-    is_manager = request.user.role in ('admin', 'trainer') or request.user.is_superuser
+    is_manager = bool(getattr(request.user, 'is_manager', False))
 
     try:
         enrollment = Enrollment.objects.get(staff_user=request.user, course=course)
@@ -160,7 +160,7 @@ def lesson_view(request, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
     course = lesson.module.course
 
-    is_manager = request.user.role in ('admin', 'trainer') or request.user.is_superuser
+    is_manager = bool(getattr(request.user, 'is_manager', False))
     try:
         enrollment = Enrollment.objects.get(staff_user=request.user, course=course)
     except Enrollment.DoesNotExist:
@@ -270,6 +270,8 @@ def training_calendar(request):
     month = request.GET.get('month') or timezone.localdate().strftime('%Y-%m')
     try:
         year, month_num = [int(p) for p in month.split('-')]
+        if not 1 <= month_num <= 12:
+            raise ValueError("month out of range")
     except (ValueError, AttributeError):
         year, month_num = timezone.localdate().year, timezone.localdate().month
 

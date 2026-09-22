@@ -202,6 +202,19 @@ class QuizEnrollmentGateTests(TestCase):
         self.assertFalse(Enrollment.objects.filter(staff_user=self.outsider).exists())
         self.assertFalse(QuizAttempt.objects.filter(staff_user=self.outsider).exists())
 
+    def test_orphan_quiz_submit_renders_without_500(self):
+        """A quiz with no course/module rendered course.id unguarded -> NoReverseMatch 500."""
+        orphan = Quiz.objects.create(title="Orphan", passing_score=70, course=None, module=None)
+        q = Question.objects.create(quiz=orphan, text="Q?")
+        right = Choice.objects.create(question=q, text="A", is_correct=True)
+        self.client.login(employee_id='EMP320', password='pass12345')
+        resp = self.client.post(reverse('submit_quiz', args=[orphan.id]), {
+            f'question_{q.id}': right.id,
+        })
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.post(reverse('submit_quiz', args=[orphan.id]), {})
+        self.assertEqual(resp.status_code, 200)
+
 
 class AIGeneratorAccessTests(TestCase):
     def setUp(self):

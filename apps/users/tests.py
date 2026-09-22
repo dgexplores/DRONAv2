@@ -109,6 +109,34 @@ class RegistrationApprovalTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "already registered")
 
+    def test_register_rejects_duplicate_email(self):
+        """Duplicate emails break password-reset disambiguation; registration must refuse them."""
+        cache.clear()
+        StaffUser.objects.create_user(
+            employee_id="EMP783", username="emp783",
+            email="dup@srms.ac.in", password="pass12345", role="staff",
+        )
+        resp = self.client.post(reverse('register'), {
+            'employee_id': 'EMP784', 'first_name': 'A', 'last_name': 'B',
+            'email': 'dup@srms.ac.in', 'password1': 'secret123', 'password2': 'secret123',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "already registered")
+        self.assertFalse(StaffUser.objects.filter(employee_id='EMP784').exists())
+
+    def test_logout_requires_post(self):
+        """GET logout was a CSRF-less state change; only POST must log out."""
+        StaffUser.objects.create_user(
+            employee_id="EMP785", username="emp785",
+            email="e@b.com", password="pass12345", role="staff",
+        )
+        self.client.login(employee_id='EMP785', password='pass12345')
+        self.assertEqual(self.client.get(reverse('logout')).status_code, 405)
+        self.assertIn('_auth_user_id', self.client.session)
+        resp = self.client.post(reverse('logout'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
     def test_login_pending_uses_generic_error(self):
         user = StaffUser.objects.create_user(
             employee_id="EMP779", username="emp779",
@@ -155,6 +183,7 @@ class RegistrationApprovalTests(TestCase):
         self.client.login(employee_id='EMP781', password='pass12345')
         resp = self.client.post(reverse('approve_user', args=[pending.id]))
         self.assertEqual(resp.status_code, 403)
+        self.assertTemplateUsed(resp, 'errors/403.html')
 
 
 class LanguageToggleTests(TestCase):

@@ -9,7 +9,6 @@ import threading
 
 from django.core.mail import send_mail
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.http import HttpResponse
 from django.conf import settings
 from django.db.models import Sum
 from django.utils.decorators import method_decorator
@@ -170,7 +169,7 @@ def register_view(request):
 @require_POST
 def approve_user(request, user_id):
     if request.user.role not in ('admin', 'trainer') and not request.user.is_superuser:
-        return HttpResponse(_("Unauthorized"), status=403)
+        return render(request, 'errors/403.html', status=403)
 
     target = get_object_or_404(StaffUser, id=user_id)
     if target.role == 'admin':
@@ -192,7 +191,7 @@ def approve_user(request, user_id):
 @require_POST
 def reject_user(request, user_id):
     if request.user.role not in ('admin', 'trainer') and not request.user.is_superuser:
-        return HttpResponse(_("Unauthorized"), status=403)
+        return render(request, 'errors/403.html', status=403)
 
     target = get_object_or_404(StaffUser, id=user_id)
     name = target.get_full_name() or target.employee_id
@@ -209,6 +208,7 @@ def reject_user(request, user_id):
     target.delete()
     messages.warning(request, f"Registration request for {name} rejected and removed.")
     return redirect('hr_dashboard')
+
 
 @method_decorator(ratelimit(key=get_client_ip, rate=RESET_MAX_RATE, method='POST', block=False), name='dispatch')
 class RateLimitedPasswordResetView(PasswordResetView):
@@ -238,6 +238,7 @@ class RateLimitedPasswordResetConfirmView(PasswordResetConfirmView):
         return super().form_valid(form)
 
 
+@require_POST
 def logout_view(request):
     logout(request)
     messages.info(request, "Logged out successfully.")

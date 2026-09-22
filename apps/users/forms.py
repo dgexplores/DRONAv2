@@ -67,6 +67,12 @@ class RegistrationForm(forms.Form):
             raise forms.ValidationError(_("This Employee ID is already registered."))
         return employee_id
 
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(_("This email is already registered."))
+        return email
+
     def clean(self):
         cleaned = super().clean()
         password1 = cleaned.get('password1')

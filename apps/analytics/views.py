@@ -1,7 +1,7 @@
 import csv
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import StreamingHttpResponse
 from django.db.models import Count, Avg, Q, Sum
 from django.core.paginator import Paginator
 from django.contrib import messages
@@ -12,7 +12,7 @@ from apps.quizzes.models import QuizAttempt, Quiz
 
 @login_required
 def hr_dashboard_view(request):
-    if request.user.role not in ['trainer', 'admin'] and not request.user.is_staff:
+    if not bool(getattr(request.user, 'is_manager', False)):
         messages.error(request, "Access restricted to HODs and HR Administrators.")
         return redirect('dashboard')
 
@@ -68,8 +68,8 @@ def hr_dashboard_view(request):
 
 @login_required
 def export_staff_report_csv(request):
-    if request.user.role not in ['trainer', 'admin'] and not request.user.is_staff:
-        return HttpResponse("Unauthorized", status=403)
+    if not bool(getattr(request.user, 'is_manager', False)):
+        return render(request, 'errors/403.html', status=403)
 
     # Streaming + annotated counts: avoids loading all rows and N+1 per-row counts.
     qs = (StaffUser.objects.select_related('department')

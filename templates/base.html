@@ -110,10 +110,13 @@
                     <div class="topbar-user">
                         <div class="avatar">{{ user.first_name|first|default:"S" }}{{ user.last_name|first }}</div>
                         <span>{{ user.get_full_name|default:user.employee_id }}</span>
-                        <a href="{% url 'logout' %}" class="logout-btn">
-                            <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
-                            {% if is_hindi %}लॉगआउट{% else %}Logout{% endif %}
-                        </a>
+                        <form method="post" action="{% url 'logout' %}" style="display:inline;margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn" style="background:none;border:1px solid transparent;cursor:pointer;font:inherit;">
+                                <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                                {% if is_hindi %}लॉगआउट{% else %}Logout{% endif %}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -240,6 +240,13 @@ class TrainingCalendarManagerTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(resp.context['is_manager'])
 
+    def test_out_of_range_month_falls_back_without_500(self):
+        """?month=2026-13 reached dt(2026,13,1) and raised ValueError -> 500."""
+        self.assertTrue(self.client.login(employee_id='EMP300', password='pass12345'), 'staff login failed')
+        for bad in ('2026-13', '2026-00', 'foo'):
+            resp = self.client.get(reverse('training_calendar') + f'?month={bad}')
+            self.assertEqual(resp.status_code, 200, msg=f"month={bad} got {resp.status_code}")
+
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
 class SopDocumentGateTests(TestCase):

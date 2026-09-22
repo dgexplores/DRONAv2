@@ -108,7 +108,7 @@ def generate_ai_quiz(request):
     """
     Admin / Trainer view to trigger Gemini AI Quiz generation from text/PDF SOP.
     """
-    if request.user.role not in ['trainer', 'admin'] and not request.user.is_staff:
+    if not bool(getattr(request.user, 'is_manager', False)):
         messages.error(request, "Permission denied. Only Trainers and HODs can generate AI quizzes.")
         return redirect('dashboard')
 
