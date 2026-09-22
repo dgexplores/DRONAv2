@@ -44,19 +44,22 @@ through an HR analytics console — all under strict role-based access control (
 - **Hindi / English UI toggle**.
 - **PWA** — manifest + service worker, installable to home screen, works as an app.
 - **Email reminders** — APScheduler nudges staff with pending training (single-worker safe).
-- **Hardened** — per-IP rate limiting on login/register/password-reset, CSP + security headers,
-  approval-notification emails, background email delivery so admin actions never hang.
+- **Hardened** — per-IP rate limiting on login/register/password-reset, CSP + security headers
+  (incl. `frame-ancestors 'none'`), fail-closed Clerk SSO, masked staff emails in `list_users`
+  output, approval-notification emails, background email delivery so admin actions never hang.
 
 ---
 
 ## ✅ Capabilities vs 🗺️ mapped to be made
 
-**Live in production** (`https://dronav2.onrender.com`, probed 2026-09-14 — see `HANDOFF.md` §1a):
+**Live in production** (`https://dronav2.onrender.com`, probed 2026-09-14; Clerk SSO verified
+2026-09-23 — see `HANDOFF.md` §1a):
 Employee-ID auth + RBAC · approval workflow · admin provisioning · course hierarchy with
 auto-enrollment · server-derived video progress · AI quiz generation (`GEMINI_API_KEY` confirmed
 set, not serving fallback) · 70% pass threshold · QR-verifiable certificates · certificate
 directory with search/filters · per-student assignment · editable training calendar · HR analytics
-+ CSV export · Hindi/English toggle · PWA · rate limiting + CSP + anti-enumeration login.
++ CSV export · Hindi/English toggle · PWA · rate limiting + CSP + anti-enumeration login ·
+**Clerk SSO** (all three `CLERK_*` env vars set on Render, verified live).
 
 **Wired in code, OFF in production** (`HANDOFF.md` §3a — silently disabled, nothing reported it):
 Email delivery (password-reset, setup links, approvals) and the reminder scheduler. The code
@@ -88,7 +91,7 @@ vars below are set.
 | **AI** | Google Gemini — MCQ generation from SOP PDF/text (candidates in `DEFAULT_GEMINI_MODELS`; pin one with `GEMINI_MODEL`) |
 | **PDF / QR** | ReportLab + qrcode — verifiable certificates |
 | **Scheduler** | APScheduler — email reminders |
-| **Auth** | Django auth + optional Clerk SSO (JWT) |
+| **Auth** | Django auth + Clerk SSO (enabled in prod; binds the JWT `azp` claim via `CLERK_AUTHORIZED_PARTIES`) |
 | **Hosting** | Render (app) + external Postgres. `Procfile` / `railway.toml` are kept in sync but Railway is no longer the live target |
 | **CI/CD** | GitHub Actions — CI on every push and PR; backend deploy is `workflow_dispatch` only |
 
@@ -141,8 +144,14 @@ vars below are set.
   mitigates brute force and email bombing.
 - **CSP + security headers** via `srms_drona.middleware.SecurityHeadersMiddleware`
   (per-request nonce for inline scripts, Referrer-Policy, Permissions-Policy, nosniff,
-  frame-ancestors, `object-src 'none'`). Inline `<script>` tags must carry
+  `frame-ancestors 'none'`, `object-src 'none'`). Inline `<script>` tags must carry
   `nonce="{{ request.csp_nonce }}"` or the browser will block them.
+- **Clerk SSO fails closed** — `clerk_enabled()` requires `CLERK_SECRET_KEY` plus a
+  token-binding claim (`CLERK_AUTHORIZED_PARTIES` verifying the JWT `azp`, or
+  `CLERK_JWT_AUDIENCE`); half-configured SSO disables itself instead of accepting
+  audience/party-unchecked tokens.
+- **Management CLI masks PII** — `list_users` prints `***@domain` unless `--include-email`
+  is passed, so staff addresses never land in logs by default.
 - **Anti-enumeration** login: pending/inactive accounts return a generic error message, and login
   goes through `authenticate()` so an unknown Employee ID costs the same as a wrong password
   (Django hashes a dummy value) — the message and the timing both stay generic.
@@ -259,8 +268,11 @@ password in production.
   active immediately. HR/HOD (trainer) accounts get approval rights plus the full management console,
   so they can operate independently.
 - **Password reset** (`/password-reset/`) — emails a reset link via SMTP.
-- **Clerk SSO** (optional) — renders when `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` are set.
-  Set the Clerk Dashboard **Homepage URL** to the live app URL for SSO signups to work.
+- **Clerk SSO** (enabled in production since 2026-09-23) — renders when `CLERK_PUBLISHABLE_KEY`
+  and `CLERK_SECRET_KEY` are set **and** a token-binding check exists
+  (`CLERK_AUTHORIZED_PARTIES`, the Clerk Frontend API URL, or alternatively `CLERK_JWT_AUDIENCE`);
+  SSO fails closed otherwise. Set the Clerk Dashboard **Homepage URL** to the live app URL for
+  SSO signups to work.
 
 ---
 
@@ -321,8 +333,8 @@ back through the CLI, so treat a password manager as the source of truth.
 | `GEMINI_API_KEY` | Live AI quiz generation; if unset, quizzes fall back to rule-based questions and **a warning is logged** |
 | `SRMS_BASE_URL` | `https://dronav2.onrender.com` |
 | `DJANGO_ADMIN_PASSWORD` | Super-admin password; applied on every boot by `set_admin_password` |
-| `SMTP_USER` / `SMTP_PASSWORD` | Reminder + password-reset emails |
-| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_JWT_AUDIENCE` | Optional Clerk SSO |
+| `SMTP_USER` / `SMTP_PASSWORD` | Reminder + password-reset emails — **not set yet; email stays off** |
+| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | Clerk SSO — all three **set live** (2026-09-23); `CLERK_JWT_AUDIENCE` is an optional alternative binding |
 
 To check whether `render.yaml` declares every env var the live service actually has:
 
@@ -389,7 +401,7 @@ on startup, so the live super-admin password is always environment-managed, neve
 | `EMAIL_TIMEOUT` | SMTP connect timeout in seconds (default `10`) |
 | `DEFAULT_FROM_EMAIL` | Sender shown on outgoing emails |
 | `DJANGO_EMAIL_BACKEND` | `django.core.mail.backends.smtp.EmailBackend` (default is console) |
-| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_JWT_AUDIENCE` | Optional Clerk SSO |
+| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | Clerk SSO (optional here; live only on Render) |
 
 > **Scheduler note:** keep exactly one worker running the scheduler (`SRMS_RUN_SCHEDULER=1`)
 > to avoid duplicate reminder emails. The Procfile runs a single `web` worker by default.
@@ -430,7 +442,7 @@ Two workflows in `.github/workflows/`:
 AI tests use the offline rule-based generator. It also swaps in `LocMemCache` (an in-memory DB
 cannot host the `DatabaseCache` backend) and MD5 password hashing for speed.
 
-**The suite is 110 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
+**The suite is 118 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
 rate limiting, quizzes, certificates, the certificate directory + filters, per-student
 assignment, calendar manager gating, and analytics — plus the regression guards added for the
 defects fixed in `ENGINEERING.md`:
@@ -449,6 +461,9 @@ defects fixed in `ENGINEERING.md`:
 | `test_password_setup_email_warns_when_console_backend` | Setup links printed instead of delivered with no log line |
 | `test_disabled_scheduler_warns` | Scheduler off with only an INFO trace |
 | `test_insecure_default_secret_key_is_rejected` | Booting production on dev defaults |
+| `test_clerk_disabled_without_audience` | SSO accepting Clerk tokens with no `azp`/`aud` binding |
+| `test_clerk_enabled_by_authorized_parties_alone` | SSO gated on a claim plain session tokens never carry |
+| `test_emails_masked_by_default` | `list_users` printing staff emails into logs |
 
 Tests write generated PDFs to a temporary `MEDIA_ROOT` (not the repo's `media/`), so a test run
 leaves the working tree untouched.
