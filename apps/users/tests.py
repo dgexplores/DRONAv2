@@ -222,6 +222,7 @@ class ClerkAuthTests(TestCase):
         self.override = override_settings(
             CLERK_SECRET_KEY='sk_test_dummy',
             CLERK_PUBLISHABLE_KEY='pk_test_dummy',
+            CLERK_JWT_AUDIENCE='test-audience',
         )
         self.override.enable()
         self.addCleanup(self.override.disable)
@@ -265,6 +266,19 @@ class ClerkAuthTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertNotIn('_auth_user_id', self.client.session)
 
+    def test_clerk_disabled_without_audience(self):
+        """SSO must fail closed when CLERK_JWT_AUDIENCE is unset — audience-unchecked tokens are not accepted."""
+        from django.test import override_settings
+        from unittest import mock as umock
+        with override_settings(CLERK_SECRET_KEY='sk_test_dummy', CLERK_JWT_AUDIENCE=''):
+            with umock.patch('apps.users.clerk_auth.verify_token', return_value={
+                'email': 'nonaud@srms.ac.in',
+            }):
+                resp = self.client.post(reverse('clerk_login'), {'token': 'valid.jwt.token'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertFalse(StaffUser.objects.filter(email='nonaud@srms.ac.in').exists())
+
 
 class SecurityHeadersTests(TestCase):
     def test_csp_and_security_headers_present(self):
@@ -273,7 +287,33 @@ class SecurityHeadersTests(TestCase):
         self.assertIn('Referrer-Policy', resp.headers)
         self.assertIn('Permissions-Policy', resp.headers)
         self.assertIn("object-src 'none'", resp.headers['Content-Security-Policy'])
-        self.assertIn("frame-ancestors 'self'", resp.headers['Content-Security-Policy'])
+        self.assertIn("frame-ancestors 'none'", resp.headers['Content-Security-Policy'])
+
+
+class ListUsersCommandTests(TestCase):
+    def test_emails_masked_by_default(self):
+        """list_users must not print PII to logs unless explicitly asked."""
+        from django.core.management import call_command
+        from io import StringIO
+        StaffUser.objects.create_user(
+            employee_id="EMP900", username="emp900",
+            email="private@srms.ac.in", password="pass12345", role="staff",
+        )
+        out = StringIO()
+        call_command('list_users', stdout=out)
+        self.assertNotIn('private@srms.ac.in', out.getvalue())
+        self.assertIn('***@srms.ac.in', out.getvalue())
+
+    def test_include_email_flag_shows_full_address(self):
+        from django.core.management import call_command
+        from io import StringIO
+        StaffUser.objects.create_user(
+            employee_id="EMP901", username="emp901",
+            email="shown@srms.ac.in", password="pass12345", role="staff",
+        )
+        out = StringIO()
+        call_command('list_users', '--include-email', stdout=out)
+        self.assertIn('shown@srms.ac.in', out.getvalue())
 
 
 class RegisterRateLimitTests(TestCase):

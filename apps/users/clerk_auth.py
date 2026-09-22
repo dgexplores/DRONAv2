@@ -26,7 +26,14 @@ except Exception:  # pragma: no cover - package may be absent on prod build
 
 
 def clerk_enabled():
-    return bool(getattr(settings, 'CLERK_SECRET_KEY', ''))
+    """SSO is on only when both the secret key and the JWT audience are set.
+
+    Failing closed here (rather than passing audience=None to the verifier)
+    so a missing CLERK_JWT_AUDIENCE disables SSO instead of accepting
+    audience-unchecked tokens.
+    """
+    return bool(getattr(settings, 'CLERK_SECRET_KEY', '')
+                and getattr(settings, 'CLERK_JWT_AUDIENCE', ''))
 
 
 class ClerkAuthenticationBackend(BaseBackend):

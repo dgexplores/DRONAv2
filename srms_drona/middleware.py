@@ -21,7 +21,7 @@ class SecurityHeadersMiddleware:
         "object-src 'none'; "
         "base-uri 'self'; "
         "form-action 'self'; "
-        "frame-ancestors 'self'"
+        "frame-ancestors 'none'"
     )
 
     def __init__(self, get_response):
@@ -44,7 +44,7 @@ class SecurityHeadersMiddleware:
                 "object-src 'none'; "
                 "base-uri 'self'; "
                 "form-action 'self'; "
-                "frame-ancestors 'self'"
+                "frame-ancestors 'none'"
             )
             response.headers.setdefault('Content-Security-Policy', csp)
             response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
