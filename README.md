@@ -59,23 +59,23 @@ auto-enrollment · server-derived video progress · AI quiz generation (`GEMINI_
 set, not serving fallback) · 70% pass threshold · QR-verifiable certificates · certificate
 directory with search/filters · per-student assignment · editable training calendar · HR analytics
 + CSV export · Hindi/English toggle · PWA · rate limiting + CSP + anti-enumeration login ·
-**Clerk SSO** (all three `CLERK_*` env vars set on Render, verified live).
+**Clerk SSO** (all three `CLERK_*` env vars set on Render, verified live) ·
+**reminder scheduler running** (delivery pending SMTP).
 
-**Wired in code, OFF in production** (`HANDOFF.md` §3a — silently disabled, nothing reported it):
-Email delivery (password-reset, setup links, approvals) and the reminder scheduler. The code
-sends correctly, but the live service has no `DJANGO_EMAIL_BACKEND` (so mail prints to logs,
-never delivers) and no `SRMS_RUN_SCHEDULER` (so reminders never generate). The repo now logs a
-**WARNING** on both paths instead of failing silently — but the features stay off until the env
-vars below are set.
+**Partially live** (`HANDOFF.md` §3a): the reminder **scheduler is on** (`SRMS_RUN_SCHEDULER=1`,
+set 2026-09-23 — reminders generate and log), but **email delivery is still off**: the live
+service has no `DJANGO_EMAIL_BACKEND`/SMTP credentials, so mail prints to logs and never
+delivers. The repo logs a **WARNING** on both paths instead of failing silently — delivery stays
+off until the SMTP env vars below are set.
 
 **Mapped to be made** (ordered):
-1. **Go-live for email + scheduler** — set `SMTP_USER`/`SMTP_PASSWORD` (+ host/port/TLS),
-   `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`, `SRMS_RUN_SCHEDULER=1` on
+1. **Go-live for email delivery** — scheduler already on; still needs `SMTP_USER`/`SMTP_PASSWORD`
+   (+ host/port/TLS) and `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend` on
    the Render service, redeploy, prove with `send_test_email`. Needs SMTP credentials — not doable
-   from the repo alone. (`render.yaml` already declares all seven vars; adoption would create them.)
+   from the repo alone. (`render.yaml` already declares them.)
 2. **Adopt the Blueprint** — dashboard-only step making `render.yaml` authoritative (`HANDOFF.md` §2).
-3. **Pin/reorder Gemini models** — preview model sits third in preference order; pin a stable model
-   via `GEMINI_MODEL` before Google retires it. Optional, low priority.
+3. ✅ ~~Pin/reorder Gemini models~~ — done 2026-09-23: stable models now precede the preview entry
+   in `DEFAULT_GEMINI_MODELS`, and `GEMINI_MODEL=gemini-3.5-flash` is pinned on the live service.
 4. Deliberately **not** planned: `/verify/<bogus>/` returns `200` not `404` (a "query result" page,
    left alone on purpose).
 
@@ -442,7 +442,7 @@ Two workflows in `.github/workflows/`:
 AI tests use the offline rule-based generator. It also swaps in `LocMemCache` (an in-memory DB
 cannot host the `DatabaseCache` backend) and MD5 password hashing for speed.
 
-**The suite is 118 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
+**The suite is 120 tests and must stay green.** Coverage includes auth, RBAC, approval flow,
 rate limiting, quizzes, certificates, the certificate directory + filters, per-student
 assignment, calendar manager gating, and analytics — plus the regression guards added for the
 defects fixed in `ENGINEERING.md`:

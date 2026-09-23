@@ -4,7 +4,7 @@
 context. If you are a teammate or a fresh session, read this file plus `ENGINEERING.md`
 and you are current.
 
-**Last updated:** 2026-09-23 (session 5 — security-review fixes pushed, Clerk SSO enabled live on Render, README + this file tailored)
+**Last updated:** 2026-09-23 (session 6 — backlog drain: fast boot, triple keep-alive, stable Gemini pin, scheduler on, venv 3.12, media purge; email delivery still blocked on SMTP creds)
 
 ---
 
@@ -14,11 +14,12 @@ and you are current.
 |---|---|
 | Working tree | clean (`git status --porcelain` empty) |
 | Branch | `main`, in sync with `origin/main` (0 behind / 0 ahead) |
-| HEAD | `6c98f36` — *docs: tailor README to current state* (plus this HANDOFF update) |
-| CI | green — run `35793907288`, 34s, success |
-| Test suite | 118 tests, all passing; ship gate green |
-| Deployed | **live on Render** — service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`), deploy `dep-dapg98n40ujc73ao56lg` (2026-09-22 22:45Z, commit `6c98f36`) |
+| HEAD | `f8d12c0` — *chore: prefer stable Gemini models…* (plus this HANDOFF update) |
+| CI | green — run `35889396418`, success (on Python 3.12, suite = 120 tests) |
+| Test suite | 120 tests, all passing; ship gate green **on local venv Python 3.12.13** (aligned) |
+| Deployed | **live on Render** — service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`), deploy `dep-dapvtv4s728c73fh3g40` (2026-09-23, commit `f8d12c0`) |
 | Health | `https://dronav2.onrender.com/health/` → `200 ok`; `/` → `302`; HTTP → HTTPS `301` |
+| Keep-alive | 3 layers: GH Actions `/health/` ping every 5m · local crontab every 6m (`scripts/keep_awake.sh`) · landing-page beacon. Fast boot via `manage.py boot` (69s → 44s cold). |
 
 The 9 defect classes found in the audit are fixed, committed, pushed, and CI-verified.
 The 3 findings from the security review (2026-09-23: Clerk fail-closed binding,
@@ -223,7 +224,7 @@ fallback questions.
 
 ---
 
-## 3a. 🚨 NEW FINDINGS — two production features are silently disabled
+## 3a. 🚨 FINDING — email delivery is still disabled (scheduler since enabled)
 
 Reading the live env vars (method below) revealed that several variables the app expects are
 simply **absent**. Nothing reports this, because each one has a harmless-looking default.
@@ -232,13 +233,16 @@ simply **absent**. Nothing reports this, because each one has a harmless-looking
 |---|---|---|
 | `DJANGO_EMAIL_BACKEND` | **absent** → `console.EmailBackend` | **No email is ever delivered.** Password-reset and staff setup links are printed to stdout (Render logs) instead of sent. `send_mail()` still returns `1`, so the UI reports success. |
 | `SMTP_USER` / `SMTP_PASSWORD` | **absent** | Same as above — no SMTP credentials configured. |
-| `SRMS_RUN_SCHEDULER` | **absent** → `'0'` | **APScheduler never starts** — reminder emails are never generated at all. |
+| `SRMS_RUN_SCHEDULER` | **present = `1`** (set 2026-09-23) | **APScheduler starts.** Reminders generate and are sent through the console backend, i.e. they land in Render logs until SMTP delivery is configured below. |
+| `GEMINI_MODEL` | **present = `gemini-3.5-flash`** (set 2026-09-23) | Quiz generation pinned to a stable model; the fallback pool also reorders stable-before-preview (`f8d12c0`). |
 | `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | **present** (set via Render API 2026-09-23) — Clerk SSO is **ON**; `/login/` renders `clerk.browser.js` on the live site. Binding is the JWT `azp` claim via `CLERK_AUTHORIZED_PARTIES`; `CLERK_JWT_AUDIENCE` is unset (optional alternative, deliberately not used — plain session tokens carry no `aud`). |
 
 Present and correct: `DATABASE_URL`, `DJANGO_ADMIN_PASSWORD`, `DJANGO_ALLOWED_HOSTS`,
 `DJANGO_CSRF_TRUSTED_ORIGINS`, `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`,
 `DJANGO_SECURE_SSL_REDIRECT`, `GEMINI_API_KEY`, `SRMS_BASE_URL` — plus, since 2026-09-23,
-the three `CLERK_*` vars (§3a table above). No undeclared extras.
+the three `CLERK_*` vars, `GEMINI_MODEL`, and `SRMS_RUN_SCHEDULER=1` (table above).
+Still absent (the remaining gap): `DJANGO_EMAIL_BACKEND`, `SMTP_*`, `SMTP_USER`,
+`SMTP_PASSWORD`.
 
 **Why this matters:** staff onboarding depends on emailed setup links. If email is not
 delivered, **new users can never set a password** and the only way in is an admin manually
@@ -277,18 +281,13 @@ commit. Prefer `scripts/verify_render_env.py`, which prints names only.
 
 ---
 
-### 4. Stray local media artifacts — cosmetic only
-`media/` holds **37 untracked PDFs** (24 in `certificates/`, 13 in `sop_documents/`),
-left over from test runs that predate the `MEDIA_ROOT` override.
+### 4. ✅ DONE — stray local media artifacts
+Deleted 2026-09-23 (37 leftover test PDFs). `media/` now holds **0 files**. The directory stays
+gitignored for runtime uploads.
 
-- `media/` is **gitignored** (`.gitignore:14`) and **0 files are tracked** — these never
-  reach the repo, CI, or Render.
-- No action needed for shipping. Delete them locally only if you want a clean dev box.
-
-### 5. Python version drift — environment hygiene
-Local venv is **Python 3.14**; `runtime.txt` and CI pin **3.12**. CI passed, so this did not
-cause a failure here — but it is a latent trap for anything version-sensitive.
-**Action:** align the local venv to 3.12, or bump the pins deliberately and re-run CI.
+### 5. ✅ DONE — Python version drift
+Resolved 2026-09-23: local venv rebuilt on **Python 3.12.13** (via `uv python install 3.12`),
+matching `runtime.txt` and CI. Full ship gate re-run green on 3.12 (120 tests).
 
 ### 6. ✅ DONE — Render redeploy (with a catch)
 Applied and verified on 2026-09-14. Production now runs the `set -e` start command and
@@ -384,20 +383,19 @@ The context limit is a real constraint. The strategy that keeps this project saf
    therefore **optional**, not blocking. *(§2)*
 4. ✅ ~~Correct the README and push everything~~ — **done**, `df6ec43`, CI green, deploy live.
    The README now states plainly that `render.yaml` is inert and documents the Render env vars.
-5. **Convert `DRONAv2` to a Blueprint-managed service** — now a *nice-to-have* rather than a
-   blocker, since the apply script closes the gap. Still needs a dashboard action, and the
-   `name` must be the display name `DRONAv2` or Render creates a duplicate. *(§2)*
-6. 🚨 **Enable email delivery** — `DJANGO_EMAIL_BACKEND` is unset, so production sends no mail
-   and staff setup links never arrive. Needs SMTP credentials + the backend variable.
-   *(§3a — highest-impact functional gap; blocks onboarding)*
-7. **Decide whether the reminder scheduler should run** — `SRMS_RUN_SCHEDULER` is unset, so
-   APScheduler never starts. *(§3a)*
+5. **Convert `DRONAv2` to a Blueprint-managed service** — nice-to-have; needs a **dashboard**
+   action (the API cannot create Blueprints), and the `name` must be the display name `DRONAv2`
+   or Render creates a duplicate. *(§2)*
+6. 🚨 **Enable email delivery** — the only high-impact gap left. Scheduler now runs, but
+   `DJANGO_EMAIL_BACKEND` and `SMTP_USER`/`SMTP_PASSWORD` are still absent, so mail only logs.
+   Needs SMTP credentials — blocks onboarding/setup links. *(§3a)*
+7. ✅ ~~Enable the reminder scheduler~~ — **done** 2026-09-23: `SRMS_RUN_SCHEDULER=1` live.
+   Reminders generate now; delivery starts the moment item 6 lands. *(§3a)*
 8. ✅ ~~Confirm `GEMINI_API_KEY`~~ — **done, it is set.** *(§3)*
-9. Align the local Python venv to 3.12. *(item 5)*
-10. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
-11. Optionally delete the 37 local media artifacts. *(item 4)*
-12. ✅ ~~Security-review findings~~ — **done**, `e5226a2` + `b4e019d`, 3 new tests, suite at 118.
-13. ✅ ~~Enable Clerk SSO on Render~~ — **done** 2026-09-23: three `CLERK_*` vars set via the
-    Render API (public values also declared in `render.yaml`), deploy live, `/login/` verified
-    rendering the Clerk widget. Secret key confirmed against Clerk's API (HTTP 200).
-14. ✅ ~~Tailor README + HANDOFF to current state~~ — **done**, `6c98f36` + this commit.
+9. ✅ ~~Align the local Python venv to 3.12~~ — **done**: 3.12.13, gate green. *(item 5)*
+10. ✅ ~~Reorder `DEFAULT_GEMINI_MODELS`~~ — **done** (`f8d12c0`): stable first, preview last;
+    `GEMINI_MODEL=gemini-3.5-flash` pinned live. *(§3 note)*
+11. ✅ ~~Delete the 37 local media artifacts~~ — **done**: `media/` empty. *(item 4)*
+12. ✅ ~~Security-review findings~~ — **done**, `e5226a2` + `b4e019d`, 3 new tests.
+13. ✅ ~~Enable Clerk SSO on Render~~ — **done** 2026-09-23, verified live.
+14. ✅ ~~Tailor README + HANDOFF to current state~~ — **done**, then re-synced in session 6.
