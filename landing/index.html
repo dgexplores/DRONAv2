@@ -13,6 +13,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="/styles.css">
+  <script>
+    // Keep the demo app awake: the Render free plan sleeps after 15 idle
+    // minutes, so every landing visitor pings the health endpoint (opaque
+    // no-cors request — fire-and-forget) and the demo never cold-starts.
+    fetch('https://dronav2.onrender.com/health/', { mode: 'no-cors', cache: 'no-store' });
+  </script>
 </head>
 <body>
   <!-- ===== NAV ===== -->
