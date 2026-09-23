@@ -328,3 +328,28 @@ class ReminderDedupTests(TestCase):
         )
         send_reminders_job()
         self.assertEqual(len(mail.outbox), 2, "stale reminder must resend after interval")
+
+
+class BootCommandTests(TestCase):
+    def test_boot_runs_migrate_cache_and_admin_password(self):
+        """One process must run all three boot steps — the old start command
+        spawned three separate manage.py boots (~90s cold start on free plan)."""
+        from unittest import mock
+        from django.core.management import call_command
+        with mock.patch(
+            'apps.management.management.commands.boot.call_command'
+        ) as cc:
+            call_command('boot')
+        names = [c.args[0] for c in cc.call_args_list]
+        self.assertEqual(names, ['migrate', 'createcachetable', 'set_admin_password'])
+
+    def test_boot_aborts_if_a_step_fails(self):
+        """A failed step must propagate (set -e chain) — never reach gunicorn."""
+        from unittest import mock
+        from django.core.management import call_command
+        with mock.patch(
+            'apps.management.management.commands.boot.call_command',
+            side_effect=RuntimeError('migration boom'),
+        ):
+            with self.assertRaises(RuntimeError):
+                call_command('boot')
