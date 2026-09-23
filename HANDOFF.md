@@ -385,7 +385,10 @@ The context limit is a real constraint. The strategy that keeps this project saf
    The README now states plainly that `render.yaml` is inert and documents the Render env vars.
 5. **Convert `DRONAv2` to a Blueprint-managed service** — nice-to-have; needs a **dashboard**
    action (the API cannot create Blueprints), and the `name` must be the display name `DRONAv2`
-   or Render creates a duplicate. *(§2)*
+   or Render creates a duplicate. **Pre-flight fully green as of 2026-09-23:** `render blueprints
+   validate` → `valid`, 1 action, no `services` key (adopts); `verify_render_env` → exact 14/14
+   match, exit 0. Email vars deliberately deferred from `render.yaml` until SMTP creds exist so
+   adoption cannot flip the backend unconfigured. *(§2, §3a)*
 6. 🚨 **Enable email delivery** — the only high-impact gap left. Scheduler now runs, but
    `DJANGO_EMAIL_BACKEND` and `SMTP_USER`/`SMTP_PASSWORD` are still absent, so mail only logs.
    Needs SMTP credentials — blocks onboarding/setup links. *(§3a)*

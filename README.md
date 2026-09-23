@@ -72,7 +72,8 @@ off until the SMTP env vars below are set.
 1. **Go-live for email delivery** — scheduler already on; still needs `SMTP_USER`/`SMTP_PASSWORD`
    (+ host/port/TLS) and `DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend` on
    the Render service, redeploy, prove with `send_test_email`. Needs SMTP credentials — not doable
-   from the repo alone. (`render.yaml` already declares them.)
+   from the repo alone. (`render.yaml` defers these declarations until the creds exist —
+   adoption must not flip the backend unconfigured; see `HANDOFF.md` §3a.)
 2. **Adopt the Blueprint** — dashboard-only step making `render.yaml` authoritative (`HANDOFF.md` §2).
 3. ✅ ~~Pin/reorder Gemini models~~ — done 2026-09-23: stable models now precede the preview entry
    in `DEFAULT_GEMINI_MODELS`, and `GEMINI_MODEL=gemini-3.5-flash` is pinned on the live service.
