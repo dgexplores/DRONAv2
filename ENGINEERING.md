@@ -277,10 +277,12 @@ Copy this into the PR description.
   editing the file does not change production. See trap 4.10. Apply changes via the CLI and verify
   against the running service.
 - Start commands run under `set -e`. Steps are separated by `;`, not chained with `&&`/`||`.
-- Every start command must run, in order: `migrate` → `createcachetable` → `set_admin_password`
-  → `gunicorn`. `createcachetable` is idempotent (exit 0 when the table exists), so it is safe on
-  every boot. `set_admin_password` exits 0 when the password env var is unset or ADMIN001 is
-  missing, so it cannot wedge a boot.
+- Every start command must run `python manage.py boot` (which runs `migrate` →
+  `createcachetable` → `set_admin_password` **in one process** — three separate manage.py
+  invocations tripled free-plan cold-start time) and then `gunicorn`. A failed boot step must
+  abort under `set -e` before gunicorn starts. `createcachetable` is idempotent (exit 0 when the
+  table exists), so it is safe on every boot. `set_admin_password` exits 0 when the password env
+  var is unset or ADMIN001 is missing, so it cannot wedge a boot.
 - `DJANGO_ADMIN_PASSWORD` is applied by `set_admin_password`; it is not enough to declare the env
   var. Confirmed set on Render 2026-09-14 (`ADMIN001 password rotated.` in the boot logs).
 - A service-config change does **not** trigger a deploy. Run

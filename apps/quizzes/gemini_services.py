@@ -23,12 +23,14 @@ logger = logging.getLogger(__name__)
 
 # Tried in order. Pin one with the GEMINI_MODEL env var -- a hardcoded list rots
 # silently as Google retires model versions, and each retirement would quietly
-# degrade the feature to the fallback with no signal to anyone.
+# degrade the feature to the fallback with no signal to anyone. Stable models
+# first; the preview entry goes last because previews get retired with little
+# notice.
 DEFAULT_GEMINI_MODELS = (
     'gemini-3.5-flash',
     'gemini-3.1-flash-lite',
-    'gemini-3-flash-preview',
     'gemini-2.5-flash',
+    'gemini-3-flash-preview',
 )
 
 MIN_QUESTIONS = 1
