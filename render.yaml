@@ -70,7 +70,7 @@ services:
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_ALLOWED_HOSTS
-        value: .onrender.com
+        value: dronav2.onrender.com
       - key: DJANGO_CSRF_TRUSTED_ORIGINS
         value: https://dronav2.onrender.com
       - key: DJANGO_SECURE_SSL_REDIRECT
