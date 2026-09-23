@@ -1,0 +1,32 @@
+name: keep-alive
+
+# The Render free plan sleeps the instance after ~15 idle minutes; a cold start
+# pays the full boot (migrate + cache + password) before serving. This ping
+# hits /health/ every 5 minutes so the instance never sleeps. The repo is
+# public, so scheduled runs cost zero Actions minutes. Scheduled workflows only
+# run from the default branch.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Wake Render instance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Hit /health/
+        run: |
+          for attempt in 1 2 3; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 90 \
+              https://dronav2.onrender.com/health/) || code=000
+            echo "attempt $attempt -> $code"
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "health check failed after 3 attempts"
+          exit 1
