@@ -74,7 +74,9 @@ off until the SMTP env vars below are set.
    the Render service, redeploy, prove with `send_test_email`. Needs SMTP credentials — not doable
    from the repo alone. (`render.yaml` defers these declarations until the creds exist —
    adoption must not flip the backend unconfigured; see `HANDOFF.md` §3a.)
-2. **Adopt the Blueprint** — dashboard-only step making `render.yaml` authoritative (`HANDOFF.md` §2).
+2. ✅ ~~Adopt the Blueprint~~ — **done 2026-09-23**: `DRONAv2` = `exs-daq0qoek1f9s73dhte70`,
+   associated with the existing service (no duplicate), **Auto Sync off**, status `in_sync` at
+   `7168f1a`. `render.yaml` is now authoritative; syncs are manual (`HANDOFF.md` §2).
 3. ✅ ~~Pin/reorder Gemini models~~ — done 2026-09-23: stable models now precede the preview entry
    in `DEFAULT_GEMINI_MODELS`, and `GEMINI_MODEL=gemini-3.5-flash` is pinned on the live service.
 4. Deliberately **not** planned: `/verify/<bogus>/` returns `200` not `404` (a "query result" page,
@@ -107,15 +109,17 @@ off until the SMTP env vars below are set.
 | **App (Django backend)** | Render service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`) at `https://dronav2.onrender.com` |
 | **Landing page (static)** | Deployed separately from `landing/` (Vercel — see `landing/vercel.json`) |
 
-> ### ⚠️ `render.yaml` does NOT control the live service
+> ### `render.yaml` is Blueprint-authoritative — but **Auto Sync is OFF**
 >
-> The service was created **manually** in the Render dashboard and is **not Blueprint-managed**, so
-> **editing `render.yaml` changes nothing in production.** This already caused one incident: the
-> `set -e` start-command fix sat inert in the file while production kept running
-> `A && B || true; C`, and only the live boot logs revealed it.
+> The service was created manually, then **adopted as Blueprint-managed on 2026-09-23**
+> (`exs-daq0qoek1f9s73dhte70`, associated with the existing service — no duplicate). Syncs are
+> **manual**: editing `render.yaml` changes nothing until you press **Sync** in the Render
+> dashboard (or run `scripts/apply_render_config.py --apply` to push immediately). Before
+> adoption this file was fully inert, which caused one incident: the `set -e` start-command fix
+> sat in the file while production kept running `A && B || true; C`, revealed only by live boot
+> logs. Verify against the running service after any change.
 >
-> To change service config, use `scripts/apply_render_config.py` (reads `render.yaml` and pushes it
-> via the CLI) or `render services update`. See `ENGINEERING.md` trap 4.10 and `HANDOFF.md` §2.
+> See `ENGINEERING.md` trap 4.10 and `HANDOFF.md` §2.
 
 > **Railway is no longer the live target** — its trial expired. `Procfile` and `railway.toml` are
 > still valid and are kept in sync, but the active deployment path is Render. The Railway deploy
@@ -294,13 +298,16 @@ password in production.
 render deploys create srv-dajkh37qj5pc73e038i0 --confirm
 ```
 
-**Change service config** — `render.yaml` is inert, so edit it and run:
+**Change service config** — edit `render.yaml`, then apply it (Auto Sync is off, so a commit alone
+won't sync):
 
 ```bash
 python scripts/apply_render_config.py                    # dry run: shows the exact command
 python scripts/apply_render_config.py --apply            # push it to the service
 python scripts/apply_render_config.py --apply --deploy   # and deploy
 ```
+
+Or click **Sync** on the Blueprint in the Render dashboard (renders the same `render.yaml`).
 
 It applies `buildCommand`, `startCommand`, `healthCheckPath`, `plan`, `branch`, `repo`,
 `rootDir`, `previews` and `autoDeployTrigger`, then **verifies against the running service**.
@@ -419,9 +426,9 @@ Two workflows in `.github/workflows/`:
 | **Deploy backend** | `.github/workflows/deploy-backend.yml` | **manual** (`workflow_dispatch`) | Deploys Django to Railway (`railway up`) |
 
 > **Railway CD is manual-only.** The Railway trial expired and Render is now the live target, so
-> the push trigger was removed. Render auto-deploys on push to `main` because the *service* has
-> `autoDeployTrigger: commit` — not because of `render.yaml`, which is inert (see the warning in
-> Live Deployment). Re-add the push trigger only if Railway is reactivated.
+> the push trigger was removed. Render auto-deploys *code* on push to `main` because the *service*
+> has `autoDeployTrigger: commit`; `render.yaml` *config* applies only on a manual Blueprint sync
+> (Auto Sync off — see Live Deployment). Re-add the push trigger only if Railway is reactivated.
 
 ### Required GitHub Secrets
 
@@ -494,8 +501,8 @@ DRONAv2/
 │                       #   verify_render_env.py (compare live env vars, names only)
 ├── ENGINEERING.md      # Invariants, review checklist, known traps — read before changing
 ├── HANDOFF.md          # Outstanding work, deploy state, how to verify from the repo
-├── render.yaml         # Render config — INERT until the service is Blueprint-managed.
-│                       #   Apply it with scripts/apply_render_config.py (see Live Deployment)
+├── render.yaml         # Render config — Blueprint-authoritative (Auto Sync off since 2026-09-23).
+│                       #   Apply via dashboard Sync or scripts/apply_render_config.py (see Live Deployment)
 ├── Procfile            # Railway web command (kept in sync, currently unused)
 ├── railway.toml        # Railway config (kept in sync, currently unused)
 ├── seed.py             # Demo data loader

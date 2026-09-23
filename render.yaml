@@ -1,19 +1,23 @@
 # Render Blueprint for SRMS Drona (DRONAv2) -- free web service + external Neon Postgres.
 #
 # ############################################################################
-# # STATUS: PREPARED, NOT YET ACTIVE.                                        #
+# # STATUS: ACTIVE — Blueprint-managed since 2026-09-23 (id exs-daq0qoek1f9s73dhte70). #
 # #                                                                          #
-# # The `DRONAv2` service is currently MANUALLY configured and is NOT        #
-# # Blueprint-managed, so editing this file does NOT change production.      #
-# # This already bit us once: a `set -e` fix sat inert in this file while    #
-# # production kept running `A && B || true; C`, and only the live boot      #
-# # logs revealed it. See ENGINEERING.md trap 4.10.                          #
+# # The `DRONAv2` service is associated with this Blueprint ("Associate      #
+# # existing services" — no duplicate was created). **Auto Sync is OFF**,    #
+# # so editing this file does NOT change production until a sync runs:       #
+# # Dashboard -> Blueprints -> DRONAv2 -> Sync (or flip Auto Sync on), or    #
+# # `python scripts/apply_render_config.py --apply` for an immediate push.   #
+# # Historically this file sat inert (trap 4.10, ENGINEERING.md) while       #
+# # production ran a different command — verify against the live service.    #
 # #                                                                          #
-# # Every field below has been aligned with the live service so that         #
-# # adopting this Blueprint is a no-op. Read MIGRATION before activating.    #
+# # Every field below is aligned with the live service so that a sync is a   #
+# # no-op until you intend a change. Email vars are deferred until SMTP      #
+# # creds exist (HANDOFF §3a).                                               #
 # ############################################################################
 #
-# MIGRATION -- dashboard-only, the CLI cannot create a Blueprint:
+# MIGRATION — COMPLETED 2026-09-23 (record of how adoption was done; the CLI
+# and API cannot create Blueprints — dashboard-only, driven via browser):
 #   1. Dashboard -> New > Blueprint -> Connect this repo, branch `main`.
 #   2. Review the change preview. It MUST show the existing `DRONAv2` service
 #      being updated, NOT a new service. If it offers to create something like

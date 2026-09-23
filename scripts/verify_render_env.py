@@ -3,11 +3,10 @@
 
 Why this exists
 ---------------
-`render.yaml` in this repo does NOT control the live service: `DRONAv2` was created
-manually in the Render dashboard and is not Blueprint-managed (ENGINEERING.md trap 4.10).
-Before adopting it as a Blueprint, Render's docs warn that you must declare *every* option
-the service currently has, or the Blueprint applies a default that "almost definitely
-differs". Env vars are the part we cannot see from the CLI, so this closes that gap.
+`render.yaml` was historically NOT connected to the live service (trap 4.10), and adoption
+required declaring *every* option the service has — Render's docs warn that an omitted option
+gets a default that "almost definitely differs". Adopted 2026-09-23; this script now serves as
+the ongoing parity guard: exit 0 means the file and the live service agree.
 
 Safety
 ------

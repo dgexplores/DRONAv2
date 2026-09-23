@@ -3,14 +3,13 @@
 
 Why this exists
 ---------------
-`render.yaml` in this repo does NOT control the live service: `DRONAv2` was created
-manually in the Render dashboard and is not Blueprint-managed (ENGINEERING.md trap 4.10).
-Editing the file therefore changes nothing, which has already caused a real incident -- a
-`set -e` fix sat inert while production kept running `A && B || true; C`.
-
-This script closes that gap without needing a Blueprint: it reads render.yaml and pushes the
-values onto the service with `render services update`. After this, **render.yaml is the
-source of truth** -- edit it, run this, done.
+`render.yaml` was historically NOT connected to the live service (trap 4.10): editing the file
+changed nothing, which caused a real incident -- a `set -e` fix sat inert while production kept
+running `A && B || true; C`. Adopted as a Blueprint on 2026-09-23 with **Auto Sync off**, so
+commits alone still do not apply config. This script remains the fast path: it reads
+render.yaml and pushes the values onto the service with `render services update`, no dashboard
+click needed. After edits + this script (or a manual Blueprint Sync), **render.yaml is the
+source of truth**.
 
 What it can and cannot apply
 ----------------------------

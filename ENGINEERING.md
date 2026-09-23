@@ -151,14 +151,15 @@ than a password in a template.
 100% — it encoded the vulnerability as the specification. When a test looks like it is describing
 what the code does rather than what the product promises, stop and check the product promise.
 
-**4.10 `render.yaml` does not control the live service.**
-The `dronav2` service was created **manually** in the Render dashboard and has **no blueprint
-linkage**. Editing `render.yaml` therefore changes **nothing** in production — it is documentation
-that looks like configuration. This already bit us: the `set -e` / `set_admin_password` fix sat
+**4.10 `render.yaml` did not control the live service. (Resolved 2026-09-23.)**
+The `dronav2` service was created **manually** in the Render dashboard with **no blueprint
+linkage**, so editing `render.yaml` changed **nothing** in production — it was documentation
+that looked like configuration. This already bit us: the `set -e` / `set_admin_password` fix sat
 inert in the repo while production kept running `A && B || true; C`, and only reading the live
-boot logs revealed it.
-
-Apply service-config changes with the CLI, and verify against the running service:
+boot logs revealed it. **Now:** the service is Blueprint-managed (`exs-daq0qoek1f9s73dhte70`,
+Auto Sync **off**), so the file is authoritative but a manual Sync (or
+`apply_render_config.py`) is required to apply changes — and verification against the live
+service remains mandatory:
 
 ```bash
 render services update srv-dajkh37qj5pc73e038i0 --start-command '...' --confirm
@@ -200,8 +201,9 @@ Also note a service-config change never triggers a deploy on its own.
 
 **4.11 Secrets are write-only through the CLI — but NOT through the API.**
 There is no CLI command to read a service's env vars, and `render ssh` needs a key registered on
-the account. Do not assume a variable is set because it appears in `render.yaml` — that file is
-inert (trap 4.10).
+the account. Do not assume a variable is set because it appears in `render.yaml` — verify via the
+API (the file was fully inert pre-adoption, trap 4.10; it is now Blueprint-managed with manual
+syncs, so drift is still possible between edits and syncs).
 
 **However, the REST API does return values in plaintext:**
 
@@ -273,9 +275,10 @@ Copy this into the PR description.
 ## 7. Deployment rules
 
 - **Render is the live target.** Service `dronav2` = `srv-dajkh37qj5pc73e038i0`.
-  ⚠️ **`render.yaml` is inert** — the service is manually configured, not Blueprint-managed, so
-  editing the file does not change production. See trap 4.10. Apply changes via the CLI and verify
-  against the running service.
+  **`render.yaml` is Blueprint-authoritative** (adopted 2026-09-23, `exs-daq0qoek1f9s73dhte70`)
+  but **Auto Sync is off** — editing the file changes production only after a manual Blueprint
+  sync (dashboard) or `apply_render_config.py --apply`. Trap 4.10 records the era when the file
+  was fully inert. Verify against the running service after any change.
 - Start commands run under `set -e`. Steps are separated by `;`, not chained with `&&`/`||`.
 - Every start command must run `python manage.py boot` (which runs `migrate` →
   `createcachetable` → `set_admin_password` **in one process** — three separate manage.py

@@ -56,15 +56,18 @@ Boot sequence on the live service confirms all four start steps run:
 
 ---
 
-## 2. ⚠️ CRITICAL: `render.yaml` is NOT authoritative
+## 2. `render.yaml` IS authoritative — Blueprint-managed, **syncs manual** (Auto Sync off)
 
-**This is the most important thing in this document.**
+**Read this before changing production config.**
 
-`render.yaml` in this repo **does not control the live service**. The `dronav2` service was
-created **manually** in the Render dashboard, not via Blueprint. It has **no blueprint
-linkage** (verified: zero `blueprint` keys in the service JSON).
+Status as of **2026-09-23**: the `DRONAv2` service is **associated with Blueprint**
+`exs-daq0qoek1f9s73dhte70` (adopted from this repo's `render.yaml`, branch `main`), with
+**Auto Sync disabled** — so the file is the source of truth, but changes land only after a
+**manual Sync** in the dashboard (or `scripts/apply_render_config.py --apply`). Before adoption
+the service was created manually with **no blueprint linkage**, and editing `render.yaml` changed
+nothing — that era produced the trap below and is why syncs stay manual until trust is earned.
 
-Consequence: **editing `render.yaml` changes nothing in production.** The 2026-09-14 fix to
+**Historical consequence (pre-adoption):** the 2026-09-14 fix to
 `startCommand` sat inert in the repo while production kept running the old command. This was
 only caught by reading the live boot logs, which still showed the old form:
 
@@ -114,10 +117,11 @@ it cannot apply rather than skipping it silently**:
 
 Note a config change never auto-deploys — use `--deploy` or run `render deploys create`.
 
-#### Option B — adopt a Blueprint (the "proper" IaC route)
+#### Option B — adopt a Blueprint (the "proper" IaC route) — ✅ DONE 2026-09-23
 
-`render.yaml` has been **rebuilt to mirror the live service field-by-field**, so adopting it is a
-no-op. This is a dashboard step — the CLI cannot create a Blueprint.
+`render.yaml` is **mirrors the live service field-by-field**, so adoption was a
+no-op (one pre-flight fix: pinned `DJANGO_ALLOWED_HOSTS` to the live exact host). This was a
+dashboard step — the CLI cannot create a Blueprint.
 
 **Pre-flight (already passing).** `render blueprints validate` reveals whether a Blueprint would
 *adopt* the existing service or *create a duplicate*: the `plan.services` list names services that
@@ -157,7 +161,9 @@ is not dangerous — but the file would then be incomplete.
 **Known limitation:** creating a Blueprint is **not** possible via the API or CLI. The public API
 exposes only `GET /blueprints`, `POST /blueprints/validate`, `GET|PATCH|DELETE
 /blueprints/{id}` and `GET /blueprints/{id}/syncs` — there is no create endpoint (verified
-against Render's OpenAPI spec, 131 paths). Creation is dashboard-only by design.
+against Render's OpenAPI spec, 131 paths, the CLI, and the live MCP tool list). Creation is
+dashboard-only by design. **Resolved 2026-09-23:** performed through the dashboard via CDP
+automation; blueprint `exs-daq0qoek1f9s73dhte70` now manages the service with Auto Sync off.
 
 **Why the risk is low** (from Render's own docs, checked 2026-09-14):
 - `name` matching an existing service **applies config to that service** — it does not recreate it.
@@ -382,13 +388,18 @@ The context limit is a real constraint. The strategy that keeps this project saf
    now pushes `render.yaml` to the live service and verifies the result. Blueprint adoption is
    therefore **optional**, not blocking. *(§2)*
 4. ✅ ~~Correct the README and push everything~~ — **done**, `df6ec43`, CI green, deploy live.
-   The README now states plainly that `render.yaml` is inert and documents the Render env vars.
-5. **Convert `DRONAv2` to a Blueprint-managed service** — nice-to-have; needs a **dashboard**
-   action (the API cannot create Blueprints), and the `name` must be the display name `DRONAv2`
-   or Render creates a duplicate. **Pre-flight fully green as of 2026-09-23:** `render blueprints
-   validate` → `valid`, 1 action, no `services` key (adopts); `verify_render_env` → exact 14/14
-   match, exit 0. Email vars deliberately deferred from `render.yaml` until SMTP creds exist so
-   adoption cannot flip the backend unconfigured. *(§2, §3a)*
+   The README documented that `render.yaml` was inert at the time and listed the Render env vars
+   (wording since updated for Blueprint adoption).
+5. ✅ ~~Convert `DRONAv2` to a Blueprint-managed service~~ — **done 2026-09-23.** No API/CLI
+   create endpoint exists (verified: OpenAPI + CLI `blueprints validate` only + live MCP 22
+   tools), so it was done through the dashboard via CDP browser automation on the
+   `gangwardeepak` Chrome profile. Pre-flight enforced: preview showed **Associate existing
+   services** (checked), never "Create as new"; `DJANGO_ALLOWED_HOSTS` diff removed first by
+   pinning `render.yaml` to the live exact host (`7168f1a`); name = `DRONAv2` (display name).
+   Result: blueprint `exs-daq0qoek1f9s73dhte70`, resources = `[srv-dajkh37qj5pc73e038i0]`,
+   status `in_sync`, **Auto Sync PATCHed to false** immediately after creation (HANDOFF §2
+   rule), exactly 1 DRONAv2 service (no duplicate), `verify_render_env` exit 0, health 200.
+   Email vars deliberately deferred from `render.yaml` until SMTP creds exist. *(§2, §3a)*
 6. 🚨 **Enable email delivery** — the only high-impact gap left. Scheduler now runs, but
    `DJANGO_EMAIL_BACKEND` and `SMTP_USER`/`SMTP_PASSWORD` are still absent, so mail only logs.
    Needs SMTP credentials — blocks onboarding/setup links. *(§3a)*
