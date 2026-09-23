@@ -4,7 +4,7 @@
 context. If you are a teammate or a fresh session, read this file plus `ENGINEERING.md`
 and you are current.
 
-**Last updated:** 2026-09-16 (session 4 — README corrected and pushed)
+**Last updated:** 2026-09-23 (session 5 — security-review fixes pushed, Clerk SSO enabled live on Render, README + this file tailored)
 
 ---
 
@@ -14,14 +14,17 @@ and you are current.
 |---|---|
 | Working tree | clean (`git status --porcelain` empty) |
 | Branch | `main`, in sync with `origin/main` (0 behind / 0 ahead) |
-| HEAD | `df6ec43` — *docs: correct README to match the live Render deployment* |
-| CI | green — run `35000917256`, 31s, success |
-| Test suite | 108 tests, all passing; ship gate run twice consecutively |
-| Deployed | **live on Render** — service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`), deploy `dep-dakntt7lk1mc73d7gub0` (2026-09-15 17:25Z) |
+| HEAD | `6c98f36` — *docs: tailor README to current state* (plus this HANDOFF update) |
+| CI | green — run `35793907288`, 34s, success |
+| Test suite | 118 tests, all passing; ship gate green |
+| Deployed | **live on Render** — service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`), deploy `dep-dapg98n40ujc73ao56lg` (2026-09-22 22:45Z, commit `6c98f36`) |
 | Health | `https://dronav2.onrender.com/health/` → `200 ok`; `/` → `302`; HTTP → HTTPS `301` |
 
 The 9 defect classes found in the audit are fixed, committed, pushed, and CI-verified.
-Nothing is half-finished. The items below are *follow-ups*, not incomplete work.
+The 3 findings from the security review (2026-09-23: Clerk fail-closed binding,
+`frame-ancestors 'none'`, `list_users` email masking) are fixed the same way — commits
+`e5226a2` + `b4e019d`, covered by 3 new regression tests. Nothing is half-finished.
+The items below are *follow-ups*, not incomplete work.
 
 ---
 
@@ -230,11 +233,12 @@ simply **absent**. Nothing reports this, because each one has a harmless-looking
 | `DJANGO_EMAIL_BACKEND` | **absent** → `console.EmailBackend` | **No email is ever delivered.** Password-reset and staff setup links are printed to stdout (Render logs) instead of sent. `send_mail()` still returns `1`, so the UI reports success. |
 | `SMTP_USER` / `SMTP_PASSWORD` | **absent** | Same as above — no SMTP credentials configured. |
 | `SRMS_RUN_SCHEDULER` | **absent** → `'0'` | **APScheduler never starts** — reminder emails are never generated at all. |
-| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_JWT_AUDIENCE` | absent | Clerk SSO is off. *This one is intended* — it is an optional feature. |
+| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | **present** (set via Render API 2026-09-23) — Clerk SSO is **ON**; `/login/` renders `clerk.browser.js` on the live site. Binding is the JWT `azp` claim via `CLERK_AUTHORIZED_PARTIES`; `CLERK_JWT_AUDIENCE` is unset (optional alternative, deliberately not used — plain session tokens carry no `aud`). |
 
 Present and correct: `DATABASE_URL`, `DJANGO_ADMIN_PASSWORD`, `DJANGO_ALLOWED_HOSTS`,
 `DJANGO_CSRF_TRUSTED_ORIGINS`, `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`,
-`DJANGO_SECURE_SSL_REDIRECT`, `GEMINI_API_KEY`, `SRMS_BASE_URL`. No undeclared extras.
+`DJANGO_SECURE_SSL_REDIRECT`, `GEMINI_API_KEY`, `SRMS_BASE_URL` — plus, since 2026-09-23,
+the three `CLERK_*` vars (§3a table above). No undeclared extras.
 
 **Why this matters:** staff onboarding depends on emailed setup links. If email is not
 delivered, **new users can never set a password** and the only way in is an admin manually
@@ -392,3 +396,8 @@ The context limit is a real constraint. The strategy that keeps this project saf
 9. Align the local Python venv to 3.12. *(item 5)*
 10. Optionally reorder `DEFAULT_GEMINI_MODELS` to prefer stable models. *(§3 note)*
 11. Optionally delete the 37 local media artifacts. *(item 4)*
+12. ✅ ~~Security-review findings~~ — **done**, `e5226a2` + `b4e019d`, 3 new tests, suite at 118.
+13. ✅ ~~Enable Clerk SSO on Render~~ — **done** 2026-09-23: three `CLERK_*` vars set via the
+    Render API (public values also declared in `render.yaml`), deploy live, `/login/` verified
+    rendering the Clerk widget. Secret key confirmed against Clerk's API (HTTP 200).
+14. ✅ ~~Tailor README + HANDOFF to current state~~ — **done**, `6c98f36` + this commit.
