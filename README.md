@@ -44,6 +44,12 @@ through an HR analytics console — all under strict role-based access control (
 - **Hindi / English UI toggle**.
 - **PWA** — manifest + service worker, installable to home screen, works as an app.
 - **Email reminders** — APScheduler nudges staff with pending training (single-worker safe).
+  The scheduler is **on** in production; actual delivery awaits SMTP credentials (see
+  Capabilities). Until then, outgoing mail logs a WARNING instead of pretending to send.
+- **Always-on free plan** — triple keep-alive keeps Render from sleeping the instance:
+  GitHub Actions pings `/health/` every 5 minutes, an optional local crontab job
+  (`scripts/keep_awake.sh`, every 6 minutes), and a tiny beacon on the landing page. Fast boot
+  via `manage.py boot` (migrate + cache + admin password in **one** process — cold start 69s → 44s).
 - **Hardened** — per-IP rate limiting on login/register/password-reset, CSP + security headers
   (incl. `frame-ancestors 'none'`), fail-closed Clerk SSO, masked staff emails in `list_users`
   output, approval-notification emails, background email delivery so admin actions never hang.
@@ -52,15 +58,18 @@ through an HR analytics console — all under strict role-based access control (
 
 ## ✅ Capabilities vs 🗺️ mapped to be made
 
-**Live in production** (`https://dronav2.onrender.com`, probed 2026-09-14; Clerk SSO verified
+**Live in production** (`https://dronav2.onrender.com`, last probed 2026-09-23; Clerk SSO verified
 2026-09-23 — see `HANDOFF.md` §1a):
 Employee-ID auth + RBAC · approval workflow · admin provisioning · course hierarchy with
 auto-enrollment · server-derived video progress · AI quiz generation (`GEMINI_API_KEY` confirmed
-set, not serving fallback) · 70% pass threshold · QR-verifiable certificates · certificate
-directory with search/filters · per-student assignment · editable training calendar · HR analytics
-+ CSV export · Hindi/English toggle · PWA · rate limiting + CSP + anti-enumeration login ·
+set, not serving fallback; model pinned via `GEMINI_MODEL=gemini-3.5-flash`) · 70% pass
+threshold · QR-verifiable certificates · certificate directory with search/filters · per-student
+assignment · editable training calendar · HR analytics + CSV export · Hindi/English toggle ·
+PWA · rate limiting + CSP + anti-enumeration login ·
 **Clerk SSO** (all three `CLERK_*` env vars set on Render, verified live) ·
-**reminder scheduler running** (delivery pending SMTP).
+**reminder scheduler running** (delivery pending SMTP) ·
+**Blueprint-managed config** (`render.yaml` authoritative, Auto Sync off) ·
+**triple keep-alive** (free plan stays warm).
 
 **Partially live** (`HANDOFF.md` §3a): the reminder **scheduler is on** (`SRMS_RUN_SCHEDULER=1`,
 set 2026-09-23 — reminders generate and log), but **email delivery is still off**: the live
@@ -247,6 +256,10 @@ Open **http://127.0.0.1:8000/** in your browser.
 
 ### Demo accounts (seed only — local / fresh environments)
 
+> This repository is **public**: treat these as published constants, not secrets. They only
+> exist where you deliberately run `seed.py`. Any instance you expose must override them —
+> production uses `DJANGO_ADMIN_PASSWORD` (env-managed, never stored here).
+
 | Role | Employee ID | Password |
 |---|---|---|
 | Super Admin | `ADMIN001` | `Admin12345` |
@@ -273,26 +286,30 @@ password in production.
   active immediately. HR/HOD (trainer) accounts get approval rights plus the full management console,
   so they can operate independently.
 - **Password reset** (`/password-reset/`) — emails a reset link via SMTP.
-- **Clerk SSO** (enabled in production since 2026-09-23) — renders when `CLERK_PUBLISHABLE_KEY`
-  and `CLERK_SECRET_KEY` are set **and** a token-binding check exists
-  (`CLERK_AUTHORIZED_PARTIES`, the Clerk Frontend API URL, or alternatively `CLERK_JWT_AUDIENCE`);
-  SSO fails closed otherwise. Set the Clerk Dashboard **Homepage URL** to the live app URL for
-  SSO signups to work.
+- **Clerk SSO** (enabled in production since 2026-09-23) — renders when `CLERK_SECRET_KEY` is set
+  **together with** a token-binding claim: `CLERK_AUTHORIZED_PARTIES` (comma-separated origins
+  checked against the JWT `azp` claim — plain session tokens carry no `aud`) or, alternatively,
+  `CLERK_JWT_AUDIENCE`. Half-configured SSO disables itself (fails closed). Publishable key
+  decides whether the button renders; the binding decides whether tokens are accepted. Set the
+  Clerk Dashboard **Homepage URL** to the live app URL for SSO signups to work.
 
 ---
 
 ## ☁️ Production deployment on Render (backend) — the live target
 
 > **What's happening:** Render builds the repo on a Python runtime, installs the dependencies,
-> connects to external Postgres via `DATABASE_URL`, runs migrations, rotates the admin password,
-> and serves behind HTTPS with a single-worker gunicorn command.
+> connects to external Postgres via `DATABASE_URL`, then runs `python manage.py boot`
+> (migrate → cache table → admin-password rotation **in one process**, ~44s cold) followed by a
+> single-worker gunicorn under `set -e` — a failed boot step aborts before the app listens.
 
-> ⚠️ The service exists **already** and is **not** Blueprint-managed — do not run
-> "New → Blueprint" against this repo unless you intend to *adopt* the existing service, and
-> even then read `HANDOFF.md` §2 first (the `name` must be `DRONAv2`, or Render creates a
-> duplicate). For a fresh environment, `render.yaml` is ready to use.
+> ⚠️ The service is **already Blueprint-managed** (`exs-daq0qoek1f9s73dhte70`, adopted 2026-09-23).
+> **Do not run "New → Blueprint" against this repo again** — a second blueprint or a mismatched
+> `name` creates a duplicate service. Auto Sync is **off**: config changes land only via the
+> dashboard **Sync** button or `scripts/apply_render_config.py --apply`. Read `HANDOFF.md` §2
+> first. For a genuinely fresh environment, `render.yaml` is ready to use as-is.
 
-**Deploy** — push to `main` (auto-deploy is on), or trigger one explicitly:
+**Deploy** — push to `main` (code auto-deploys via the service's `autoDeployTrigger: commit`;
+config does **not** — that needs a Blueprint sync), or trigger one explicitly:
 
 ```bash
 render deploys create srv-dajkh37qj5pc73e038i0 --confirm
@@ -335,14 +352,18 @@ back through the CLI, so treat a password manager as the source of truth.
 | `DATABASE_URL` | External Postgres (e.g. Neon) connection string |
 | `DJANGO_SECRET_KEY` | Long random string |
 | `DJANGO_DEBUG` | `False` |
-| `DJANGO_ALLOWED_HOSTS` | `.onrender.com` |
+| `DJANGO_ALLOWED_HOSTS` | `dronav2.onrender.com` (exact host — matches live and `render.yaml`) |
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://dronav2.onrender.com` |
 | `DJANGO_SECURE_SSL_REDIRECT` | `True` |
 | `GEMINI_API_KEY` | Live AI quiz generation; if unset, quizzes fall back to rule-based questions and **a warning is logged** |
+| `GEMINI_MODEL` | `gemini-3.5-flash` — pins the stable model (fallback pool can drift through retired previews) |
 | `SRMS_BASE_URL` | `https://dronav2.onrender.com` |
+| `SRMS_RUN_SCHEDULER` | `1` — APScheduler reminder loop **on** (delivery still needs SMTP rows below) |
 | `DJANGO_ADMIN_PASSWORD` | Super-admin password; applied on every boot by `set_admin_password` |
-| `SMTP_USER` / `SMTP_PASSWORD` | Reminder + password-reset emails — **not set yet; email stays off** |
 | `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | Clerk SSO — all three **set live** (2026-09-23); `CLERK_JWT_AUDIENCE` is an optional alternative binding |
+| `DJANGO_EMAIL_BACKEND` | **Not set yet** — when set: `django.core.mail.backends.smtp.EmailBackend` |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USE_TLS` | **Not set yet** — e.g. `smtp.gmail.com` / `587` / `True` |
+| `SMTP_USER` / `SMTP_PASSWORD` | **Not set yet** — reminder + password-reset emails stay off until these land |
 
 To check whether `render.yaml` declares every env var the live service actually has:
 
@@ -350,6 +371,14 @@ To check whether `render.yaml` declares every env var the live service actually 
 export RENDER_API_KEY=rnd_...    # Dashboard → Account Settings → API Keys
 python scripts/verify_render_env.py        # prints NAMES only, never values
 ```
+
+**Keep-alive (free plan).** The instance sleeps after ~15 idle minutes; three layers prevent it:
+
+1. `.github/workflows/keep-alive.yml` — GitHub Actions cron every 5 minutes hits `/health/`
+   (free for public repos).
+2. `scripts/keep_awake.sh` — optional local crontab entry (`*/6 * * * *`), logs to
+   `~/Library/Logs/drona_keep_awake.log`.
+3. A `fetch('/health/', {mode:'no-cors'})` beacon on the Vercel landing page.
 
 ---
 
@@ -418,12 +447,13 @@ on startup, so the live super-admin password is always environment-managed, neve
 
 ## 🚦 CI/CD (GitHub Actions)
 
-Two workflows in `.github/workflows/`:
+Three workflows in `.github/workflows/`:
 
 | Workflow | File | Trigger | Job |
 |---|---|---|---|
-| **CI** | `.github/workflows/ci.yml` | push to `main`, every PR | Django system check · missing-migration check · full test suite · `collectstatic` · `compileall` |
-| **Deploy backend** | `.github/workflows/deploy-backend.yml` | **manual** (`workflow_dispatch`) | Deploys Django to Railway (`railway up`) |
+| **CI** | `.github/workflows/ci.yml` | push to `main`, every PR | Django system check · missing-migration check · full test suite (120) · `collectstatic` · `compileall` |
+| **Deploy backend** | `.github/workflows/deploy-backend.yml` | **manual** (`workflow_dispatch`) | Deploys Django to Railway (`railway up`) — legacy, manual only |
+| **Keep-alive** | `.github/workflows/keep-alive.yml` | cron every 5 min + manual | GET `/health/` so the free Render instance never sleeps |
 
 > **Railway CD is manual-only.** The Railway trial expired and Render is now the live target, so
 > the push trigger was removed. Render auto-deploys *code* on push to `main` because the *service*
@@ -489,16 +519,18 @@ DRONAv2/
 │   ├── quizzes/        # Quiz, Question, Choice, Attempt + Gemini service
 │   ├── certificates/   # Certificate model + PDF/QR builder
 │   ├── analytics/      # HR dashboard + CSV export
-│   ├── management/     # Admin management console + AuditLog
+│   ├── management/     # Admin management console, AuditLog, and `boot` (single-process
+│   │                   #   migrate + createcacheetable + set_admin_password for fast cold start)
 │   └── notifications/  # APScheduler email reminders
 ├── srms_drona/         # Settings, URLs, middleware, protected_media, test_settings
 ├── static/             # CSS (design system), JS, manifest.json, sw.js, icons, videos/
 ├── templates/          # Server-rendered HTML templates
 ├── landing/            # Static marketing site (deployed separately via Vercel)
 ├── media/              # Runtime uploads (cert PDFs, SOP PDFs) — git-ignored
-├── .github/workflows/  # ci.yml + deploy-backend.yml (manual)
+├── .github/workflows/  # ci.yml · deploy-backend.yml (manual, legacy) · keep-alive.yml (5m /health/)
 ├── scripts/            # apply_render_config.py (push render.yaml to Render, then verify)
 │                       #   verify_render_env.py (compare live env vars, names only)
+│                       #   keep_awake.sh (optional local crontab keep-alive)
 ├── ENGINEERING.md      # Invariants, review checklist, known traps — read before changing
 ├── HANDOFF.md          # Outstanding work, deploy state, how to verify from the repo
 ├── render.yaml         # Render config — Blueprint-authoritative (Auto Sync off since 2026-09-23).
