@@ -1,7 +1,13 @@
-from django.test import TestCase
+import os
+import tempfile
+
+from django.test import TestCase, override_settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from apps.users.models import StaffUser, Department
 from apps.courses.models import Category, Course, Module, Lesson, Enrollment
+
+TEST_MEDIA_ROOT = tempfile.mkdtemp(prefix='srms-test-media-')
 
 
 class ManagementConsoleTests(TestCase):
@@ -353,3 +359,99 @@ class BootCommandTests(TestCase):
         ):
             with self.assertRaises(RuntimeError):
                 call_command('boot')
+
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
+class DeleteRemovesUploadedFilesTests(TestCase):
+    """Deleting content must delete the uploaded file too (ENGINEERING.md 4.4).
+
+    The DB cascades; the bytes on disk do not. Without this the SOP PDFs
+    accumulate forever with no row pointing at them.
+    """
+
+    def setUp(self):
+        self.dept = Department.objects.create(name="IT", code="IT")
+        self.admin = StaffUser.objects.create_user(
+            employee_id="ADMIN9", username="admin9",
+            email="admin9@srms.ac.in", password="pass12345",
+            role="admin", is_superuser=True,
+        )
+        self.category = Category.objects.create(name="Safety")
+        self.client.login(employee_id='ADMIN9', password='pass12345')
+
+    def _lesson_with_pdf(self, course, title="SOP"):
+        module = Module.objects.create(course=course, title="M1", order=1)
+        pdf = SimpleUploadedFile("sop.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+        return Lesson.objects.create(
+            module=module, title=title, lesson_type="pdf", order=1, pdf_file=pdf,
+        )
+
+    def _path(self, lesson):
+        return lesson.pdf_file.path
+
+    def test_lesson_delete_removes_its_pdf(self):
+        course = Course.objects.create(title="C1", description="d", category=self.category)
+        lesson = self._lesson_with_pdf(course)
+        path = self._path(lesson)
+        self.assertTrue(os.path.exists(path))
+        self.client.post(reverse('mgmt_lesson_delete', args=[lesson.id]))
+        self.assertFalse(Lesson.objects.filter(pk=lesson.pk).exists())
+        self.assertFalse(os.path.exists(path), "file orphaned after lesson delete")
+
+    def test_module_delete_removes_child_pdfs(self):
+        course = Course.objects.create(title="C2", description="d", category=self.category)
+        lesson = self._lesson_with_pdf(course)
+        path = self._path(lesson)
+        module_id = lesson.module_id
+        self.client.post(reverse('mgmt_module_delete', args=[module_id]))
+        self.assertFalse(Module.objects.filter(pk=module_id).exists())
+        self.assertFalse(Lesson.objects.filter(pk=lesson.pk).exists())
+        self.assertFalse(os.path.exists(path), "file orphaned after module delete")
+
+    def test_course_delete_removes_all_pdfs(self):
+        course = Course.objects.create(title="C3", description="d", category=self.category)
+        a = self._lesson_with_pdf(course, "A")
+        b = self._lesson_with_pdf(course, "B")
+        pa, pb = self._path(a), self._path(b)
+        self.assertTrue(os.path.exists(pa) and os.path.exists(pb))
+        self.client.post(reverse('mgmt_course_delete', args=[course.id]))
+        self.assertFalse(Course.objects.filter(pk=course.pk).exists())
+        self.assertFalse(Module.objects.filter(course=course).exists())
+        self.assertFalse(Lesson.objects.filter(pk__in=[a.pk, b.pk]).exists())
+        self.assertFalse(os.path.exists(pa), "file A orphaned after course delete")
+        self.assertFalse(os.path.exists(pb), "file B orphaned after course delete")
+
+    def test_replacing_pdf_removes_the_old_file(self):
+        course = Course.objects.create(title="C4", description="d", category=self.category)
+        lesson = self._lesson_with_pdf(course)
+        old_path = self._path(lesson)
+        new_pdf = SimpleUploadedFile("sop2.pdf", b"%PDF-1.4 newer", content_type="application/pdf")
+        self.client.post(reverse('mgmt_lesson_edit', args=[lesson.id]), {
+            'title': lesson.title, 'lesson_type': 'pdf', 'duration_minutes': 5,
+            'order': 1, 'pdf_file': new_pdf,
+        })
+        lesson.refresh_from_db()
+        self.assertNotEqual(lesson.pdf_file.name, "sop.pdf")
+        self.assertFalse(os.path.exists(old_path), "old file orphaned after replace")
+        self.assertTrue(os.path.exists(lesson.pdf_file.path), "new file missing")
+
+    def test_delete_does_not_error_when_file_already_gone(self):
+        """A missing file must not turn a successful delete into a 500."""
+        course = Course.objects.create(title="C5", description="d", category=self.category)
+        lesson = self._lesson_with_pdf(course)
+        os.remove(self._path(lesson))
+        resp = self.client.post(reverse('mgmt_lesson_delete', args=[lesson.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(Lesson.objects.filter(pk=lesson.pk).exists())
+
+class FaviconTests(TestCase):
+    """Browsers request /favicon.ico unprompted; it must not 404."""
+
+    def test_root_favicon_route_serves_the_icon(self):
+        resp = self.client.get('/favicon.ico')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'image/x-icon')
+        self.assertTrue(resp.content.startswith(b'\x00\x00\x01\x00'), 'not an ICO file')
+
+    def test_layout_declares_an_icon(self):
+        resp = self.client.get(reverse('login'))
+        self.assertContains(resp, 'rel="icon"')

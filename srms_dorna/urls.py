@@ -17,9 +17,24 @@ handler403 = 'srms_dorna.views.handler403'
 handler404 = 'srms_dorna.views.handler404'
 handler500 = 'srms_dorna.views.handler500'
 
+
+def favicon_view(request):
+    """Serve the app icon at /favicon.ico from the collected static files."""
+    from django.contrib.staticfiles.storage import staticfiles_storage
+    try:
+        with staticfiles_storage.open('img/favicon.ico') as fh:
+            return HttpResponse(fh.read(), content_type='image/x-icon')
+    except (OSError, ValueError):
+        return HttpResponse(status=204)
+
 urlpatterns = [
     # Healthcheck (used by Railway + CI)
     path('health/', lambda request: HttpResponse('ok', content_type='text/plain'), name='health'),
+
+    # Browsers request /favicon.ico at the site root regardless of any <link>
+    # tag, and the standalone auth + error templates carry no layout, so serve
+    # it from a real route instead of leaving every page with a 404.
+    path('favicon.ico', favicon_view, name='favicon'),
 
     # Admin
     path('admin/', admin.site.urls),

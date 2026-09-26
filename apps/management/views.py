@@ -21,6 +21,39 @@ from apps.management.forms import (
 )
 
 
+def _collect_pdf_files(queryset):
+    """Every `Lesson.pdf_file` reachable from a course/module queryset.
+
+    Deleting a course or module cascades through the database, but the uploaded
+    SOP files stay on disk with nothing pointing at them. Collect the names
+    before the rows disappear so they can be removed afterwards.
+    """
+    return [
+        lesson.pdf_file
+        for lesson in Lesson.objects.filter(module__in=queryset).exclude(pdf_file='')
+        if lesson.pdf_file
+    ]
+
+
+def _delete_files(files):
+    """Remove stored files from disk, ignoring anything still referenced.
+
+    Call only after the owning rows are deleted. Never raises: a missing or
+    already-removed file must not turn a successful delete into a 500.
+    """
+    for field in files:
+        if not field:
+            continue
+        name = field.name
+        # A file still pointed at by a live row belongs to someone else.
+        if Lesson.objects.exclude(pk=field.instance.pk).filter(pdf_file=name).exists():
+            continue
+        try:
+            field.storage.delete(name)
+        except Exception:
+            logger.warning('Could not delete orphaned file %s', name, exc_info=True)
+
+
 def _random_password(length=12):
     """Generate a throwaway password that is never shown, logged, or returned.
 
@@ -117,8 +150,10 @@ def course_delete(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     if request.method == 'POST':
         title = course.title
+        orphans = _collect_pdf_files(course.modules.all())
         log_audit(request.user, 'course_delete', course, f"Deleted course '{title}' id={course_id}")
         course.delete()
+        _delete_files(orphans)
         messages.warning(request, f"Course '{title}' deleted.")
         return redirect('mgmt_course_list')
     return redirect('mgmt_course_detail', course_id=course_id)
@@ -181,8 +216,10 @@ def module_delete(request, module_id):
     module = get_object_or_404(Module, id=module_id)
     course_id = module.course.id
     if request.method == 'POST':
+        orphans = _collect_pdf_files(Module.objects.filter(pk=module.pk))
         log_audit(request.user, 'module_delete', module, f"Deleted module '{module.title}' id={module_id}")
         module.delete()
+        _delete_files(orphans)
         messages.warning(request, "Module deleted.")
     return redirect('mgmt_course_detail', course_id=course_id)
 
@@ -215,9 +252,14 @@ def lesson_edit(request, lesson_id):
 
     lesson = get_object_or_404(Lesson, id=lesson_id)
     if request.method == 'POST':
+        # Capture the existing file first: once the new one saves, the old name
+        # is unrecoverable from the instance and would be orphaned on disk.
+        previous = lesson.pdf_file if lesson.pdf_file else None
         form = LessonForm(request.POST, request.FILES, instance=lesson)
         if form.is_valid():
             form.save()
+            if previous and previous.name != lesson.pdf_file.name:
+                _delete_files([previous])
             messages.success(request, "Lesson updated.")
             return redirect('mgmt_course_detail', course_id=lesson.module.course.id)
     else:
@@ -234,8 +276,10 @@ def lesson_delete(request, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
     course_id = lesson.module.course.id
     if request.method == 'POST':
+        orphans = [lesson.pdf_file] if lesson.pdf_file else []
         log_audit(request.user, 'lesson_delete', lesson, f"Deleted lesson '{lesson.title}' id={lesson_id}")
         lesson.delete()
+        _delete_files(orphans)
         messages.warning(request, "Lesson deleted.")
     return redirect('mgmt_course_detail', course_id=course_id)
 
