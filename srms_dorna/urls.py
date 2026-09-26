@@ -3,6 +3,7 @@ from django.urls import path, include, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
+from django.core.exceptions import SuspiciousFileOperation
 from django.contrib.auth import views as auth_views
 
 from apps.users import views as user_views
@@ -19,12 +20,20 @@ handler500 = 'srms_dorna.views.handler500'
 
 
 def favicon_view(request):
-    """Serve the app icon at /favicon.ico from the collected static files."""
+    """Serve the app icon at /favicon.ico.
+
+    Resolved through the staticfiles finders (the source `static/` tree) before
+    falling back to storage, so it works in a fresh checkout where
+    `collectstatic` has not run yet — CI runs the test suite before that step.
+    """
+    from django.contrib.staticfiles import finders
     from django.contrib.staticfiles.storage import staticfiles_storage
+
     try:
-        with staticfiles_storage.open('img/favicon.ico') as fh:
+        path = finders.find('img/favicon.ico') or staticfiles_storage.path('img/favicon.ico')
+        with open(path, 'rb') as fh:
             return HttpResponse(fh.read(), content_type='image/x-icon')
-    except (OSError, ValueError):
+    except (OSError, ValueError, SuspiciousFileOperation):
         return HttpResponse(status=204)
 
 urlpatterns = [
