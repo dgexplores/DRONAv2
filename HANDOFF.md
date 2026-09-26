@@ -22,10 +22,12 @@ and you are current.
 | Keep-alive | 3 layers: GH Actions `/health/` ping every 5m · local crontab every 6m (`scripts/keep_awake.sh`) · landing-page beacon. Fast boot via `manage.py boot` (69s → 44s cold). |
 
 The 9 defect classes found in the audit are fixed, committed, pushed, and CI-verified.
-The 3 findings from the security review (2026-09-23: Clerk fail-closed binding,
+The 3 findings from the security review (2026-09-23: Clerk token-binding gate,
 `frame-ancestors 'none'`, `list_users` email masking) are fixed the same way — commits
-`e5226a2` + `b4e019d`, covered by 3 new regression tests. Nothing is half-finished.
-The items below are *follow-ups*, not incomplete work.
+`e5226a2` + `b4e019d`, covered by 3 new regression tests.
+
+⚠️ The Clerk part of that is now **moot**: the whole SSO integration was removed on 2026-09-26
+(its 3 regression tests went with it). The other two findings stand.$1The items below are *follow-ups*, not incomplete work.
 
 ---
 
@@ -241,12 +243,15 @@ simply **absent**. Nothing reports this, because each one has a harmless-looking
 | `SMTP_USER` / `SMTP_PASSWORD` | **absent** | Same as above — no SMTP credentials configured. |
 | `SRMS_RUN_SCHEDULER` | **present = `1`** (set 2026-09-23) | **APScheduler starts.** Reminders generate and are sent through the console backend, i.e. they land in Render logs until SMTP delivery is configured below. |
 | `GEMINI_MODEL` | **present = `gemini-3.5-flash`** (set 2026-09-23) | Quiz generation pinned to a stable model; the fallback pool also reorders stable-before-preview (`f8d12c0`). |
-| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | **present** (set via Render API 2026-09-23) — Clerk SSO is **ON**; `/login/` renders `clerk.browser.js` on the live site. Binding is the JWT `azp` claim via `CLERK_AUTHORIZED_PARTIES`; `CLERK_JWT_AUDIENCE` is unset (optional alternative, deliberately not used — plain session tokens carry no `aud`). |
 
 Present and correct: `DATABASE_URL`, `DJANGO_ADMIN_PASSWORD`, `DJANGO_ALLOWED_HOSTS`,
 `DJANGO_CSRF_TRUSTED_ORIGINS`, `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`,
-`DJANGO_SECURE_SSL_REDIRECT`, `GEMINI_API_KEY`, `SRMS_BASE_URL` — plus, since 2026-09-23,
-the three `CLERK_*` vars, `GEMINI_MODEL`, and `SRMS_RUN_SCHEDULER=1` (table above).
+`DJANGO_SECURE_SSL_REDIRECT`, `GEMINI_API_KEY`, `SRMS_BASE_URL` — plus `GEMINI_MODEL` and
+`SRMS_RUN_SCHEDULER=1` (set 2026-09-23).
+
+Now inert: `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `CLERK_AUTHORIZED_PARTIES` are **still set
+on the service** but nothing reads them — the SSO code was removed 2026-09-26. Clearing them in the
+dashboard is optional cleanup; a Blueprint sync will not remove them.
 Still absent (the remaining gap): `DJANGO_EMAIL_BACKEND`, `SMTP_*`, `SMTP_USER`,
 `SMTP_PASSWORD`.
 
@@ -411,5 +416,11 @@ The context limit is a real constraint. The strategy that keeps this project saf
     `GEMINI_MODEL=gemini-3.5-flash` pinned live. *(§3 note)*
 11. ✅ ~~Delete the 37 local media artifacts~~ — **done**: `media/` empty. *(item 4)*
 12. ✅ ~~Security-review findings~~ — **done**, `e5226a2` + `b4e019d`, 3 new tests.
-13. ✅ ~~Enable Clerk SSO on Render~~ — **done** 2026-09-23, verified live.
+13. ⛔ ~~Enable Clerk SSO on Render~~ — **REMOVED 2026-09-26.** Superseded item 13: rather than
+    leaving SSO inert, the integration was deleted (backend, view, URL, settings, widget, tests,
+    deps). The original "done, verified live" (2026-09-23) was wrong twice over — it was a
+    server-side check that never exercised the browser, and it blamed a missing publishable key when
+    the key was in fact set and rendered. Real cause: the page loaded Clerk's CDN *global* build but
+    called `Clerk.load({publishableKey})`, the npm/ESM signature, so the global build never saw the
+    key. Reinstating SSO means redoing it properly — see README § "Clerk SSO — removed".
 14. ✅ ~~Tailor README + HANDOFF to current state~~ — **done**, then re-synced in session 6.

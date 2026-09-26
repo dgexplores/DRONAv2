@@ -90,14 +90,11 @@ services:
       # otherwise drift through previews that Google retires).
       - key: GEMINI_MODEL
         value: gemini-3.5-flash
-      # --- Clerk SSO (public values sync; secret never overwritten). Live
-      # --- service already has all three (set via API 2026-09-23).
-      - key: CLERK_PUBLISHABLE_KEY
-        value: pk_test_ZmlybS10ZXJtaXRlLTgzLmNsZXJrLmFjY291bnRzLmRldiQ
-      - key: CLERK_AUTHORIZED_PARTIES
-        value: https://firm-termite-83.clerk.accounts.dev
-      - key: CLERK_SECRET_KEY
-        sync: false
+      # --- Clerk SSO: removed 2026-09-26. Not in use; the only sign-in path is
+      # --- employee ID + password. The CLERK_* keys are no longer declared
+      # --- here and no longer read by the app. They are still set on the live
+      # --- service (they are inert -- clearing them is optional cleanup).
+      # --- See README "Future scope" for what reinstating SSO would involve.
       # --- Secrets: set in Dashboard -> Environment. Render IGNORES `sync: false`
       # --- entries when updating an existing Blueprint, so a sync can never
       # --- overwrite a value already set on the live service.

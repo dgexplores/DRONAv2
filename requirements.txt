@@ -42,5 +42,3 @@ tzlocal==5.4.4
 urllib3==2.7.0
 websockets==16.1.1
 whitenoise==6.12.0
-clerk-backend-api==6.0.1
-pyjwt==2.13.0

@@ -51,25 +51,26 @@ through an HR analytics console — all under strict role-based access control (
   (`scripts/keep_awake.sh`, every 6 minutes), and a tiny beacon on the landing page. Fast boot
   via `manage.py boot` (migrate + cache + admin password in **one** process — cold start 69s → 44s).
 - **Hardened** — per-IP rate limiting on login/register/password-reset, CSP + security headers
-  (incl. `frame-ancestors 'none'`), fail-closed Clerk SSO, masked staff emails in `list_users`
-  output, approval-notification emails, background email delivery so admin actions never hang.
+  (incl. `frame-ancestors 'none'`), masked staff emails in `list_users` output, approval-notification
+  emails, background email delivery so admin actions never hang.
 
 ---
 
 ## ✅ Capabilities vs 🗺️ mapped to be made
 
-**Live in production** (`https://dronav2.onrender.com`, last probed 2026-09-23; Clerk SSO verified
-2026-09-23 — see `HANDOFF.md` §1a):
+**Live in production** (`https://dronav2.onrender.com`, last probed 2026-09-26):
 Employee-ID auth + RBAC · approval workflow · admin provisioning · course hierarchy with
 auto-enrollment · server-derived video progress · AI quiz generation (`GEMINI_API_KEY` confirmed
 set, not serving fallback; model pinned via `GEMINI_MODEL=gemini-3.5-flash`) · 70% pass
 threshold · QR-verifiable certificates · certificate directory with search/filters · per-student
 assignment · editable training calendar · HR analytics + CSV export · Hindi/English toggle ·
 PWA · rate limiting + CSP + anti-enumeration login ·
-**Clerk SSO** (all three `CLERK_*` env vars set on Render, verified live) ·
 **reminder scheduler running** (delivery pending SMTP) ·
 **Blueprint-managed config** (`render.yaml` authoritative, Auto Sync off) ·
 **triple keep-alive** (free plan stays warm).
+
+**Removed:** Clerk SSO (2026-09-26). Employee-ID + password is the only sign-in path. See
+[Clerk SSO — removed](#clerk-sso--removed-future-scope).
 
 **Partially live** (`HANDOFF.md` §3a): the reminder **scheduler is on** (`SRMS_RUN_SCHEDULER=1`,
 set 2026-09-23 — reminders generate and log), but **email delivery is still off**: the live
@@ -103,7 +104,7 @@ off until the SMTP env vars below are set.
 | **AI** | Google Gemini — MCQ generation from SOP PDF/text (candidates in `DEFAULT_GEMINI_MODELS`; pin one with `GEMINI_MODEL`) |
 | **PDF / QR** | ReportLab + qrcode — verifiable certificates |
 | **Scheduler** | APScheduler — email reminders |
-| **Auth** | Django auth + Clerk SSO (enabled in prod; binds the JWT `azp` claim via `CLERK_AUTHORIZED_PARTIES`) |
+| **Auth** | Django auth only — employee ID + password. No third-party identity provider |
 | **Hosting** | Render (app) + external Postgres. `Procfile` / `railway.toml` are kept in sync but Railway is no longer the live target |
 | **CI/CD** | GitHub Actions — CI on every push and PR; backend deploy is `workflow_dispatch` only |
 
@@ -160,10 +161,6 @@ off until the SMTP env vars below are set.
   (per-request nonce for inline scripts, Referrer-Policy, Permissions-Policy, nosniff,
   `frame-ancestors 'none'`, `object-src 'none'`). Inline `<script>` tags must carry
   `nonce="{{ request.csp_nonce }}"` or the browser will block them.
-- **Clerk SSO fails closed** — `clerk_enabled()` requires `CLERK_SECRET_KEY` plus a
-  token-binding claim (`CLERK_AUTHORIZED_PARTIES` verifying the JWT `azp`, or
-  `CLERK_JWT_AUDIENCE`); half-configured SSO disables itself instead of accepting
-  audience/party-unchecked tokens.
 - **Management CLI masks PII** — `list_users` prints `***@domain` unless `--include-email`
   is passed, so staff addresses never land in logs by default.
 - **Anti-enumeration** login: pending/inactive accounts return a generic error message, and login
@@ -286,12 +283,37 @@ password in production.
   active immediately. HR/HOD (trainer) accounts get approval rights plus the full management console,
   so they can operate independently.
 - **Password reset** (`/password-reset/`) — emails a reset link via SMTP.
-- **Clerk SSO** (enabled in production since 2026-09-23) — renders when `CLERK_SECRET_KEY` is set
-  **together with** a token-binding claim: `CLERK_AUTHORIZED_PARTIES` (comma-separated origins
-  checked against the JWT `azp` claim — plain session tokens carry no `aud`) or, alternatively,
-  `CLERK_JWT_AUDIENCE`. Half-configured SSO disables itself (fails closed). Publishable key
-  decides whether the button renders; the binding decides whether tokens are accepted. Set the
-  Clerk Dashboard **Homepage URL** to the live app URL for SSO signups to work.
+
+### Clerk SSO — removed (future scope)
+
+Clerk (a hosted third-party identity provider) was integrated until 2026-09-26 and has been
+**removed from the codebase**. Sign-in is **employee ID + password only**.
+
+Removed: `apps/users/clerk_auth.py` (the `ClerkAuthenticationBackend`), the `/clerk/login/`
+token-exchange view and its URL, the `CLERK_*` settings, the `ClerkAuthenticationBackend` entry in
+`AUTHENTICATION_BACKENDS`, the login-page widget markup and scripts, its 5 regression tests, and the
+`clerk-backend-api` / `pyjwt` dependencies. Net effect: `/login/` no longer loads
+`clerk.browser.js`, so the console is clean and the page loads one script lighter.
+
+**If SSO is ever wanted**, it is a deliberate re-adding, not a config flip. Two things to get right
+that the old integration got wrong:
+
+1. **The key was being handed to Clerk the wrong way.** The page loaded the CDN *global* build and
+   called `window.Clerk.load({ publishableKey: key })` — but that options-object signature belongs to
+   the npm/ESM build. The global build reads the key from a `data-clerk-publishable-key` script
+   attribute or `window.__clerk_publishable_key`, so it threw `Missing publishableKey` and rendered
+   an empty widget even though the key *was* set and correctly rendered into the page.
+2. **The gate didn't check the key it needed.** `clerk_enabled()` tested `CLERK_SECRET_KEY` plus a
+   token-binding claim but never `CLERK_PUBLISHABLE_KEY`, so a missing key rendered a broken button
+   instead of disabling SSO.
+
+Also required: a **production** publishable key (the old one was `pk_test_…`, test mode only), and
+`CLERK_AUTHORIZED_PARTIES` matching the Clerk Frontend API origin, since plain Clerk session tokens
+carry no `aud` claim and bind on `azp` instead.
+
+**Housekeeping:** the `CLERK_*` env vars are still set on the Render service. They are now inert —
+nothing reads them. Clearing them in the dashboard is optional cleanup; a Blueprint sync will not
+remove them, because `render.yaml` only declares what it declares.
 
 ---
 
@@ -360,7 +382,6 @@ back through the CLI, so treat a password manager as the source of truth.
 | `SRMS_BASE_URL` | `https://dronav2.onrender.com` |
 | `SRMS_RUN_SCHEDULER` | `1` — APScheduler reminder loop **on** (delivery still needs SMTP rows below) |
 | `DJANGO_ADMIN_PASSWORD` | Super-admin password; applied on every boot by `set_admin_password` |
-| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | Clerk SSO — all three **set live** (2026-09-23); `CLERK_JWT_AUDIENCE` is an optional alternative binding |
 | `DJANGO_EMAIL_BACKEND` | **Not set yet** — when set: `django.core.mail.backends.smtp.EmailBackend` |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USE_TLS` | **Not set yet** — e.g. `smtp.gmail.com` / `587` / `True` |
 | `SMTP_USER` / `SMTP_PASSWORD` | **Not set yet** — reminder + password-reset emails stay off until these land |
@@ -438,7 +459,6 @@ on startup, so the live super-admin password is always environment-managed, neve
 | `EMAIL_TIMEOUT` | SMTP connect timeout in seconds (default `10`) |
 | `DEFAULT_FROM_EMAIL` | Sender shown on outgoing emails |
 | `DJANGO_EMAIL_BACKEND` | `django.core.mail.backends.smtp.EmailBackend` (default is console) |
-| `CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` / `CLERK_AUTHORIZED_PARTIES` | Clerk SSO (optional here; live only on Render) |
 
 > **Scheduler note:** keep exactly one worker running the scheduler (`SRMS_RUN_SCHEDULER=1`)
 > to avoid duplicate reminder emails. The Procfile runs a single `web` worker by default.
@@ -499,8 +519,6 @@ defects fixed in `ENGINEERING.md`:
 | `test_password_setup_email_warns_when_console_backend` | Setup links printed instead of delivered with no log line |
 | `test_disabled_scheduler_warns` | Scheduler off with only an INFO trace |
 | `test_insecure_default_secret_key_is_rejected` | Booting production on dev defaults |
-| `test_clerk_disabled_without_audience` | SSO accepting Clerk tokens with no `azp`/`aud` binding |
-| `test_clerk_enabled_by_authorized_parties_alone` | SSO gated on a claim plain session tokens never carry |
 | `test_emails_masked_by_default` | `list_users` printing staff emails into logs |
 
 Tests write generated PDFs to a temporary `MEDIA_ROOT` (not the repo's `media/`), so a test run

@@ -99,11 +99,6 @@ def login_view(request):
         )
         return render(request, 'users/login.html', status=429)
 
-    context = {
-        'clerk_publishable_key': settings.CLERK_PUBLISHABLE_KEY,
-        'clerk_enabled': bool(settings.CLERK_PUBLISHABLE_KEY),
-    }
-
     if request.method == 'POST':
         employee_id = request.POST.get('employee_id', '').strip().upper()
         # Do not strip password: spaces can be significant.
@@ -127,7 +122,7 @@ def login_view(request):
             return redirect('dashboard')
         messages.error(request, _("Invalid Employee ID or Password. Please try again."))
 
-    return render(request, 'users/login.html', context)
+    return render(request, 'users/login.html')
 
 @ratelimit(key=get_client_ip, rate=REGISTER_MAX_RATE, method='POST', block=False)
 def register_view(request):
@@ -318,31 +313,3 @@ def toggle_language(request):
         return redirect(next_url)
     return redirect('dashboard')
 
-def clerk_login_view(request):
-    """Exchange a verified Clerk session token for a Django session.
-
-    The Clerk frontend signs the user in, obtains a session JWT, and POSTs it
-    here. The token is verified against Clerk's secret key and mapped to a
-    StaffUser (auto-provisioned on first sign-in).
-    """
-    from django.contrib.auth import authenticate
-
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-
-    if request.method != 'POST':
-        return redirect('login')
-
-    token = request.POST.get('token', '').strip()
-    if not token:
-        messages.error(request, _("Missing Clerk session token."))
-        return redirect('login')
-
-    user = authenticate(request, clerk_token=token)
-    if user is not None:
-        login(request, user)
-        messages.success(request, f"Welcome back, {user.first_name or user.employee_id}!")
-        return redirect('dashboard')
-
-    messages.error(request, _("Unable to sign in with the provided session. Please try again."))
-    return redirect('login')
