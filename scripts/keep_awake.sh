@@ -3,7 +3,7 @@
 # Layer 2 of 3: GitHub Actions pings every 5m, this cron every 6m, and the
 # landing page pings on every visitor. Two independent schedulers mean one
 # can be late or die without the instance ever sleeping.
-LOG="$HOME/Library/Logs/drona_keep_awake.log"
+LOG="$HOME/Library/Logs/DRONA_keep_awake.log"
 mkdir -p "$(dirname "$LOG")"
 # cap the log at 1MB so it can never grow unbounded
 [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ] && : > "$LOG"

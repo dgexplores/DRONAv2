@@ -100,5 +100,5 @@ def export_staff_report_csv(request):
 
     writer = csv.writer(Echo())
     response = StreamingHttpResponse((writer.writerow(r) for r in rows()), content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="srms_drona_staff_report.csv"'
+    response['Content-Disposition'] = 'attachment; filename="srms_dorna_staff_report.csv"'
     return response

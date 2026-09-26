@@ -282,7 +282,7 @@ class SopDocumentGateTests(TestCase):
     def _fetch_media(self, user):
         """Hit the production /media/ fallback route for the SOP file."""
         from django.test import RequestFactory
-        from srms_drona.views import protected_media
+        from srms_dorna.views import protected_media
         path = self.lesson.pdf_file.name
         request = RequestFactory().get('/media/' + path)
         request.user = user

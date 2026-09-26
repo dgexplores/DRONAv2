@@ -1,4 +1,4 @@
-# Engineering Standards — SRMS Drona
+# Engineering Standards — SRMS DRONA
 
 Read this before changing anything. It records the invariants this codebase depends on, the
 review process we hold each other to, and the traps that have already cost us time.
@@ -34,7 +34,7 @@ the admin typed, or generates one that nobody ever sees and emails a setup link
 (`apps/users/services.py`). The generated password stays *usable* on purpose — see trap 4.1.
 
 **1.5 Media is authorised per file.**
-`srms_drona.views.protected_media` is the only production `/media/` route. `certificates/`
+`srms_dorna.views.protected_media` is the only production `/media/` route. `certificates/`
 requires ownership or a manager role; `sop_documents/` requires enrollment. A blanket
 `login_required` is **not** sufficient — filenames are guessable and certificate IDs are printed
 on the credential itself.
@@ -45,7 +45,7 @@ value when the account does not exist, which equalises response time. Skipping i
 latency into an Employee-ID oracle, no matter how generic the error message is.
 
 **1.7 Production config fails fast.**
-With `DJANGO_DEBUG=False`, `srms_drona/settings.py` raises on an empty/default `DJANGO_SECRET_KEY`
+With `DJANGO_DEBUG=False`, `srms_dorna/settings.py` raises on an empty/default `DJANGO_SECRET_KEY`
 and on `DJANGO_ALLOWED_HOSTS=*`. Keep it that way. A misconfigured deploy must not boot.
 
 **1.8 The AI fallback is never silent.**
@@ -82,11 +82,11 @@ example `git stash push -- <file>`, run the test, confirm the failure, then `git
 ## 3. Ship gate
 
 ```bash
-./venv/bin/python manage.py check --settings=srms_drona.test_settings
-./venv/bin/python manage.py makemigrations --check --dry-run --settings=srms_drona.test_settings
-./venv/bin/python manage.py test apps --settings=srms_drona.test_settings
-./venv/bin/python manage.py collectstatic --noinput --settings=srms_drona.test_settings
-./venv/bin/python -m compileall -q apps srms_drona seed.py manage.py
+./venv/bin/python manage.py check --settings=srms_dorna.test_settings
+./venv/bin/python manage.py makemigrations --check --dry-run --settings=srms_dorna.test_settings
+./venv/bin/python manage.py test apps --settings=srms_dorna.test_settings
+./venv/bin/python manage.py collectstatic --noinput --settings=srms_dorna.test_settings
+./venv/bin/python -m compileall -q apps srms_dorna seed.py manage.py
 ```
 
 `makemigrations --check` must report **no changes** — if it doesn't, you forgot to commit a
@@ -302,11 +302,11 @@ Copy this into the PR description.
 |---|---|
 | Completion rules | `apps/courses/models.py` → `LessonProgress` |
 | Progress endpoint | `apps/courses/views.py` → `save_lesson_progress` |
-| Media authorisation | `srms_drona/views.py` → `protected_media` |
+| Media authorisation | `srms_dorna/views.py` → `protected_media` |
 | Post-commit + setup email | `apps/users/services.py` |
 | Login | `apps/users/views.py` → `login_view` |
 | Provisioning | `apps/management/views.py` → `create_user`, `import_staff` |
 | AI generation + report | `apps/quizzes/gemini_services.py` |
-| Production guards | `srms_drona/settings.py` (bottom of the file) |
-| CSP nonce | `srms_drona/middleware.py` |
+| Production guards | `srms_dorna/settings.py` (bottom of the file) |
+| CSP nonce | `srms_dorna/middleware.py` |
 | Player heartbeat | `static/js/app.js` (top of file) |

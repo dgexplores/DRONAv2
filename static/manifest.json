@@ -1,6 +1,6 @@
 {
-  "name": "SRMS Drona Learning App",
-  "short_name": "SRMS Drona",
+  "name": "SRMS DRONA Learning App",
+  "short_name": "SRMS DRONA",
   "description": "Skill Learning & Performance Tracking Platform for SRMS Non-Teaching Staff",
   "start_url": "/",
   "display": "standalone",

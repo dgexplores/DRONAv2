@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0d1b3e">
-    <title>{% block title %}SRMS Drona Learning App{% endblock %}</title>
+    <title>{% block title %}SRMS DRONA Learning App{% endblock %}</title>
     <meta name="description" content="Skill Learning & Performance Tracking Platform for SRMS Non-Teaching Staff">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,9 +21,9 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo"><img src="{% static 'img/logo.png' %}" alt="SRMS Drona logo"></div>
+            <div class="sidebar-logo"><img src="{% static 'img/logo.png' %}" alt="SRMS DRONA logo"></div>
             <div>
-                <span class="sidebar-brand-name">SRMS Drona</span>
+                <span class="sidebar-brand-name">SRMS DRONA</span>
                 <span class="sidebar-brand-sub">{% if is_hindi %}सीखने का मंच{% else %}Learning Platform{% endif %}</span>
             </div>
         </div>
@@ -102,7 +102,7 @@
                 <button class="menu-toggle" id="menuToggle" aria-label="{% if is_hindi %}मेनू{% else %}Toggle menu{% endif %}" aria-expanded="false">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
-                <span class="topbar-title">{% block page_title %}SRMS Drona{% endblock %}</span>
+                <span class="topbar-title">{% block page_title %}SRMS DRONA{% endblock %}</span>
                 <div class="topbar-actions">
                     <a href="{% url 'toggle_language' %}?lang={% if is_hindi %}en{% else %}hi{% endif %}" class="lang-toggle">
                         {% if is_hindi %}English{% else %}हिंदी{% endif %}
@@ -146,7 +146,7 @@
     {% if user.is_authenticated %}
         <footer class="footer">
             <div class="container">
-                © 2026 SRMS Drona Learning App &mdash; Shri Ram Murti Smarak Group of Institutions
+                © 2026 SRMS DRONA Learning App &mdash; Shri Ram Murti Smarak Group of Institutions
             </div>
         </footer>
     </div><!-- /.app -->

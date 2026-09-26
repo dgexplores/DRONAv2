@@ -8,7 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         start()
-        self.stdout.write(self.style.SUCCESS("SRMS Drona APScheduler started."))
+        self.stdout.write(self.style.SUCCESS("SRMS DRONA APScheduler started."))
         try:
             while True:
                 import time

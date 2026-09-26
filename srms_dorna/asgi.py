@@ -1,5 +1,5 @@
 """
-ASGI config for srms_drona project.
+ASGI config for srms_dorna project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'srms_drona.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'srms_dorna.settings')
 
 application = get_asgi_application()

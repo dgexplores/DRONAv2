@@ -1,5 +1,5 @@
 """
-WSGI config for srms_drona project.
+WSGI config for srms_dorna project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'srms_drona.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'srms_dorna.settings')
 
 application = get_wsgi_application()

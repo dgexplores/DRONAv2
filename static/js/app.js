@@ -1,4 +1,4 @@
-// SRMS Drona - Main Application JS
+// SRMS DRONA - Main Application JS
 (function () {
   'use strict';
 

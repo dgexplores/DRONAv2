@@ -1,4 +1,4 @@
-# HANDOFF — SRMS Drona (DRONAv2)
+# HANDOFF — SRMS DRONA (DRONAv2)
 
 **Purpose:** durable state so that no remaining work depends on an agent's conversation
 context. If you are a teammate or a fresh session, read this file plus `ENGINEERING.md`
@@ -38,8 +38,8 @@ read-only probes:
 |---|---|---|
 | `GET /media/certificates/<file>.pdf` (anonymous) | `302` → `/login/?next=...` | ✅ never `200` |
 | `GET /media/sop_documents/sop.pdf` (anonymous) | `302` → `/login/` | ✅ never `200` |
-| `GET /media/../srms_drona/settings.py` | `404` | ✅ traversal rejected |
-| `GET /media/....//srms_drona/settings.py` | `302` → login (404 once authed) | ✅ no leak |
+| `GET /media/../srms_dorna/settings.py` | `404` | ✅ traversal rejected |
+| `GET /media/....//srms_dorna/settings.py` | `302` → login (404 once authed) | ✅ no leak |
 | `GET /` `/certificates/` `/analytics/` `/manage/` | `302` → `/login/` | ✅ auth enforced |
 | `GET /verify/<bogus>/` | `200`, renders "Certificate Not Found" | ✅ no data leak |
 | `GET /verify/<img src=x onerror=...>` | reflected **HTML-escaped** | ✅ no XSS |
@@ -138,7 +138,7 @@ render blueprints validate render.yaml
 > under `services`, i.e. they would **create a second, duplicate service**.
 
 **Migration steps:**
-1. Dashboard → **New > Blueprint** → connect `dgexplores/DRONAv2`, branch `main`.
+1. Dashboard → **New > Blueprint** → connect `dgexplores/DRONA`, branch `main`.
 2. Read the change preview. It must show the **existing** `DRONAv2` service being updated.
 3. Set the Blueprint's **Auto Sync to No** before the first sync.
 4. Deploy, then verify against the running service (never against the file):
@@ -315,7 +315,7 @@ Nine defect classes, verified — not just claimed:
 1. **Certificate forgery** — video completion is now *derived* server-side from
    `LessonProgress.watched_seconds` (90% of duration). The client `completed` flag is
    ignored for video lessons.
-2. **`/media/` leak** — `srms_drona.views.protected_media` authorises per file
+2. **`/media/` leak** — `srms_dorna.views.protected_media` authorises per file
    (certificate = owner or manager; SOP = enrolled), replacing a blanket `login_required`.
 3. **Timing oracle** — login now goes through `authenticate()`.
 4. **Password display** — provisioning no longer renders passwords into Django messages.
@@ -335,7 +335,7 @@ Plus: production settings guards (refuses to boot with default `SECRET_KEY` or
 ## 5. How to verify the current state yourself
 
 ```bash
-cd /Users/dgsmacbook/DRONAv2
+cd /Users/dgsmacbook/DRONA
 
 # tree clean and in sync?
 git status --porcelain
@@ -345,11 +345,11 @@ git rev-list --left-right --count origin/main...HEAD   # expect: 0   0
 gh run list --limit 3
 
 # full ship gate (expect all green, twice)
-./venv/bin/python manage.py check --settings=srms_drona.test_settings
-./venv/bin/python manage.py makemigrations --check --dry-run --settings=srms_drona.test_settings
-./venv/bin/python manage.py test --settings=srms_drona.test_settings
-./venv/bin/python manage.py collectstatic --noinput --settings=srms_drona.test_settings
-./venv/bin/python -m compileall -q apps srms_drona
+./venv/bin/python manage.py check --settings=srms_dorna.test_settings
+./venv/bin/python manage.py makemigrations --check --dry-run --settings=srms_dorna.test_settings
+./venv/bin/python manage.py test --settings=srms_dorna.test_settings
+./venv/bin/python manage.py collectstatic --noinput --settings=srms_dorna.test_settings
+./venv/bin/python -m compileall -q apps srms_dorna
 
 # is production actually running the intended start command? (§2 — do not skip)
 render services -o json | python3 -c "import json,sys; [print(e['service']['serviceDetails']['envSpecificDetails']['startCommand']) for e in json.load(sys.stdin) if e['service']['id']=='srv-dajkh37qj5pc73e038i0']"

@@ -1,4 +1,4 @@
-# SRMS Drona — Learning & HR Analytics Platform
+# SRMS DRONA — Learning & HR Analytics Platform
 
 A full-featured, production-ready skill-learning and performance-tracking platform for
 **non-teaching staff** at SRMS Group of Institutions. Users learn from structured courses,
@@ -156,7 +156,7 @@ off until the SMTP env vars below are set.
   require enrollment, so guessing a filename gets a 404.
 - **Rate limiting** (`django-ratelimit`) on login, registration, and password reset — per IP —
   mitigates brute force and email bombing.
-- **CSP + security headers** via `srms_drona.middleware.SecurityHeadersMiddleware`
+- **CSP + security headers** via `srms_dorna.middleware.SecurityHeadersMiddleware`
   (per-request nonce for inline scripts, Referrer-Policy, Permissions-Policy, nosniff,
   `frame-ancestors 'none'`, `object-src 'none'`). Inline `<script>` tags must carry
   `nonce="{{ request.csp_nonce }}"` or the browser will block them.
@@ -201,8 +201,8 @@ Prereqs: **Python 3.12+** and **Git**.
 ### 1. Get the code
 
 ```bash
-git clone git@github.com:dgexplores/DRONAv2.git
-cd DRONAv2
+git clone git@github.com:dgexplores/DRONA.git
+cd DRONA
 ```
 
 ### 2. Create and activate a virtual environment
@@ -377,7 +377,7 @@ python scripts/verify_render_env.py        # prints NAMES only, never values
 1. `.github/workflows/keep-alive.yml` — GitHub Actions cron every 5 minutes hits `/health/`
    (free for public repos).
 2. `scripts/keep_awake.sh` — optional local crontab entry (`*/6 * * * *`), logs to
-   `~/Library/Logs/drona_keep_awake.log`.
+   `~/Library/Logs/DRONA_keep_awake.log`.
 3. A `fetch('/health/', {mode:'no-cors'})` beacon on the Vercel landing page.
 
 ---
@@ -473,7 +473,7 @@ Three workflows in `.github/workflows/`:
 ## 🧪 Running Tests
 
 ```bash
-./venv/bin/python manage.py test apps --settings=srms_drona.test_settings
+./venv/bin/python manage.py test apps --settings=srms_dorna.test_settings
 ```
 
 `test_settings.py` forces an in-memory DB, disables the scheduler, and clears the Gemini key so
@@ -511,7 +511,7 @@ leaves the working tree untouched.
 ## 📁 Project Structure
 
 ```
-DRONAv2/
+DRONA/
 ├── apps/
 │   ├── users/          # StaffUser, Department, auth, approval views, rate limiting,
 │   │                   #   services.py (post-commit hooks + password-setup email)
@@ -522,7 +522,7 @@ DRONAv2/
 │   ├── management/     # Admin management console, AuditLog, and `boot` (single-process
 │   │                   #   migrate + createcacheetable + set_admin_password for fast cold start)
 │   └── notifications/  # APScheduler email reminders
-├── srms_drona/         # Settings, URLs, middleware, protected_media, test_settings
+├── srms_dorna/         # Settings, URLs, middleware, protected_media, test_settings
 ├── static/             # CSS (design system), JS, manifest.json, sw.js, icons, videos/
 ├── templates/          # Server-rendered HTML templates
 ├── landing/            # Static marketing site (deployed separately via Vercel)

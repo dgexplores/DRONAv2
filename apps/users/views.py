@@ -40,20 +40,20 @@ def _send_approval_email(user, approved):
         return
     base = settings.SRMS_BASE_URL.rstrip('/')
     if approved:
-        subject = "Your SRMS Drona account is active"
+        subject = "Your SRMS DRONA account is active"
         message = (
             f"Dear {user.first_name or user.employee_id},\n\n"
-            "Your SRMS Drona account has been approved by an administrator.\n"
+            "Your SRMS DRONA account has been approved by an administrator.\n"
             "You can now sign in and start your training.\n\n"
             f"Sign in here: {base}/login/\n"
             "Forgot your password? Use the 'Forgot password?' link on the login page.\n\n"
             "Regards,\nSRMS Learning & HR Team"
         )
     else:
-        subject = "Your SRMS Drona registration"
+        subject = "Your SRMS DRONA registration"
         message = (
             f"Dear {user.first_name or user.employee_id},\n\n"
-            "Your SRMS Drona registration request has not been approved.\n"
+            "Your SRMS DRONA registration request has not been approved.\n"
             "If you believe this is an error, please contact the SRMS HR / admin team.\n\n"
             "Regards,\nSRMS Learning & HR Team"
         )

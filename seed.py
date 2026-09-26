@@ -1,6 +1,6 @@
 import os
 import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'srms_drona.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'srms_dorna.settings')
 django.setup()
 
 SEED_ADMIN_PASSWORD = os.environ.get('SEED_ADMIN_PASSWORD', 'Admin12345')
@@ -380,7 +380,7 @@ def create_enrollments_and_progress(staff):
     print(f"Enrolled {staff.employee_id} in mandatory courses and issued certificates.")
 
 def run():
-    print("=== SRMS Drona Seed Script ===")
+    print("=== SRMS DRONA Seed Script ===")
     departments = create_departments()
     create_super_admin()
     create_staff(departments[1])  # IT dept

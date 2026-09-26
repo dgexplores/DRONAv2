@@ -25,16 +25,16 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Django system check
-        run: python manage.py check --settings=srms_drona.test_settings
+        run: python manage.py check --settings=srms_dorna.test_settings
 
       - name: Check for missing migrations
-        run: python manage.py makemigrations --check --dry-run --settings=srms_drona.test_settings
+        run: python manage.py makemigrations --check --dry-run --settings=srms_dorna.test_settings
 
       - name: Run tests
-        run: python manage.py test apps --settings=srms_drona.test_settings -v 1
+        run: python manage.py test apps --settings=srms_dorna.test_settings -v 1
 
       - name: Collect static (build check)
-        run: python manage.py collectstatic --noinput --settings=srms_drona.test_settings
+        run: python manage.py collectstatic --noinput --settings=srms_dorna.test_settings
 
       - name: Python syntax gate (no pyc, fast fail)
-        run: python -m compileall -q apps srms_drona seed.py manage.py
+        run: python -m compileall -q apps srms_dorna seed.py manage.py

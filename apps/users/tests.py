@@ -382,7 +382,7 @@ class ProductionSettingsGuardTests(TestCase):
         # would otherwise fill in and mask the guard.
         env.update(env_overrides)
         return subprocess.run(
-            [sys.executable, '-c', 'import srms_drona.settings'],
+            [sys.executable, '-c', 'import srms_dorna.settings'],
             cwd=str(dj_settings.BASE_DIR),
             env=env, capture_output=True, text=True, timeout=60,
         )

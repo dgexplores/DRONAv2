@@ -157,7 +157,7 @@ class ProtectedMediaTests(TestCase):
 
     def _fetch(self, user, path):
         from django.test import RequestFactory
-        from srms_drona.views import protected_media
+        from srms_dorna.views import protected_media
         request = RequestFactory().get('/media/' + path)
         request.user = user
         return protected_media(request, path)

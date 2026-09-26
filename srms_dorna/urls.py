@@ -12,10 +12,10 @@ from apps.certificates import views as cert_views
 from apps.analytics import views as analytics_views
 
 # Custom error handlers
-handler400 = 'srms_drona.views.handler400'
-handler403 = 'srms_drona.views.handler403'
-handler404 = 'srms_drona.views.handler404'
-handler500 = 'srms_drona.views.handler500'
+handler400 = 'srms_dorna.views.handler400'
+handler403 = 'srms_dorna.views.handler403'
+handler404 = 'srms_dorna.views.handler404'
+handler500 = 'srms_dorna.views.handler500'
 
 urlpatterns = [
     # Healthcheck (used by Railway + CI)
@@ -86,7 +86,7 @@ else:
     # Serve uploaded media in production. protected_media authorises each file:
     # certificate PDFs require ownership, SOP documents require enrollment.
     # Long-term: object storage + signed URLs.
-    from srms_drona.views import protected_media
+    from srms_dorna.views import protected_media
     urlpatterns += [
         path(f'{settings.MEDIA_URL.lstrip("/")}<path:path>', protected_media),
     ]

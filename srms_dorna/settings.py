@@ -1,5 +1,5 @@
 """
-Django settings for srms_drona project.
+Django settings for srms_dorna project.
 """
 import os
 from pathlib import Path
@@ -52,7 +52,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'srms_drona.middleware.SecurityHeadersMiddleware',
+    'srms_dorna.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -62,7 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'srms_drona.urls'
+ROOT_URLCONF = 'srms_dorna.urls'
 
 TEMPLATES = [
     {
@@ -81,7 +81,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'srms_drona.wsgi.application'
+WSGI_APPLICATION = 'srms_dorna.wsgi.application'
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -180,7 +180,7 @@ EMAIL_USE_TLS = os.getenv('SMTP_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('SMTP_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASSWORD', '')
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SRMS Drona <no-reply@srms.ac.in>')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SRMS DRONA <no-reply@srms.ac.in>')
 SRMS_BASE_URL = os.getenv('SRMS_BASE_URL', 'http://127.0.0.1:8000')
 
 # ---- APScheduler email reminders ----

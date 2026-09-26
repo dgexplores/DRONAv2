@@ -1,4 +1,4 @@
-# Render Blueprint for SRMS Drona (DRONAv2) -- free web service + external Neon Postgres.
+# Render Blueprint for SRMS DRONA (DRONAv2) -- free web service + external Neon Postgres.
 #
 # ############################################################################
 # # STATUS: ACTIVE — Blueprint-managed since 2026-09-23 (id exs-daq0qoek1f9s73dhte70). #
@@ -46,7 +46,7 @@ services:
     plan: free
     # Cannot be modified after creation -- must match the live region.
     region: oregon
-    repo: https://github.com/dgexplores/DRONAv2
+    repo: https://github.com/dgexplores/DRONA
     branch: main
     # `autoDeployTrigger: commit` is the current form of `autoDeploy: true`,
     # which is deprecated.
@@ -62,7 +62,7 @@ services:
     startCommand: >-
       set -e;
       python manage.py boot;
-      gunicorn srms_drona.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+      gunicorn srms_dorna.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
     healthCheckPath: /health/
     # `previews` is omitted on purpose: the live service has preview generation
     # disabled, and omitting the field disables it.

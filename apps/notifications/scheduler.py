@@ -36,7 +36,7 @@ def start():
         replace_existing=True,
     )
     scheduler.start()
-    logger.info("SRMS Drona APScheduler started.")
+    logger.info("SRMS DRONA APScheduler started.")
 
 def send_reminders_job():
     """Send reminder emails to staff with incomplete mandatory training."""
@@ -66,7 +66,7 @@ def send_reminders_job():
         progress = enrollment.progress_percent
         course_url = f"{settings.SRMS_BASE_URL}/courses/{course.id}/"
 
-        subject = f"[SRMS Drona] Reminder: Complete {course.title}"
+        subject = f"[SRMS DRONA] Reminder: Complete {course.title}"
         message = (
             f"Dear {user.first_name},\n\n"
             f"This is a reminder that you have not yet completed the mandatory training:\n"

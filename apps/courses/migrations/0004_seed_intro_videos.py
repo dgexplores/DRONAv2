@@ -12,7 +12,7 @@ def seed_intro_course(apps, schema_editor):
         defaults={
             'name_hi': 'परिचय',
             'icon': 'play-circle',
-            'description': 'Welcome videos for the Drona learning platform.',
+            'description': 'Welcome videos for the DRONA learning platform.',
         },
     )
 
@@ -20,7 +20,7 @@ def seed_intro_course(apps, schema_editor):
         title='Platform Introduction',
         defaults={
             'title_hi': 'प्लेटफ़ॉर्म परिचय',
-            'description': 'Watch these short videos to get familiar with the Drona learning platform and how it works.',
+            'description': 'Watch these short videos to get familiar with the DRONA learning platform and how it works.',
             'description_hi': 'ड्रोना लर्निंग प्लेटफ़ॉर्म से परिचित होने के लिए ये छोटे वीडियो देखें।',
             'category': category,
             'is_mandatory': False,

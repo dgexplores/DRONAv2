@@ -15,7 +15,7 @@ class Command(BaseCommand):
             return
         try:
             count = send_mail(
-                "SRMS Drona - SMTP connectivity test",
+                "SRMS DRONA - SMTP connectivity test",
                 "This confirms SMTP is working on the production server.",
                 settings.DEFAULT_FROM_EMAIL,
                 [to],
