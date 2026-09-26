@@ -17,7 +17,7 @@ and you are current.
 | HEAD | `f8d12c0` — *chore: prefer stable Gemini models…* (plus this HANDOFF update) |
 | CI | green — run `35889396418`, success (on Python 3.12, suite = 120 tests) |
 | Test suite | 120 tests, all passing; ship gate green **on local venv Python 3.12.13** (aligned) |
-| Deployed | **live on Render** — service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`), deploy `dep-dapvtv4s728c73fh3g40` (2026-09-23, commit `f8d12c0`) |
+| Deployed | **live on Render** — service **`DRONAv2`** (`srv-dajkh37qj5pc73e038i0`), deploy `dep-dartv2sef86c73emicg0` (2026-09-26, commit `1ff324a`, bilingual en+hi) |
 | Health | `https://dronav2.onrender.com/health/` → `200 ok`; `/` → `302`; HTTP → HTTPS `301` |
 | Keep-alive | 3 layers: GH Actions `/health/` ping every 5m · local crontab every 6m (`scripts/keep_awake.sh`) · landing-page beacon. Fast boot via `manage.py boot` (69s → 44s cold). |
 
@@ -427,3 +427,28 @@ The context limit is a real constraint. The strategy that keeps this project saf
     called `Clerk.load({publishableKey})`, the npm/ESM signature, so the global build never saw the
     key. Reinstating SSO means redoing it properly — see README § "Clerk SSO — removed".
 14. ✅ ~~Tailor README + HANDOFF to current state~~ — **done**, then re-synced in session 6.
+
+
+## ⚠️ Known issue: documented admin password does not work on production
+
+Found 2026-09-26 while verifying the Hindi deploy. **Unrelated to i18n — pre-existing.**
+
+- `ADMIN001 / Admin12345` (documented in README) returns *"Invalid Employee ID or Password"*.
+  `EMP001 / drona123` works fine.
+- Cause: `create_super_admin()` in `seed.py` is **skip-if-exists** —
+  `if not StaffUser.objects.filter(employee_id='ADMIN001').exists():` — so the password is
+  written **only on first creation**. Once the row exists, re-running the seed (with a
+  different `SEED_ADMIN_PASSWORD`) never updates it. The live DB's admin was created under a
+  different value, so the documented credential has been wrong ever since.
+- `create_staff()` has the same skip-if-exists shape but hardcodes `password='drona123'`, which
+  is why staff logins are unaffected and only the admin drifted.
+
+Fixing this means writing to production data or re-running a seed that **updates** existing
+rows. Do not do that implicitly — pick one:
+
+1. set `SEED_ADMIN_PASSWORD` on the service to the documented value and change the seed to
+   `set_password` when the user already exists, or
+2. reset the row via a Django shell / one-off admin action.
+
+Until then, use `EMP001 / drona123` (staff) to demo, and reach the management console by
+promoting a staff account from the admin UI rather than by the admin login.
