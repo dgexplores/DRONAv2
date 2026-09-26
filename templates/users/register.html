@@ -1,11 +1,12 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ UI_LANG }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0d1b3e">
-    <title>Create Account | SRMS DRONA Learning App</title>
+    <title>{% trans "Create Account | SRMS DRONA Learning App" %}</title>
     <link rel="manifest" href="{% static 'manifest.json' %}">
     <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
     <link rel="apple-touch-icon" href="{% static 'img/logo.png' %}">
@@ -21,8 +22,8 @@
         <div class="login-card">
             <div class="login-brand">
                 <div class="logo-circle"><img src="{% static 'img/logo.png' %}" alt="SRMS DRONA logo"></div>
-                <h1>Create Account</h1>
-                <p>Register to join the SRMS DRONA Learning Platform. Your account must be approved by an admin before you can sign in.</p>
+                <h1>{% trans "Create Account" %}</h1>
+                <p>{% blocktranslate %}Register to join the SRMS DRONA Learning Platform. Your account must be approved by an admin before you can sign in.{% endblocktranslate %}</p>
             </div>
 
             {% if messages %}
@@ -52,11 +53,11 @@
                     {% endif %}
                 </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-primary btn-block mt-2">Create Account</button>
+                <button type="submit" class="btn btn-primary btn-block mt-2">{% trans "Create Account" %}</button>
             </form>
 
             <div class="login-alt">
-                Already have an account? <a href="{% url 'login' %}">Sign in</a>
+                {% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Sign in" %}</a>
             </div>
         </div>
     </div>

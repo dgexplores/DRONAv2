@@ -1,14 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Quiz Builder | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Quiz Builder | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
-<div class="page-title">{% if is_hindi %}प्रश्नोत्तरी निर्माता{% else %}Quiz Builder{% endif %}</div>
+<div class="page-title">{% trans "Quiz Builder" %}</div>
 <p class="page-subtitle">
-    {% if is_hindi %}
-    SOP पीडीएफ या टेक्स्ट अपलोड करें, MCQs स्वचालित रूप से उत्पन्न करें।
-    {% else %}
-    Upload an SOP PDF or paste text to generate MCQs automatically.
-    {% endif %}
+    {% trans "Upload an SOP PDF or paste text to generate MCQs automatically." %}
 </p>
 
 <div class="form-card">
@@ -16,9 +13,9 @@
         {% csrf_token %}
 
         <div class="form-group">
-            <label for="module_id">{% if is_hindi %}मॉड्यूल चुनें{% else %}Select Module{% endif %}</label>
+            <label for="module_id">{% trans "Select Module" %}</label>
             <select id="module_id" name="module_id" class="form-input" required>
-                <option value="">-- {% if is_hindi %}चुनें{% else %}Select Module{% endif %} --</option>
+                <option value="">-- {% trans "Select Module" %} --</option>
                 {% for module in modules %}
                 <option value="{{ module.id }}">{{ module.course.title }} → {{ module.title }}</option>
                 {% endfor %}
@@ -26,18 +23,18 @@
         </div>
 
         <div class="form-group">
-            <label for="pdf_file">{% if is_hindi %}SOP पीडीएफ (वैकल्पिक){% else %}SOP PDF (Optional){% endif %}</label>
+            <label for="pdf_file">{% trans "SOP PDF (Optional)" %}</label>
             <input type="file" id="pdf_file" name="pdf_file" class="form-input" accept=".pdf">
         </div>
 
         <div class="form-group">
-            <label for="sop_text">{% if is_hindi %}या SOP टेक्स्ट पेस्ट करें{% else %}Or Paste SOP Text{% endif %}</label>
+            <label for="sop_text">{% trans "Or Paste SOP Text" %}</label>
             <textarea id="sop_text" name="sop_text" class="form-input"
-                      placeholder="{% if is_hindi %}प्रश्न उत्पन्न करने के लिए SOP सामग्री पेस्ट करें...{% else %}Paste SOP content to generate questions...{% endif %}"></textarea>
+                      placeholder="{% trans "Paste SOP content to generate questions..." %}"></textarea>
         </div>
 
         <div class="form-group">
-            <label for="num_questions">{% if is_hindi %}प्रश्नों की संख्या{% else %}Number of Questions{% endif %}</label>
+            <label for="num_questions">{% trans "Number of Questions" %}</label>
             <select id="num_questions" name="num_questions" class="form-input">
                 <option value="5">5</option>
                 <option value="7">7</option>
@@ -45,7 +42,7 @@
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">⚡ {% if is_hindi %}प्रश्न उत्पन्न करें{% else %}Generate Questions{% endif %}</button>
+        <button type="submit" class="btn btn-primary btn-block">⚡ {% trans "Generate Questions" %}</button>
     </form>
 </div>
 {% endblock %}

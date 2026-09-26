@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block title %}{{ title }} | SRMS DRONA{% endblock %}
 
 {% block content %}
@@ -19,8 +20,8 @@
         </div>
         {% endfor %}
         <div style="display:flex; gap:0.75rem; margin-top:1rem;">
-            <button type="submit" class="btn btn-primary">💾 Save Session</button>
-            <a href="{% url 'mgmt_session_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">💾 {% trans "Save Session" %}</button>
+            <a href="{% url 'mgmt_session_list' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
         </div>
     </form>
 </div>

@@ -1,26 +1,27 @@
 {% extends 'base.html' %}
-{% block title %}Training Sessions | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Training Sessions | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
-<div class="page-title">📅 Training Sessions</div>
-<p class="page-subtitle">Schedule workshops, drills, and live training for staff.</p>
+<div class="page-title">📅 {% trans "Training Sessions" %}</div>
+<p class="page-subtitle">{% trans "Schedule workshops, drills, and live training for staff." %}</p>
 
 <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem;">
-    <a href="{% url 'mgmt_session_create' %}" class="btn btn-primary">➕ New Session</a>
-    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">← Back</a>
+    <a href="{% url 'mgmt_session_create' %}" class="btn btn-primary">➕ {% trans "New Session" %}</a>
+    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">← {% trans "Back" %}</a>
 </div>
 
 <div class="table-wrap">
     <table class="data">
         <thead>
             <tr>
-                <th>Session</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Location</th>
-                <th>Linked Course</th>
-                <th>Type</th>
-                <th>Actions</th>
+                <th>{% trans "Session" %}</th>
+                <th>{% trans "Date" %}</th>
+                <th>{% trans "Time" %}</th>
+                <th>{% trans "Location" %}</th>
+                <th>{% trans "Linked Course" %}</th>
+                <th>{% trans "Type" %}</th>
+                <th>{% trans "Actions" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -35,21 +36,21 @@
                 <td>{{ s.location|default:"—" }}</td>
                 <td>{% if s.course %}{{ s.course.title }}{% else %}—{% endif %}</td>
                 <td>
-                    {% if s.is_mandatory %}<span class="badge badge-mandatory">Mandatory</span>{% else %}<span class="badge badge-elective">Elective</span>{% endif %}
+                    {% if s.is_mandatory %}<span class="badge badge-mandatory">{% trans "Mandatory" %}</span>{% else %}<span class="badge badge-elective">{% trans "Elective" %}</span>{% endif %}
                 </td>
                 <td>
                     <div style="display:flex; gap:0.4rem;">
-                        <a href="{% url 'mgmt_session_edit' s.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                        <a href="{% url 'mgmt_session_edit' s.id %}" class="btn btn-secondary btn-sm">{% trans "Edit" %}</a>
                         <form method="POST" action="{% url 'mgmt_session_delete' s.id %}" style="display:inline;"
                               onsubmit="return confirm('Delete this session?');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                            <button type="submit" class="btn btn-danger btn-sm">{% trans "Del" %}</button>
                         </form>
                     </div>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" style="text-align:center; color:var(--muted);">No sessions scheduled yet.</td></tr>
+            <tr><td colspan="7" style="text-align:center; color:var(--muted);">{% trans "No sessions scheduled yet." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>

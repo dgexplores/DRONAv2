@@ -1,11 +1,12 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ UI_LANG }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0d1b3e">
-    <title>Access Denied | SRMS DRONA</title>
+    <title>{% trans "Access Denied | SRMS DRONA" %}</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
 </head>
@@ -13,9 +14,9 @@
     <div class="error-page">
         <div class="error-card">
             <div class="error-code">403</div>
-            <div class="error-title">Access denied</div>
-            <p class="error-message">You don't have permission to view this page. If you believe this is a mistake, please contact your administrator.</p>
-            <a href="/" class="btn btn-primary">Back to Dashboard</a>
+            <div class="error-title">{% trans "Access denied" %}</div>
+            <p class="error-message">{% trans "You don't have permission to view this page. If you believe this is a mistake, please contact your administrator." %}</p>
+            <a href="/" class="btn btn-primary">{% trans "Back to Dashboard" %}</a>
         </div>
     </div>
 </body>

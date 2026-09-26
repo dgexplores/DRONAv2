@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block title %}{{ course.title }} | SRMS DRONA{% endblock %}
 
 {% block content %}
@@ -6,13 +7,13 @@
 <p class="page-subtitle">{{ course.description|truncatechars:160 }}</p>
 
 <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.25rem;">
-    <a href="{% url 'mgmt_course_edit' course.id %}" class="btn btn-primary btn-sm">✏️ Edit Course</a>
-    <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold btn-sm">👥 Enroll Staff</a>
-    <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-sm">👁️ View as learner</a>
+    <a href="{% url 'mgmt_course_edit' course.id %}" class="btn btn-primary btn-sm">✏️ {% trans "Edit Course" %}</a>
+    <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold btn-sm">👥 {% trans "Enroll Staff" %}</a>
+    <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-sm">👁️ {% trans "View as learner" %}</a>
     <a href="{% url 'mgmt_course_list' %}" class="btn btn-secondary btn-sm">← Courses</a>
 </div>
 
-<div class="section-title">Structure</div>
+<div class="section-title">{% trans "Structure" %}</div>
 {% for module in modules %}
 <div class="module-block" style="margin-bottom: 1rem;">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -22,12 +23,12 @@
             <span class="badge badge-category">Order {{ module.order }}</span>
         </div>
         <div style="display:flex; gap:0.4rem;">
-            <a href="{% url 'mgmt_module_edit' module.id %}" class="btn btn-secondary btn-sm">Edit</a>
-            <a href="{% url 'mgmt_lesson_create' module.id %}" class="btn btn-success btn-sm">+ Lesson</a>
+            <a href="{% url 'mgmt_module_edit' module.id %}" class="btn btn-secondary btn-sm">{% trans "Edit" %}</a>
+            <a href="{% url 'mgmt_lesson_create' module.id %}" class="btn btn-success btn-sm">{% trans "+ Lesson" %}</a>
             <form method="POST" action="{% url 'mgmt_module_delete' module.id %}" style="display:inline;"
                   onsubmit="return confirm('Delete module and its lessons?');">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                <button type="submit" class="btn btn-danger btn-sm">{% trans "Del" %}</button>
             </form>
         </div>
     </div>
@@ -35,7 +36,7 @@
     {% if module.lessons.all %}
     <table class="data" style="margin-top:0.75rem;">
         <thead>
-            <tr><th>#</th><th>Lesson</th><th>Type</th><th>Duration</th><th>Actions</th></tr>
+            <tr><th>#</th><th>{% trans "Lesson" %}</th><th>{% trans "Type" %}</th><th>{% trans "Duration" %}</th><th>{% trans "Actions" %}</th></tr>
         </thead>
         <tbody>
             {% for lesson in module.lessons.all %}
@@ -43,17 +44,17 @@
                 <td>{{ lesson.order }}</td>
                 <td>{{ lesson.title }}</td>
                 <td>
-                    {% if lesson.lesson_type == 'video' %}<span class="badge badge-elective">🎬 Video</span>
+                    {% if lesson.lesson_type == 'video' %}<span class="badge badge-elective">🎬 {% trans "Video" %}</span>
                     {% else %}<span class="badge badge-category">📄 SOP PDF</span>{% endif %}
                 </td>
                 <td>{{ lesson.duration_minutes }} min</td>
                 <td>
                     <div style="display:flex; gap:0.4rem;">
-                        <a href="{% url 'mgmt_lesson_edit' lesson.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                        <a href="{% url 'mgmt_lesson_edit' lesson.id %}" class="btn btn-secondary btn-sm">{% trans "Edit" %}</a>
                         <form method="POST" action="{% url 'mgmt_lesson_delete' lesson.id %}" style="display:inline;"
                               onsubmit="return confirm('Delete lesson \'{{ lesson.title }}\'?');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                            <button type="submit" class="btn btn-danger btn-sm">{% trans "Del" %}</button>
                         </form>
                     </div>
                 </td>
@@ -62,14 +63,14 @@
         </tbody>
     </table>
     {% else %}
-    <p style="color:var(--muted); margin-top:0.6rem;">No lessons in this module yet.</p>
+    <p style="color:var(--muted); margin-top:0.6rem;">{% trans "No lessons in this module yet." %}</p>
     {% endif %}
 </div>
 {% empty %}
-<div class="alert alert-info">This course has no modules yet. Add your first module below.</div>
+<div class="alert alert-info">{% trans "This course has no modules yet. Add your first module below." %}</div>
 {% endfor %}
 
-<div class="section-title" style="margin-top:1.5rem;">Add a Module</div>
+<div class="section-title" style="margin-top:1.5rem;">{% trans "Add a Module" %}</div>
 <div class="module-block" style="max-width: 520px;">
     <form method="POST" action="{% url 'mgmt_course_detail' course.id %}">
         {% csrf_token %}
@@ -80,7 +81,7 @@
             {% for error in field.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
         </div>
         {% endfor %}
-        <button type="submit" class="btn btn-primary">＋ Add Module</button>
+        <button type="submit" class="btn btn-primary">{% trans "＋ Add Module" %}</button>
     </form>
 </div>
 {% endblock %}

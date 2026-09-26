@@ -1,21 +1,22 @@
 {% extends 'base.html' %}
-{% block title %}Profile | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Profile | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
 <div class="page-title">
-    {% if is_hindi %}मेरी प्रोफ़ाइल{% else %}My Profile{% endif %}
+    {% trans "My Profile" %}
 </div>
 <p class="page-subtitle">
     {% if is_manager %}
-    {% if is_hindi %}आपका खाता विवरण और प्रबंधन अवलोकन।{% else %}Your account details and management overview.{% endif %}
+    {% trans "Your account details and management overview." %}
     {% else %}
-    {% if is_hindi %}आपके कार्य विवरण और सीखने की प्रगति।{% else %}Your work details and learning progress.{% endif %}
+    {% trans "Your work details and learning progress." %}
     {% endif %}
 </p>
 
 <div class="module-block">
     <div class="module-header">
-        <div class="module-title">{% if is_hindi %}कर्मचारी जानकारी{% else %}Employee Information{% endif %}</div>
+        <div class="module-title">{% trans "Employee Information" %}</div>
     </div>
     <div class="lesson-list">
         <div class="lesson-item">
@@ -24,19 +25,19 @@
         </div>
         <div class="lesson-item">
             <div class="lesson-icon">🪪</div>
-            <div>{% if is_hindi %}कर्मचारी आईडी:{% else %}Employee ID:{% endif %} {{ staff_user.employee_id }}</div>
+            <div>{% trans "Employee ID:" %} {{ staff_user.employee_id }}</div>
         </div>
         <div class="lesson-item">
             <div class="lesson-icon">🏢</div>
-            <div>{% if is_hindi %}विभाग:{% else %}Department:{% endif %} {{ staff_user.department.name|default:"—" }}</div>
+            <div>{% trans "Department:" %} {{ staff_user.department.name|default:"—" }}</div>
         </div>
         <div class="lesson-item">
             <div class="lesson-icon">💼</div>
-            <div>{% if is_hindi %}पद:{% else %}Designation:{% endif %} {{ staff_user.designation|default:"—" }}</div>
+            <div>{% trans "Designation:" %} {{ staff_user.designation|default:"—" }}</div>
         </div>
         <div class="lesson-item">
             <div class="lesson-icon">🎖️</div>
-            <div>{% if is_hindi %}भूमिका:{% else %}Role:{% endif %} {{ staff_user.get_role_display }}</div>
+            <div>{% trans "Role:" %} {% if staff_user.role == "staff" %}{% trans "Non-Teaching Staff" %}{% elif staff_user.role == "trainer" %}{% trans "Departmental Trainer / HOD" %}{% elif staff_user.role == "admin" %}{% trans "Super Admin" %}{% else %}{{ staff_user.get_role_display }}{% endif %}</div>
         </div>
         <div class="lesson-item">
             <div class="lesson-icon">📧</div>
@@ -46,7 +47,7 @@
 </div>
 
 {% if not is_manager %}
-<div class="section-title" style="margin-top: 1.5rem;">🏆 {% if is_hindi %}बैज{% else %}Badges{% endif %} &nbsp;<small style="color:var(--muted); font-weight:400;">⏱️ {{ learning_hours|floatformat:1 }} {% if is_hindi %}घंटे{% else %}hrs{% endif %} learning</small></div>
+<div class="section-title" style="margin-top: 1.5rem;">🏆 {% trans "Badges" %} &nbsp;<small style="color:var(--muted); font-weight:400;">⏱️ {{ learning_hours|floatformat:1 }} {% trans "hrs" %} learning</small></div>
 <div class="card-grid" style="margin-bottom:0;">
     {% for badge in badges %}
     <div class="course-card reveal" style="{% if not badge.earned %}opacity:.45; filter:grayscale(1);{% endif %}">
@@ -56,20 +57,20 @@
         </div>
         <div class="course-card-body">
             <div class="course-desc">{{ badge.description }}</div>
-            {% if badge.earned %}<span class="badge badge-elective">✓ Earned</span>{% else %}<span class="badge badge-category">Locked</span>{% endif %}
+            {% if badge.earned %}<span class="badge badge-elective">{% trans "✓ Earned" %}</span>{% else %}<span class="badge badge-category">{% trans "Locked" %}</span>{% endif %}
         </div>
     </div>
     {% endfor %}
 </div>
 
-<div class="section-title" style="margin-top: 1.5rem;">📚 {% if is_hindi %}मेरे नामांकन{% else %}My Enrollments{% endif %}</div>
+<div class="section-title" style="margin-top: 1.5rem;">📚 {% trans "My Enrollments" %}</div>
 <div class="table-wrap">
     <table class="data">
         <thead>
             <tr>
-                <th>{% if is_hindi %}पाठ्यक्रम{% else %}Course{% endif %}</th>
-                <th>{% if is_hindi %}प्रगति{% else %}Progress{% endif %}</th>
-                <th>{% if is_hindi %}स्थिति{% else %}Status{% endif %}</th>
+                <th>{% trans "Course" %}</th>
+                <th>{% trans "Progress" %}</th>
+                <th>{% trans "Status" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -79,29 +80,29 @@
                 <td>{{ enrollment.progress_percent }}%</td>
                 <td>
                     {% if enrollment.is_completed %}
-                    <span class="badge badge-elective">✓ {% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</span>
+                    <span class="badge badge-elective">✓ {% trans "Completed" %}</span>
                     {% else %}
-                    <span class="badge badge-category">{% if is_hindi %}चल रहा{% else %}In Progress{% endif %}</span>
+                    <span class="badge badge-category">{% trans "In Progress" %}</span>
                     {% endif %}
                 </td>
             </tr>
             {% empty %}
             <tr><td colspan="3" style="text-align: center; color: var(--muted);">
-                {% if is_hindi %}कोई नामांकन नहीं।{% else %}No enrollments yet.{% endif %}
+                {% trans "No enrollments yet." %}
             </td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<div class="section-title">🏆 {% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+<div class="section-title">🏆 {% trans "Certificates" %}</div>
 <div class="table-wrap">
     <table class="data">
         <thead>
             <tr>
-                <th>{% if is_hindi %}पाठ्यक्रम{% else %}Course{% endif %}</th>
-                <th>{% if is_hindi %}प्रमाणपत्र आईडी{% else %}Certificate ID{% endif %}</th>
-                <th>{% if is_hindi %}जारी{% else %}Issued{% endif %}</th>
+                <th>{% trans "Course" %}</th>
+                <th>{% trans "Certificate ID" %}</th>
+                <th>{% trans "Issued" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -113,7 +114,7 @@
             </tr>
             {% empty %}
             <tr><td colspan="3" style="text-align: center; color: var(--muted);">
-                {% if is_hindi %}कोई प्रमाणपत्र नहीं।{% else %}No certificates yet.{% endif %}
+                {% trans "No certificates yet." %}
             </td></tr>
             {% endfor %}
         </tbody>
@@ -122,42 +123,42 @@
 {% endif %}
 
 {% if is_manager %}
-<div class="section-title" style="margin-top: 1.5rem;">📊 {% if is_hindi %}प्रबंधन अवलोकन{% else %}Management Overview{% endif %} &nbsp;<small style="color:var(--muted); font-weight:400;">{{ scope_label }}</small></div>
+<div class="section-title" style="margin-top: 1.5rem;">📊 {% trans "Management Overview" %} &nbsp;<small style="color:var(--muted); font-weight:400;">{{ scope_label }}</small></div>
 <div class="stats-grid">
     <div class="stat-card reveal">
         <div class="stat-icon blue">👥</div>
         <div>
             <div class="stat-value" data-count="{{ active_staff }}">{{ active_staff }}</div>
-            <div class="stat-label">{% if is_hindi %}कर्मचारी{% else %}Staff{% endif %}</div>
+            <div class="stat-label">{% trans "Staff" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon teal">🏁</div>
         <div>
             <div class="stat-value" data-count="{{ completed_count }}">{{ completed_count }}</div>
-            <div class="stat-label">{% if is_hindi %}पूर्ण पाठ्यक्रम{% else %}Completed{% endif %}</div>
+            <div class="stat-label">{% trans "Completed" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon gold">📚</div>
         <div>
             <div class="stat-value" data-count="{{ enrollment_count }}">{{ enrollment_count }}</div>
-            <div class="stat-label">{% if is_hindi %}सक्रिय पाठ्यक्रम{% else %}Courses{% endif %}</div>
+            <div class="stat-label">{% trans "Courses" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon crimson">🏆</div>
         <div>
             <div class="stat-value" data-count="{{ cert_count }}">{{ cert_count }}</div>
-            <div class="stat-label">{% if is_hindi %}जारी प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+            <div class="stat-label">{% trans "Certificates" %}</div>
         </div>
     </div>
 </div>
 <div class="module-block" style="display:flex; flex-wrap:wrap; gap:0.75rem;">
-    <a href="{% url 'dashboard' %}" class="btn btn-primary">📊 {% if is_hindi %}डैशबोर्ड{% else %}Command Center{% endif %}</a>
-    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">🛠️ {% if is_hindi %}प्रबंधन कंसोल{% else %}Management{% endif %}</a>
-    <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">📈 {% if is_hindi %}एचआर एनालिटिक्स{% else %}HR Analytics{% endif %}</a>
-    <a href="{% url 'my_certificates' %}" class="btn btn-secondary">🏆 {% if is_hindi %}प्रमाणपत्र निर्देशिका{% else %}Certificates{% endif %}</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">📊 {% trans "Command Center" %}</a>
+    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">🛠️ {% trans "Management" %}</a>
+    <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">📈 {% trans "HR Analytics" %}</a>
+    <a href="{% url 'my_certificates' %}" class="btn btn-secondary">🏆 {% trans "Certificates" %}</a>
 </div>
 {% endif %}
 {% endblock %}

@@ -1,16 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Dashboard | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
 <div class="page-title">
-    {% if is_hindi %}नमस्ते, {{ user.first_name }}{% else %}Welcome, {{ user.first_name|default:user.employee_id }}{% endif %}
+    {% blocktranslate %}Welcome, {{ user.first_name|default:user.employee_id }}{% endblocktranslate %}
 </div>
 <p class="page-subtitle">
-    {% if is_hindi %}
-    आपकी सीखने की प्रगति और अनिवार्य प्रशिक्षण यहाँ देखें।
-    {% else %}
-    View your learning progress and mandatory training courses here.
-    {% endif %}
+    {% trans "View your learning progress and mandatory training courses here." %}
 </p>
 
 <div class="stats-grid">
@@ -18,35 +15,35 @@
         <div class="stat-icon blue">📚</div>
         <div>
             <div class="stat-value">{{ user_enrollments|length }}</div>
-            <div class="stat-label">{% if is_hindi %}पाठ्यक्रम{% else %}Enrolled Courses{% endif %}</div>
+            <div class="stat-label">{% trans "Enrolled Courses" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon green">✅</div>
         <div>
             <div class="stat-value">{{ completed_count }}</div>
-            <div class="stat-label">{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</div>
+            <div class="stat-label">{% trans "Completed" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon gold">⏳</div>
         <div>
             <div class="stat-value">{{ in_progress_count }}</div>
-            <div class="stat-label">{% if is_hindi %}चल रहा{% else %}In Progress{% endif %}</div>
+            <div class="stat-label">{% trans "In Progress" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon crimson">🏆</div>
         <div>
             <div class="stat-value">{{ certificates_count }}</div>
-            <div class="stat-label">{% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+            <div class="stat-label">{% trans "Certificates" %}</div>
         </div>
     </div>
 </div>
 
 {% if user_enrollments %}
 <div class="section-title">
-    {% if is_hindi %}मेरे पाठ्यक्रम{% else %}My Courses{% endif %}
+    {% trans "My Courses" %}
 </div>
 <div class="card-grid">
     {% for enrollment in user_enrollments %}
@@ -59,14 +56,14 @@
         </div>
         <div class="course-card-body">
             {% if enrollment.course.is_mandatory %}
-                <span class="badge badge-mandatory">{% if is_hindi %}अनिवार्य{% else %}Mandatory{% endif %}</span>
+                <span class="badge badge-mandatory">{% trans "Mandatory" %}</span>
             {% else %}
-                <span class="badge badge-elective">{% if is_hindi %}वैकल्पिक{% else %}Elective{% endif %}</span>
+                <span class="badge badge-elective">{% trans "Elective" %}</span>
             {% endif %}
-            <span class="badge badge-category">{{ enrollment.course.category.name }}</span>
+            <span class="badge badge-category">{% if is_hindi and enrollment.course.category.name_hi %}{{ enrollment.course.category.name_hi }}{% else %}{{ enrollment.course.category.name }}{% endif %}</span>
             <div class="progress-wrap" style="margin-top: 1rem;">
                 <div class="progress-label">
-                    <span>{% if is_hindi %}प्रगति{% else %}Progress{% endif %}</span>
+                    <span>{% trans "Progress" %}</span>
                     <span data-progress-text>{{ enrollment.progress_percent }}%</span>
                 </div>
                 <div class="progress-bar">
@@ -77,10 +74,10 @@
         </div>
         <div class="course-card-footer">
             {% if enrollment.is_completed %}
-                <span class="badge badge-elective">✓ {% if is_hindi %}पूर्ण हुआ{% else %}Completed{% endif %}</span>
+                <span class="badge badge-elective">✓ {% trans "Completed" %}</span>
             {% endif %}
             <a href="{% url 'course_detail' enrollment.course.id %}" class="btn btn-primary btn-sm">
-                {% if is_hindi %}जारी रखें{% else %}Continue{% endif %}
+                {% trans "Continue" %}
             </a>
         </div>
     </div>
@@ -90,9 +87,9 @@
 
 {% if available_courses %}
 <div class="section-title">
-    {% if is_hindi %}वैकल्पिक पाठ्यक्रम{% else %}Available Courses{% endif %}
+    {% trans "Available Courses" %}
 </div>
-<p class="page-subtitle" style="margin-top: 0;">{% if is_hindi %}स्व-पंजीकरण के लिए खुला।{% else %}Open for self-enrollment.{% endif %}</p>
+<p class="page-subtitle" style="margin-top: 0;">{% trans "Open for self-enrollment." %}</p>
 <div class="card-grid">
     {% for course in available_courses %}
     <div class="course-card reveal">
@@ -106,14 +103,14 @@
             <div class="course-desc">
                 {% if is_hindi and course.description_hi %}{{ course.description_hi }}{% else %}{{ course.description }}{% endif %}
             </div>
-            <span class="badge badge-category">{{ course.category.name }}</span>
+            <span class="badge badge-category">{% if is_hindi and course.category.name_hi %}{{ course.category.name_hi }}{% else %}{{ course.category.name }}{% endif %}</span>
         </div>
         <div class="course-card-footer">
-            <span class="lesson-duration">{{ course.get_total_lessons }} {% if is_hindi %}पाठ{% else %}lessons{% endif %}</span>
+            <span class="lesson-duration">{{ course.get_total_lessons }} {% trans "lessons" %}</span>
             <form method="post" action="{% url 'enroll_course' course.id %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-success btn-sm">
-                    {% if is_hindi %}नामांकन{% else %}Enroll{% endif %}
+                    {% trans "Enroll" %}
                 </button>
             </form>
         </div>
@@ -124,7 +121,7 @@
 
 {% if not user_enrollments and not available_courses %}
 <div class="alert alert-info">
-    {% if is_hindi %}कोई पाठ्यक्रम निर्धारित नहीं है।{% else %}No courses assigned yet. Your HOD or HR will assign training courses to you.{% endif %}
+    {% trans "No courses assigned yet. Your HOD or HR will assign training courses to you." %}
 </div>
 {% endif %}
 {% endblock %}

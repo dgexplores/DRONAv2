@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
-{% block title %}Assign Course | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Assign Course | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
-<div class="page-title">🎯 Assign Course to Employee</div>
-<p class="page-subtitle">Enroll a specific employee into a course (per-student assignment).</p>
+<div class="page-title">🎯 {% trans "Assign Course to Employee" %}</div>
+<p class="page-subtitle">{% trans "Enroll a specific employee into a course (per-student assignment)." %}</p>
 
 <div class="module-block" style="max-width: 560px;">
     <form method="POST">
@@ -17,8 +18,8 @@
         </div>
         {% endfor %}
         <div style="display:flex; gap:0.75rem; margin-top:1rem;">
-            <button type="submit" class="btn btn-primary">🔗 Assign</button>
-            <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">🔗 {% trans "Assign" %}</button>
+            <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
         </div>
     </form>
 </div>

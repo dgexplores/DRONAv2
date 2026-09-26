@@ -1,3 +1,4 @@
+import os
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -319,3 +320,66 @@ class ProductionSettingsGuardTests(TestCase):
             DJANGO_ALLOWED_HOSTS='example.com',
         )
         self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class HindiCatalogTests(TestCase):
+    """The Hindi UI depends on a committed catalog, not on a code flag.
+
+    Guards three separate ways this has silently broken:
+      * LOCALE_PATHS pointing nowhere (no LANGUAGES / LOCALE_PATHS before this)
+      * a .po present but no compiled .mo (Render's image has no msgfmt)
+      * a msgid in a template that the catalog never learned
+    """
+
+    def test_locale_paths_and_languages_configured(self):
+        from django.conf import settings
+        self.assertTrue(settings.LOCALE_PATHS, 'LOCALE_PATHS is empty')
+        self.assertIn('hi', dict(settings.LANGUAGES))
+
+    def test_compiled_mo_is_committed(self):
+        from django.conf import settings
+        mo = os.path.join(str(settings.LOCALE_PATHS[0]), 'hi', 'LC_MESSAGES', 'django.mo')
+        self.assertTrue(os.path.exists(mo), 'django.mo missing - run compilemessages and commit it')
+
+    def test_catalog_translates_known_strings(self):
+        from django.utils import translation
+        with translation.override('hi'):
+            for src, expected in [
+                ('Dashboard', 'डैशबोर्ड'),
+                ('Employee ID', 'कर्मचारी आईडी'),
+                ('Sign In', 'साइन इन करें'),
+                ('Certificates', 'प्रमाणपत्र'),
+                ('Password', 'पासवर्ड'),
+            ]:
+                self.assertEqual(translation.gettext(src), expected, f'{src!r} not translated')
+
+    def test_session_language_activates_catalog(self):
+        """The toggle writes the session; {% trans %} must follow it.
+
+        LocaleMiddleware reads only the language cookie and Accept-Language, so
+        this is UserLanguageMiddleware's job (apps/users/views.py toggle_language).
+        """
+        dept = Department.objects.create(name="IT", code="IT")
+        StaffUser.objects.create_user(
+            employee_id="EMPH1", username="emph1", email="emph1@srms.ac.in",
+            password="pass12345", role="staff", department=dept,
+        )
+        self.client.login(employee_id='EMPH1', password='pass12345')
+        self.client.get(reverse('toggle_language'), {'lang': 'hi'})
+        resp = self.client.get(reverse('dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'पाठ्यक्रम')
+        self.assertNotContains(resp, 'Enrolled Courses')
+
+    def test_saved_preference_applies_on_a_fresh_session(self):
+        """A saved Hindi preference must win even with an empty session."""
+        dept = Department.objects.create(name="IT", code="IT")
+        u = StaffUser.objects.create_user(
+            employee_id="EMPH2", username="emph2", email="emph2@srms.ac.in",
+            password="pass12345", role="staff", department=dept, preferred_language="hi",
+        )
+        self.client.login(employee_id='EMPH2', password='pass12345')
+        resp = self.client.get(reverse('dashboard'))
+        self.assertContains(resp, 'पाठ्यक्रम')
+        u.refresh_from_db()
+        self.assertEqual(u.preferred_language, 'hi')

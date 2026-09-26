@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block title %}{{ quiz.title }} | SRMS DRONA{% endblock %}
 
 {% block content %}
-<a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-sm" style="margin-bottom: 1rem;">← {% if is_hindi %}कोर्स पर वापस{% else %}Back to Course{% endif %}</a>
+<a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-sm" style="margin-bottom: 1rem;">← {% trans "Back to Course" %}</a>
 
 <div class="page-title">
     {% if is_hindi and quiz.title_hi %}{{ quiz.title_hi }}{% else %}{{ quiz.title }}{% endif %}
 </div>
 <p class="page-subtitle">
-    {{ course.title }} &mdash; {% if is_hindi %}उत्तीर्ण अंक:{% else %}Passing Score:{% endif %} <strong>{{ quiz.passing_score }}%</strong>
-    &middot; {{ questions|length }} {% if is_hindi %}प्रश्न{% else %}questions{% endif %}
+    {{ course.title }} &mdash; {% trans "Passing Score:" %} <strong>{{ quiz.passing_score }}%</strong>
+    &middot; {{ questions|length }} {% trans "questions" %}
 </p>
 
 <div class="quiz-container">
@@ -17,7 +18,7 @@
         {% csrf_token %}
         {% for question in questions %}
         <div class="question-card">
-            <div class="question-number">{% if is_hindi %}प्रश्न{% else %}Question{% endif %} {{ forloop.counter }} / {{ questions|length }}</div>
+            <div class="question-number">{% trans "Question" %} {{ forloop.counter }} / {{ questions|length }}</div>
             <div class="question-text">
                 {% if is_hindi and question.text_hi %}{{ question.text_hi }}{% else %}{{ question.text }}{% endif %}
             </div>
@@ -31,13 +32,13 @@
         </div>
         {% empty %}
         <div class="alert alert-warning">
-            {% if is_hindi %}इस प्रश्नोत्तरी के लिए अभी कोई प्रश्न नहीं हैं।{% else %}No questions available for this quiz yet.{% endif %}
+            {% trans "No questions available for this quiz yet." %}
         </div>
         {% endfor %}
 
         {% if questions %}
         <button type="submit" class="btn btn-gold btn-block" style="margin-top: 1rem;">
-            {% if is_hindi %}उत्तर जमा करें{% else %}Submit Answers{% endif %}
+            {% trans "Submit Answers" %}
         </button>
         {% endif %}
     </form>

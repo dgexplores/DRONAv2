@@ -1,27 +1,28 @@
 {% extends 'base.html' %}
-{% block title %}Manage Courses | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Manage Courses | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
-<div class="page-title">📚 Manage Courses</div>
-<p class="page-subtitle">Edit course structure, add modules and lessons, and track enrollments.</p>
+<div class="page-title">📚 {% trans "Manage Courses" %}</div>
+<p class="page-subtitle">{% trans "Edit course structure, add modules and lessons, and track enrollments." %}</p>
 
 <div style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem;">
-    <a href="{% url 'mgmt_course_create' %}" class="btn btn-primary">➕ New Course</a>
-    <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold">👥 Bulk Enroll</a>
-    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">← Back</a>
+    <a href="{% url 'mgmt_course_create' %}" class="btn btn-primary">➕ {% trans "New Course" %}</a>
+    <a href="{% url 'mgmt_bulk_enroll' %}" class="btn btn-gold">👥 {% trans "Bulk Enroll" %}</a>
+    <a href="{% url 'mgmt_home' %}" class="btn btn-secondary">← {% trans "Back" %}</a>
 </div>
 
 <div class="table-wrap">
     <table class="data">
         <thead>
             <tr>
-                <th>Course</th>
-                <th>Category</th>
-                <th>Type</th>
-                <th>Modules</th>
-                <th>Lessons</th>
-                <th>Enrollments</th>
-                <th>Actions</th>
+                <th>{% trans "Course" %}</th>
+                <th>{% trans "Category" %}</th>
+                <th>{% trans "Type" %}</th>
+                <th>{% trans "Modules" %}</th>
+                <th>{% trans "Lessons" %}</th>
+                <th>{% trans "Enrollments" %}</th>
+                <th>{% trans "Actions" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -31,12 +32,12 @@
                     <strong>{{ course.title }}</strong>
                     <div style="font-size:0.78rem; color:var(--muted);">{{ course.description|truncatechars:70 }}</div>
                 </td>
-                <td>{{ course.category.name }}</td>
+                <td>{% if is_hindi and course.category.name_hi %}{{ course.category.name_hi }}{% else %}{{ course.category.name }}{% endif %}</td>
                 <td>
                     {% if course.is_mandatory %}
-                    <span class="badge badge-mandatory">Mandatory</span>
+                    <span class="badge badge-mandatory">{% trans "Mandatory" %}</span>
                     {% else %}
-                    <span class="badge badge-elective">Elective</span>
+                    <span class="badge badge-elective">{% trans "Elective" %}</span>
                     {% endif %}
                 </td>
                 <td>{{ course.module_count }}</td>
@@ -44,18 +45,18 @@
                 <td>{{ course.enrollment_count }}</td>
                 <td>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
-                        <a href="{% url 'mgmt_course_detail' course.id %}" class="btn btn-secondary btn-sm">Open</a>
-                        <a href="{% url 'mgmt_course_edit' course.id %}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{% url 'mgmt_course_detail' course.id %}" class="btn btn-secondary btn-sm">{% trans "Open" %}</a>
+                        <a href="{% url 'mgmt_course_edit' course.id %}" class="btn btn-primary btn-sm">{% trans "Edit" %}</a>
                         <form method="POST" action="{% url 'mgmt_course_delete' course.id %}" style="display:inline;"
                               onsubmit="return confirm('Delete course \'{{ course.title }}\' and all its modules/lessons?');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            <button type="submit" class="btn btn-danger btn-sm">{% trans "Delete" %}</button>
                         </form>
                     </div>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" style="text-align:center; color:var(--muted);">No courses yet. <a href="{% url 'mgmt_course_create' %}">Create your first course.</a></td></tr>
+            <tr><td colspan="7" style="text-align:center; color:var(--muted);">{% trans "No courses yet." %} <a href="{% url 'mgmt_course_create' %}">{% trans "Create your first course." %}</a></td></tr>
             {% endfor %}
         </tbody>
     </table>

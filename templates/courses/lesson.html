@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block title %}{{ lesson.title }} | SRMS DRONA{% endblock %}
 
 {% block content %}
-<a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-sm" style="margin-bottom: 1rem;">← {% if is_hindi %}कोर्स पर वापस{% else %}Back to Course{% endif %}</a>
+<a href="{% url 'course_detail' course.id %}" class="btn btn-secondary btn-sm" style="margin-bottom: 1rem;">← {% trans "Back to Course" %}</a>
 
 <div class="page-title">
     {% if is_hindi and lesson.title_hi %}{{ lesson.title_hi }}{% else %}{{ lesson.title }}{% endif %}
 </div>
 <p class="page-subtitle">
-    {{ course.title }} &mdash; {% if is_hindi %}मॉड्यूल{% else %}Module{% endif %} {{ lesson.module.order }} &middot; {% if is_hindi %}पाठ{% else %}Lesson{% endif %} {{ lesson.order }}
+    {{ course.title }} &mdash; {% trans "Module" %} {{ lesson.module.order }} &middot; {% trans "Lesson" %} {{ lesson.order }}
 </p>
 
 {% if lesson.lesson_type == 'video' and lesson.video_url %}
@@ -29,7 +30,7 @@
 </div>
 {% else %}
 <div class="alert alert-warning">
-    {% if is_hindi %}इस पाठ के लिए कोई सामग्री उपलब्ध नहीं है।{% else %}No content available for this lesson yet.{% endif %}
+    {% trans "No content available for this lesson yet." %}
 </div>
 {% endif %}
 
@@ -38,36 +39,36 @@
         <div class="stat-icon blue">📊</div>
         <div>
             <div class="stat-value">{% if enrollment %}{{ enrollment.progress_percent }}%{% else %}—{% endif %}</div>
-            <div class="stat-label">{% if is_hindi %}कोर्स प्रगति{% else %}Course Progress{% endif %}</div>
+            <div class="stat-label">{% trans "Course Progress" %}</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon green">⏱️</div>
         <div>
             <div class="stat-value">{{ lesson.duration_minutes }}</div>
-            <div class="stat-label">{% if is_hindi %}मिनट{% else %}Minutes{% endif %}</div>
+            <div class="stat-label">{% trans "Minutes" %}</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon {% if progress.is_completed %}green{% else %}crimson{% endif %}">🎯</div>
         <div>
             <div class="stat-value">{% if progress.is_completed %}✓{% else %}—{% endif %}</div>
-            <div class="stat-label">{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</div>
+            <div class="stat-label">{% trans "Completed" %}</div>
         </div>
     </div>
 </div>
 
 <div class="course-card-footer" style="justify-content: space-between; gap: 1rem; padding: 1.25rem 0;">
     {% if prev_lesson %}
-    <a href="{% url 'lesson_view' prev_lesson.id %}" class="btn btn-secondary">← {% if is_hindi %}पिछला{% else %}Previous{% endif %}</a>
+    <a href="{% url 'lesson_view' prev_lesson.id %}" class="btn btn-secondary">← {% trans "Previous" %}</a>
     {% else %}
     <span></span>
     {% endif %}
 
     {% if next_lesson %}
-    <a href="{% url 'lesson_view' next_lesson.id %}" class="btn btn-primary">{% if is_hindi %}अगला{% else %}Next{% endif %} →</a>
+    <a href="{% url 'lesson_view' next_lesson.id %}" class="btn btn-primary">{% trans "Next" %} →</a>
     {% else %}
-    <a href="{% url 'take_quiz' course.id %}" class="btn btn-gold">{% if is_hindi %}परीक्षा दें{% else %}Take Quiz{% endif %}</a>
+    <a href="{% url 'take_quiz' course.id %}" class="btn btn-gold">{% trans "Take Quiz" %}</a>
     {% endif %}
 </div>
 

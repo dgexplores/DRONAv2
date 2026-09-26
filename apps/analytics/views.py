@@ -5,6 +5,7 @@ from django.http import StreamingHttpResponse
 from django.db.models import Count, Avg, Q, Sum
 from django.core.paginator import Paginator
 from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
 
 from apps.users.models import StaffUser, Department
 from apps.courses.models import Course, Enrollment, LessonProgress
@@ -13,7 +14,7 @@ from apps.quizzes.models import QuizAttempt, Quiz
 @login_required
 def hr_dashboard_view(request):
     if not bool(getattr(request.user, 'is_manager', False)):
-        messages.error(request, "Access restricted to HODs and HR Administrators.")
+        messages.error(request, _("Access restricted to HODs and HR Administrators."))
         return redirect('dashboard')
 
     departments = Department.objects.all()

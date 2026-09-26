@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'srms_dorna.middleware.UserLanguageMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -129,6 +130,16 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
+
+# Bilingual UI. Without an explicit LANGUAGES list Django accepts any code, and
+# without LOCALE_PATHS there is no catalog to read -- `hi` silently rendered
+# English. `locale/hi/LC_MESSAGES/django.mo` is committed, because gettext's
+# msgfmt is not installed on the Render runtime image.
+LANGUAGES = [
+    ('en', 'English'),
+    ('hi', 'Hindi'),
+]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'

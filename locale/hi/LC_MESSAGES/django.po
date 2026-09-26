@@ -1,0 +1,1537 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-26 20:33+0530\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: apps/analytics/views.py:17
+msgid "Access restricted to HODs and HR Administrators."
+msgstr ""
+
+#: apps/management/forms.py:15
+msgid "Temporary password. Leave blank to auto-generate a random one."
+msgstr "अस्थायी पासवर्ड। खाली छोड़ने पर एक यादृच्छिक पासवर्ड अपने आप बन जाएगा।"
+
+#: apps/management/forms.py:34
+msgid "No department"
+msgstr "कोई विभाग नहीं"
+
+#: apps/management/forms.py:35
+msgid "Uppercase letters/numbers only (e.g. HR001)."
+msgstr "केवल बड़े अक्षर और अंक (जैसे HR001)।"
+
+#: apps/management/forms.py:41
+msgid "An account with this Employee ID already exists."
+msgstr "इस कर्मचारी आईडी वाला खाता पहले से मौजूद है।"
+
+#: apps/management/forms.py:47
+msgid "An account with this email already exists."
+msgstr "इस ईमेल वाला खाता पहले से मौजूद है।"
+
+#: apps/management/forms.py:67
+msgid "Select category"
+msgstr "श्रेणी चुनें"
+
+#: apps/management/forms.py:69
+msgid "Leave empty to make this course available to all departments."
+msgstr "इसे खाली छोड़ें ताकि यह पाठ्यक्रम सभी विभागों के लिए उपलब्ध हो।"
+
+#: apps/management/forms.py:104
+msgid "A video URL is required for video lessons."
+msgstr "वीडियो पाठ के लिए वीडियो URL आवश्यक है।"
+
+#: apps/management/forms.py:106
+msgid "A PDF file is required for SOP PDF lessons."
+msgstr "SOP PDF पाठ के लिए PDF फ़ाइल आवश्यक है।"
+
+#: apps/management/forms.py:113 apps/management/forms.py:133
+#: templates/certificates/my_certificates.html:29
+#: templates/certificates/my_certificates.html:63
+#: templates/courses/manager_dashboard.html:88
+#: templates/management/course_list.html:19 templates/users/profile.html:71
+#: templates/users/profile.html:103
+msgid "Course"
+msgstr "पाठ्यक्रम"
+
+#: apps/management/forms.py:118 apps/users/forms.py:37
+#: templates/analytics/hr_dashboard.html:75
+#: templates/analytics/hr_dashboard.html:147
+#: templates/certificates/my_certificates.html:20
+#: templates/certificates/my_certificates.html:62
+msgid "Department"
+msgstr "विभाग"
+
+#: apps/management/forms.py:120
+msgid "All departments (all active staff)"
+msgstr "सभी विभाग (सभी सक्रिय कर्मचारी)"
+
+#: apps/management/forms.py:128 templates/analytics/hr_dashboard.html:110
+#: templates/courses/manager_dashboard.html:87
+msgid "Employee"
+msgstr "कर्मचारी"
+
+#: apps/management/forms.py:140
+msgid "Choose ..."
+msgstr "चुनें ..."
+
+#: apps/management/forms.py:160
+msgid "No linked course (optional)"
+msgstr "कोई संबद्ध पाठ्यक्रम नहीं (वैकल्पिक)"
+
+#: apps/management/views.py:73
+msgid "Access restricted to administrators and trainers."
+msgstr "पहुँच केवल प्रशासकों और प्रशिक्षकों तक सीमित है।"
+
+#: apps/management/views.py:123 templates/management/console_home.html:38
+msgid "Create Course"
+msgstr "पाठ्यक्रम बनाएँ"
+
+#: apps/management/views.py:141 templates/management/course_detail.html:10
+msgid "Edit Course"
+msgstr "पाठ्यक्रम संपादित करें"
+
+#: apps/management/views.py:244
+msgid "Add Lesson"
+msgstr "पाठ जोड़ें"
+
+#: apps/management/views.py:267
+msgid "Edit Lesson"
+msgstr "पाठ संपादित करें"
+
+#: apps/management/views.py:393
+msgid "Schedule Training Session"
+msgstr "प्रशिक्षण सत्र निर्धारित करें"
+
+#: apps/management/views.py:410
+msgid "Edit Training Session"
+msgstr "प्रशिक्षण सत्र संपादित करें"
+
+#: apps/management/views.py:525
+msgid "Only super admins can create accounts."
+msgstr "केवल सुपर एडमिन ही खाते बना सकते हैं।"
+
+#: apps/management/views.py:551
+msgid "Could not create the account. Check for duplicate Employee ID or email."
+msgstr "खाता नहीं बनाया जा सका। कर्मचारी आईडी या ईमेल की दोहरी प्रविष्टि जाँचें।"
+
+#: apps/users/badges.py:18
+msgid "First Steps"
+msgstr "पहला कदम"
+
+#: apps/users/badges.py:20
+msgid "Enrolled in your first course."
+msgstr "आपने अपना पहला पाठ्यक्रम शुरू किया।"
+
+#: apps/users/badges.py:25
+msgid "Course Completer"
+msgstr "पाठ्यक्रम पूर्णकर्ता"
+
+#: apps/users/badges.py:27
+msgid "Completed your first course."
+msgstr "आपने अपना पहला पाठ्यक्रम पूरा किया।"
+
+#: apps/users/badges.py:32
+msgid "Certified"
+msgstr "प्रमाणित"
+
+#: apps/users/badges.py:34
+msgid "Earned a verified certificate."
+msgstr "एक सत्यापित प्रमाणपत्र प्राप्त किया।"
+
+#: apps/users/badges.py:39
+msgid "Top Performer"
+msgstr "शीर्ष प्रदर्शक"
+
+#: apps/users/badges.py:41
+msgid "Scored 90% or above in an assessment."
+msgstr "मूल्यांकन में 90% या अधिक अंक प्राप्त किए।"
+
+#: apps/users/badges.py:46
+msgid "Course Master"
+msgstr "पाठ्यक्रम मास्टर"
+
+#: apps/users/badges.py:48
+msgid "Completed 3 or more courses."
+msgstr "3 या अधिक पाठ्यक्रम पूरे किए।"
+
+#: apps/users/badges.py:53
+msgid "Dedicated Learner"
+msgstr "समर्पित शिक्षार्थी"
+
+#: apps/users/badges.py:55
+msgid "Logged 3+ hours of active learning."
+msgstr "3 घंटे से अधिक सक्रिय अध्ययन दर्ज किया।"
+
+#: apps/users/forms.py:12 templates/analytics/hr_dashboard.html:145
+#: templates/certificates/my_certificates.html:60 templates/users/login.html:45
+#: templates/users/login.html:62
+msgid "Employee ID"
+msgstr "कर्मचारी आईडी"
+
+#: apps/users/forms.py:22
+msgid "First Name"
+msgstr "पहला नाम"
+
+#: apps/users/forms.py:27
+msgid "Last Name"
+msgstr "अंतिम नाम"
+
+#: apps/users/forms.py:33 templates/analytics/hr_dashboard.html:148
+msgid "Email"
+msgstr "ईमेल"
+
+#: apps/users/forms.py:40
+msgid "Select department (optional)"
+msgstr "विभाग चुनें (वैकल्पिक)"
+
+#: apps/users/forms.py:44
+msgid "Designation / Job Title"
+msgstr "पद / पदनाम"
+
+#: apps/users/forms.py:50
+msgid "Phone Number"
+msgstr "फ़ोन नंबर"
+
+#: apps/users/forms.py:56 templates/users/login.html:50
+#: templates/users/login.html:67
+msgid "Password"
+msgstr "पासवर्ड"
+
+#: apps/users/forms.py:60 templates/users/password_reset_confirm.html:27
+msgid "Confirm Password"
+msgstr "पासवर्ड की पुष्टि करें"
+
+#: apps/users/forms.py:67
+msgid "This Employee ID is already registered."
+msgstr "यह कर्मचारी आईडी पहले से पंजीकृत है।"
+
+#: apps/users/forms.py:73
+msgid "This email is already registered."
+msgstr "यह ईमेल पहले से पंजीकृत है।"
+
+#: apps/users/forms.py:82
+msgid "Password must be at least 8 characters."
+msgstr "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए।"
+
+#: apps/users/forms.py:84
+msgid "Passwords do not match."
+msgstr "पासवर्ड मेल नहीं खाते।"
+
+#: apps/users/models.py:9
+msgid ""
+"Employee ID must be 3-20 characters using only uppercase letters and numbers "
+"(e.g. EMP001, ADMIN001)."
+msgstr "कर्मचारी आईडी 3-20 अक्षरों की होनी चाहिए और केवल बड़े अक्षर तथा अंकों से बनी हो (जैसे EMP001, ADMIN001)।"
+
+#: apps/users/views.py:98
+msgid ""
+"Too many failed login attempts. Please wait a few minutes and try again."
+msgstr "बहुत अधिक असफल लॉगिन प्रयास। कृपया कुछ मिनट प्रतीक्षा करें और पुनः प्रयास करें।"
+
+#: apps/users/views.py:123
+msgid "Invalid Employee ID or Password. Please try again."
+msgstr "कर्मचारी आईडी या पासवर्ड अमान्य है। कृपया पुनः प्रयास करें।"
+
+#: apps/users/views.py:133
+msgid "Too many sign-up attempts. Please try again later."
+msgstr "बहुत अधिक पंजीकरण प्रयास। कृपया बाद में पुनः प्रयास करें।"
+
+#: apps/users/views.py:155
+msgid ""
+"Account created successfully. An admin must approve your account before you "
+"can sign in."
+msgstr "खाता सफलतापूर्वक बन गया। साइन इन करने से पहले एक प्रशासक को आपके खाते को अनुमोदित करना होगा।"
+
+#: apps/users/views.py:171
+msgid "Admin accounts cannot be approved via self-signup."
+msgstr "एडमिन खाते स्वयं पंजीकरण के माध्यम से अनुमोदित नहीं किए जा सकते।"
+
+#: apps/users/views.py:194
+msgid "Only pending (inactive) accounts can be rejected."
+msgstr "केवल लंबित (निष्क्रिय) खाते ही अस्वीकार किए जा सकते हैं।"
+
+#: apps/users/views.py:216
+msgid "Too many password reset requests. Please wait and try again later."
+msgstr "बहुत अधिक पासवर्ड रीसेट अनुरोध। कृपया प्रतीक्षा करें और बाद में पुनः प्रयास करें।"
+
+#: apps/users/views.py:230
+msgid "Too many reset attempts. Please wait and try again later."
+msgstr "बहुत अधिक रीसेट प्रयास। कृपया प्रतीक्षा करें और बाद में पुनः प्रयास करें।"
+
+#: templates/analytics/hr_dashboard.html:3
+msgid "HR Analytics Dashboard | SRMS DRONA"
+msgstr "एचआर एनालिटिक्स डैशबोर्ड | SRMS DRONA"
+
+#: templates/analytics/hr_dashboard.html:6
+msgid "HR Analytics Dashboard"
+msgstr "एचआर एनालिटिक्स डैशबोर्ड"
+
+#: templates/analytics/hr_dashboard.html:8
+msgid "Department-wise learning progress and compliance metrics."
+msgstr "विभागवार सीखने की प्रगति और अनुपालन आँकड़े।"
+
+#: templates/analytics/hr_dashboard.html:16
+msgid "Total Staff"
+msgstr "कुल कर्मचारी"
+
+#: templates/analytics/hr_dashboard.html:24
+#: templates/courses/manager_dashboard.html:50
+msgid "Pending Approvals"
+msgstr "लंबित अनुमोदन"
+
+#: templates/analytics/hr_dashboard.html:32
+msgid "Total Courses"
+msgstr "कुल पाठ्यक्रम"
+
+#: templates/analytics/hr_dashboard.html:39 templates/base.html:49
+#: templates/courses/dashboard.html:39 templates/users/profile.html:98
+#: templates/users/profile.html:153 templates/users/profile.html:161
+msgid "Certificates"
+msgstr "प्रमाणपत्र"
+
+#: templates/analytics/hr_dashboard.html:46
+msgid "Completed Enrollments"
+msgstr "पूर्ण नामांकन"
+
+#: templates/analytics/hr_dashboard.html:53
+msgid "Avg Quiz Score"
+msgstr "औसत क्विज़ स्कोर"
+
+#: templates/analytics/hr_dashboard.html:60
+msgid "Total Learning Hours"
+msgstr "कुल सीखने के घंटे"
+
+#: templates/analytics/hr_dashboard.html:65
+msgid "Department Completion Rates"
+msgstr "विभागवार समापन दर"
+
+#: templates/analytics/hr_dashboard.html:70
+msgid "Department Statistics"
+msgstr "विभाग सांख्यिकी"
+
+#: templates/analytics/hr_dashboard.html:76 templates/users/profile.html:132
+msgid "Staff"
+msgstr "कर्मचारी"
+
+#: templates/analytics/hr_dashboard.html:77
+#: templates/courses/manager_dashboard.html:36
+#: templates/management/console_home.html:32
+#: templates/management/course_list.html:24
+msgid "Enrollments"
+msgstr "नामांकन"
+
+#: templates/analytics/hr_dashboard.html:78 templates/courses/dashboard.html:25
+#: templates/courses/dashboard.html:77 templates/courses/lesson.html:56
+#: templates/courses/manager_dashboard.html:43 templates/users/profile.html:83
+#: templates/users/profile.html:139
+msgid "Completed"
+msgstr "पूर्ण"
+
+#: templates/analytics/hr_dashboard.html:79
+msgid "Completion Rate"
+msgstr "समापन दर"
+
+#: templates/analytics/hr_dashboard.html:99
+msgid "No departments found."
+msgstr "कोई विभाग नहीं।"
+
+#: templates/analytics/hr_dashboard.html:105
+msgid "Recent Quiz Attempts"
+msgstr "हाल के प्रयास"
+
+#: templates/analytics/hr_dashboard.html:111
+msgid "Quiz"
+msgstr "प्रश्नोत्तरी"
+
+#: templates/analytics/hr_dashboard.html:112
+msgid "Score"
+msgstr "स्कोर"
+
+#: templates/analytics/hr_dashboard.html:113 templates/users/profile.html:73
+msgid "Status"
+msgstr "स्थिति"
+
+#: templates/analytics/hr_dashboard.html:114
+#: templates/courses/manager_dashboard.html:89
+#: templates/courses/training_calendar.html:28
+#: templates/management/session_list.html:19
+msgid "Date"
+msgstr "दिनांक"
+
+#: templates/analytics/hr_dashboard.html:125
+#: templates/courses/course_detail.html:93
+msgid "Passed"
+msgstr "उत्तीर्ण"
+
+#: templates/analytics/hr_dashboard.html:127
+#: templates/courses/course_detail.html:93
+msgid "Failed"
+msgstr "अनुत्तीर्ण"
+
+#: templates/analytics/hr_dashboard.html:133
+msgid "No attempts yet."
+msgstr "कोई प्रयास नहीं।"
+
+#: templates/analytics/hr_dashboard.html:140
+msgid "Pending Account Approvals"
+msgstr "लंबित खाता अनुमोदन"
+
+#: templates/analytics/hr_dashboard.html:146
+#: templates/certificates/my_certificates.html:61
+msgid "Name"
+msgstr "नाम"
+
+#: templates/analytics/hr_dashboard.html:149
+msgid "Designation"
+msgstr "पदनाम"
+
+#: templates/analytics/hr_dashboard.html:150
+msgid "Registered"
+msgstr "पंजीकरण"
+
+#: templates/analytics/hr_dashboard.html:151
+#: templates/certificates/my_certificates.html:66
+#: templates/courses/training_calendar.html:33
+#: templates/management/course_detail.html:39
+#: templates/management/course_list.html:25
+#: templates/management/session_list.html:24
+msgid "Actions"
+msgstr "कार्रवाई"
+
+#: templates/analytics/hr_dashboard.html:167
+msgid "Approve"
+msgstr "अनुमोदन"
+
+#: templates/analytics/hr_dashboard.html:172
+msgid "Reject"
+msgstr "अस्वीकार"
+
+#: templates/analytics/hr_dashboard.html:178
+msgid "No pending approvals."
+msgstr "कोई लंबित अनुमोदन नहीं।"
+
+#: templates/analytics/hr_dashboard.html:186
+#: templates/certificates/my_certificates.html:116
+msgid "← Prev"
+msgstr "← पिछला"
+
+#: templates/analytics/hr_dashboard.html:190
+#: templates/certificates/my_certificates.html:120
+msgid "Next →"
+msgstr "अगला →"
+
+#: templates/analytics/hr_dashboard.html:196
+msgid "Export CSV Report"
+msgstr "CSV रिपोर्ट निर्यात करें"
+
+#: templates/analytics/hr_dashboard.html:220
+#, python-format
+msgid "Completion Rate (%%)"
+msgstr "समापन दर (%%)"
+
+#: templates/base.html:9
+msgid "SRMS DRONA Learning App"
+msgstr "SRMS DRONA लर्निंग ऐप"
+
+#: templates/base.html:10
+msgid ""
+"Skill Learning & Performance Tracking Platform for SRMS Non-Teaching Staff"
+msgstr "SRMS गैर-शिक्षण कर्मचारियों के लिए कौशल सीखना और प्रदर्शन पर नज़र"
+
+#: templates/base.html:30
+msgid "Learning Platform"
+msgstr "सीखने का मंच"
+
+#: templates/base.html:35
+msgid "Main"
+msgstr "मुख्य"
+
+#: templates/base.html:39
+msgid "Dashboard"
+msgstr "डैशबोर्ड"
+
+#: templates/base.html:44 templates/users/profile.html:7
+msgid "My Profile"
+msgstr "प्रोफ़ाइल"
+
+#: templates/base.html:54 templates/courses/manager_dashboard.html:67
+#: templates/courses/training_calendar.html:6
+msgid "Training Calendar"
+msgstr "प्रशिक्षण कैलेंडर"
+
+#: templates/base.html:58
+msgid "Administration"
+msgstr "प्रशासन"
+
+#: templates/base.html:62 templates/management/console_home.html:46
+#: templates/quizzes/ai_quiz_generator.html:6
+msgid "Quiz Builder"
+msgstr "प्रश्न बैंक निर्माता"
+
+#: templates/base.html:67
+msgid "HR Dashboard"
+msgstr "एचआर डैशबोर्ड"
+
+#: templates/base.html:72 templates/users/profile.html:159
+msgid "Management"
+msgstr "प्रबंधन"
+
+#: templates/base.html:78 templates/management/user_create.html:20
+#: templates/users/login.html:76 templates/users/register.html:25
+#: templates/users/register.html:56
+msgid "Create Account"
+msgstr "खाता बनाएँ"
+
+#: templates/base.html:84
+msgid "Admin"
+msgstr "एडमिन"
+
+#: templates/base.html:94 templates/users/profile.html:40
+msgid "Non-Teaching Staff"
+msgstr "गैर-शिक्षण कर्मचारी"
+
+#: templates/base.html:94 templates/users/profile.html:40
+msgid "Departmental Trainer / HOD"
+msgstr "विभागीय प्रशिक्षक / अध्यक्ष"
+
+#: templates/base.html:94 templates/users/profile.html:40
+msgid "Super Admin"
+msgstr "सुपर एडमिन"
+
+#: templates/base.html:105
+msgid "Toggle menu"
+msgstr "मेनू"
+
+#: templates/base.html:120
+msgid "Logout"
+msgstr "लॉगआउट"
+
+#: templates/base.html:137
+msgid "Dismiss"
+msgstr "बंद करें"
+
+#: templates/base.html:152
+msgid ""
+"© 2026 SRMS DRONA Learning App &mdash; Shri Ram Murti Smarak Group of "
+"Institutions"
+msgstr "© 2026 SRMS DRONA लर्निंग ऐप — श्री राम मूर्ति स्मारक समूह संस्थान"
+
+#: templates/certificates/my_certificates.html:3
+msgid "Certificate Directory | SRMS DRONA"
+msgstr "प्रमाणपत्र निर्देशिका | SRMS DRONA"
+
+#: templates/certificates/my_certificates.html:3
+msgid "My Certificates | SRMS DRONA"
+msgstr "मेरे प्रमाणपत्र | SRMS DRONA"
+
+#: templates/certificates/my_certificates.html:7
+#: templates/courses/manager_dashboard.html:66
+msgid "Certificate Directory"
+msgstr "प्रमाणपत्र निर्देशिका"
+
+#: templates/certificates/my_certificates.html:9
+msgid "Who completed which certificate - search and filter below."
+msgstr "किसने कौन सा प्रमाणपत्र पूरा किया - खोज और फ़िल्टर करें।"
+
+#: templates/certificates/my_certificates.html:15
+msgid "Search (Employee ID / Name / Email)"
+msgstr "खोजें (कर्मचारी आईडी / नाम / ईमेल)"
+
+#: templates/certificates/my_certificates.html:22
+msgid "All departments"
+msgstr "सभी विभाग"
+
+#: templates/certificates/my_certificates.html:31
+msgid "All courses"
+msgstr "सभी पाठ्यक्रम"
+
+#: templates/certificates/my_certificates.html:37
+msgid "Filter"
+msgstr "फ़िल्टर करें"
+
+#: templates/certificates/my_certificates.html:39
+msgid "Clear"
+msgstr "साफ़ करें"
+
+#: templates/certificates/my_certificates.html:43
+#, python-format
+msgid "%(all_cert_count)s certificate(s) found."
+msgstr "%(all_cert_count)s प्रमाणपत्र मिले।"
+
+#: templates/certificates/my_certificates.html:47
+msgid "My Certificates"
+msgstr "मेरे प्रमाणपत्र"
+
+#: templates/certificates/my_certificates.html:49
+msgid "Your QR-verified certificates are available here."
+msgstr "आपके QR-सत्यापित प्रमाणपत्र यहाँ उपलब्ध हैं।"
+
+#: templates/certificates/my_certificates.html:64
+#: templates/users/profile.html:104
+msgid "Certificate ID"
+msgstr "प्रमाणपत्र आईडी"
+
+#: templates/certificates/my_certificates.html:65
+msgid "Issued On"
+msgstr "जारी दिनांक"
+
+#: templates/certificates/my_certificates.html:81
+msgid "✓ Verify"
+msgstr "✓ सत्यापित करें"
+
+#: templates/certificates/my_certificates.html:88
+msgid "No certificates found."
+msgstr "कोई प्रमाणपत्र नहीं मिला।"
+
+#: templates/certificates/my_certificates.html:102
+msgid "Issued on:"
+msgstr "जारी किया गया:"
+
+#: templates/certificates/my_certificates.html:105
+msgid "Download"
+msgstr "डाउनलोड"
+
+#: templates/certificates/my_certificates.html:106
+msgid "Verify"
+msgstr "सत्यापित करें"
+
+#: templates/certificates/my_certificates.html:128
+msgid "No certificates found. Try adjusting your filters."
+msgstr "कोई प्रमाणपत्र नहीं मिला। फ़िल्टर बदलने का प्रयास करें।"
+
+#: templates/certificates/my_certificates.html:130
+msgid ""
+"You have no certificates yet. Complete a mandatory course and pass the final "
+"assessment."
+msgstr "आपके पास अभी कोई प्रमाणपत्र नहीं है। एक अनिवार्य पाठ्यक्रम पूरा करें और अंतिम परीक्षा उत्तीर्ण करें।"
+
+#: templates/certificates/verify.html:3
+msgid "Certificate Verification | SRMS DRONA"
+msgstr "प्रमाणपत्र सत्यापन | SRMS DRONA"
+
+#: templates/certificates/verify.html:9
+msgid "Certificate Validated"
+msgstr "प्रमाणपत्र सत्यापित"
+
+#: templates/certificates/verify.html:11
+msgid "This certificate is valid and was issued by SRMS Group of Institutions."
+msgstr "यह प्रमाणपत्र वैध है और SRMS समूह संस्थान द्वारा जारी किया गया है।"
+
+#: templates/certificates/verify.html:16
+msgid "Certificate Details"
+msgstr "प्रमाणपत्र विवरण"
+
+#: templates/certificates/verify.html:29
+msgid "Issued:"
+msgstr "जारी:"
+
+#: templates/certificates/verify.html:37
+msgid ""
+"The name is partially shown. The full name, Employee ID, and department "
+"appear on the certificate PDF itself."
+msgstr "नाम आंशिक रूप से दिखाया गया है। पूरा नाम, कर्मचारी आईडी और विभाग प्रमाणपत्र पीडीएफ पर अंकित हैं।"
+
+#: templates/certificates/verify.html:42
+msgid "Certificate Not Found"
+msgstr "प्रमाणपत्र नहीं मिला"
+
+#: templates/certificates/verify.html:44
+#, python-format
+msgid "Certificate ID \"%(cert_id)s\" is not valid or does not exist."
+msgstr "प्रमाणपत्र आईडी \"%(cert_id)s\" मान्य नहीं है या इसका अस्तित्व नहीं है।"
+
+#: templates/courses/course_detail.html:7 templates/errors/400.html:19
+#: templates/errors/403.html:19 templates/errors/404.html:19
+#: templates/errors/500.html:19
+msgid "Back to Dashboard"
+msgstr "डैशबोर्ड पर वापस"
+
+#: templates/courses/course_detail.html:21 templates/courses/dashboard.html:66
+#: templates/users/profile.html:72
+msgid "Progress"
+msgstr "प्रगति"
+
+#: templates/courses/course_detail.html:28
+#: templates/management/console_home.html:20
+#: templates/management/course_list.html:23
+msgid "Lessons"
+msgstr "पाठ"
+
+#: templates/courses/course_detail.html:35
+msgid "Latest Score"
+msgstr "नवीनतम स्कोर"
+
+#: templates/courses/course_detail.html:43
+msgid "Overall Progress"
+msgstr "समग्र प्रगति"
+
+#: templates/courses/course_detail.html:58
+#, python-format
+msgid "Module %(module.order)s"
+msgstr "मॉड्यूल %(module.order)s"
+
+#: templates/courses/course_detail.html:83
+msgid "Final Assessment"
+msgstr "परीक्षा"
+
+#: templates/courses/course_detail.html:89
+msgid "Complete all lessons and then take the quiz."
+msgstr "पाठ्यक्रम समाप्त करें और फिर परीक्षा दें।"
+
+#: templates/courses/course_detail.html:99 templates/courses/lesson.html:71
+msgid "Take Quiz"
+msgstr "परीक्षा दें"
+
+#: templates/courses/dashboard.html:3
+msgid "Dashboard | SRMS DRONA"
+msgstr "डैशबोर्ड | SRMS DRONA"
+
+#: templates/courses/dashboard.html:7
+#, python-format
+msgid "Welcome, %(user.first_name|default:user.employee_id)s"
+msgstr "नमस्ते, %(user.first_name|default:user.employee_id)s"
+
+#: templates/courses/dashboard.html:10
+msgid "View your learning progress and mandatory training courses here."
+msgstr "आपकी सीखने की प्रगति और अनिवार्य प्रशिक्षण यहाँ देखें।"
+
+#: templates/courses/dashboard.html:18
+msgid "Enrolled Courses"
+msgstr "पाठ्यक्रम"
+
+#: templates/courses/dashboard.html:32 templates/users/profile.html:85
+msgid "In Progress"
+msgstr "चल रहा"
+
+#: templates/courses/dashboard.html:46
+msgid "My Courses"
+msgstr "मेरे पाठ्यक्रम"
+
+#: templates/courses/dashboard.html:59
+#: templates/courses/training_calendar.html:48
+#: templates/management/course_list.html:38
+#: templates/management/session_list.html:39
+msgid "Mandatory"
+msgstr "अनिवार्य"
+
+#: templates/courses/dashboard.html:61
+#: templates/courses/training_calendar.html:49
+#: templates/management/course_list.html:40
+#: templates/management/session_list.html:39
+msgid "Elective"
+msgstr "वैकल्पिक"
+
+#: templates/courses/dashboard.html:80
+msgid "Continue"
+msgstr "जारी रखें"
+
+#: templates/courses/dashboard.html:90
+msgid "Available Courses"
+msgstr "वैकल्पिक पाठ्यक्रम"
+
+#: templates/courses/dashboard.html:92
+msgid "Open for self-enrollment."
+msgstr "स्व-पंजीकरण के लिए खुला।"
+
+#: templates/courses/dashboard.html:109
+msgid "lessons"
+msgstr "पाठ"
+
+#: templates/courses/dashboard.html:113
+msgid "Enroll"
+msgstr "नामांकन"
+
+#: templates/courses/dashboard.html:124
+msgid ""
+"No courses assigned yet. Your HOD or HR will assign training courses to you."
+msgstr "कोई पाठ्यक्रम निर्धारित नहीं है।"
+
+#: templates/courses/lesson.html:6 templates/quizzes/quiz_result.html:28
+#: templates/quizzes/take_quiz.html:6
+msgid "Back to Course"
+msgstr "कोर्स पर वापस"
+
+#: templates/courses/lesson.html:12
+msgid "Module"
+msgstr "मॉड्यूल"
+
+#: templates/courses/lesson.html:12 templates/management/course_detail.html:39
+msgid "Lesson"
+msgstr "पाठ"
+
+#: templates/courses/lesson.html:33
+msgid "No content available for this lesson yet."
+msgstr "इस पाठ के लिए कोई सामग्री उपलब्ध नहीं है।"
+
+#: templates/courses/lesson.html:42
+msgid "Course Progress"
+msgstr "कोर्स प्रगति"
+
+#: templates/courses/lesson.html:49
+msgid "Minutes"
+msgstr "मिनट"
+
+#: templates/courses/lesson.html:63
+msgid "Previous"
+msgstr "पिछला"
+
+#: templates/courses/lesson.html:69 templates/courses/training_calendar.html:14
+msgid "Next"
+msgstr "अगला"
+
+#: templates/courses/manager_dashboard.html:3
+msgid "Admin Command Center | SRMS DRONA"
+msgstr "एडमिन कमांड सेंटर | SRMS DRONA"
+
+#: templates/courses/manager_dashboard.html:3
+msgid "HOD / Training Dashboard | SRMS DRONA"
+msgstr "अध्यक्ष / प्रशिक्षण डैशबोर्ड | SRMS DRONA"
+
+#: templates/courses/manager_dashboard.html:11
+msgid "Platform-wide training activity and compliance at a glance."
+msgstr "पूरे मंच पर प्रशिक्षण गतिविधि और अनुपालन एक नज़र में।"
+
+#: templates/courses/manager_dashboard.html:13
+#, python-format
+msgid "Overview of training progress for %(scope_label)s."
+msgstr "%(scope_label)s की प्रशिक्षण प्रगति का अवलोकन।"
+
+#: templates/courses/manager_dashboard.html:22
+#: templates/management/console_home.html:24
+msgid "Active Staff"
+msgstr "सक्रिय कर्मचारी"
+
+#: templates/courses/manager_dashboard.html:29
+#: templates/management/console_home.html:12 templates/users/profile.html:146
+msgid "Courses"
+msgstr "पाठ्यक्रम"
+
+#: templates/courses/manager_dashboard.html:57
+#: templates/courses/training_calendar.html:23
+msgid "Sessions This Month"
+msgstr "इस माह के सत्र"
+
+#: templates/courses/manager_dashboard.html:62
+msgid "Management Actions"
+msgstr "प्रबंधन क्रियाएँ"
+
+#: templates/courses/manager_dashboard.html:64
+#: templates/management/console_home.html:6
+msgid "Management Console"
+msgstr "प्रबंधन कंसोल"
+
+#: templates/courses/manager_dashboard.html:65
+#: templates/management/console_home.html:42 templates/users/profile.html:160
+msgid "HR Analytics"
+msgstr "एचआर एनालिटिक्स"
+
+#: templates/courses/manager_dashboard.html:68
+#: templates/management/course_list.html:11
+msgid "Bulk Enroll"
+msgstr "सामूहिक नामांकन"
+
+#: templates/courses/manager_dashboard.html:69
+msgid "Assign Course"
+msgstr "पाठ्यक्रम असाइन करें"
+
+#: templates/courses/manager_dashboard.html:70
+msgid "Session Manager"
+msgstr "सत्र प्रबंधन"
+
+#: templates/courses/manager_dashboard.html:74
+msgid "Needs Your Action"
+msgstr "कार्रवाई की आवश्यकता"
+
+#: templates/courses/manager_dashboard.html:76
+#, python-format
+msgid "%(pending_count)s account approval request(s) are pending."
+msgstr "%(pending_count)s खाता अनुमोदन अनुरोध लंबित हैं।"
+
+#: templates/courses/manager_dashboard.html:77
+msgid "Review Approvals"
+msgstr "अनुमोदन देखें"
+
+#: templates/courses/manager_dashboard.html:82
+msgid "Recent Enrollments"
+msgstr "हाल के नामांकन"
+
+#: templates/courses/manager_dashboard.html:100 templates/users/profile.html:91
+msgid "No enrollments yet."
+msgstr "कोई नामांकन नहीं।"
+
+#: templates/courses/training_calendar.html:3
+msgid "Training Calendar | SRMS DRONA"
+msgstr "प्रशिक्षण कैलेंडर | SRMS DRONA"
+
+#: templates/courses/training_calendar.html:7
+msgid "View upcoming workshops and training sessions."
+msgstr "आगामी कार्यशालाओं और प्रशिक्षण सत्र देखें।"
+
+#: templates/courses/training_calendar.html:11
+msgid "Prev"
+msgstr "पिछला"
+
+#: templates/courses/training_calendar.html:17
+#: templates/management/session_list.html:10
+msgid "New Session"
+msgstr "नया सत्र"
+
+#: templates/courses/training_calendar.html:18
+msgid "Manage Sessions"
+msgstr "सत्र प्रबंधन"
+
+#: templates/courses/training_calendar.html:29
+#: templates/management/session_list.html:18
+msgid "Session"
+msgstr "सत्र"
+
+#: templates/courses/training_calendar.html:30
+#: templates/management/session_list.html:20
+msgid "Time"
+msgstr "समय"
+
+#: templates/courses/training_calendar.html:31
+#: templates/management/session_list.html:21
+msgid "Location"
+msgstr "स्थान"
+
+#: templates/courses/training_calendar.html:32
+#: templates/management/course_detail.html:39
+#: templates/management/course_list.html:21
+#: templates/management/session_list.html:23
+msgid "Type"
+msgstr "प्रकार"
+
+#: templates/courses/training_calendar.html:54
+#: templates/management/course_detail.html:26
+#: templates/management/course_detail.html:53
+#: templates/management/course_list.html:49
+#: templates/management/session_list.html:43
+msgid "Edit"
+msgstr "संपादित करें"
+
+#: templates/courses/training_calendar.html:58
+#: templates/management/course_detail.html:31
+#: templates/management/course_detail.html:57
+#: templates/management/session_list.html:47
+msgid "Del"
+msgstr "हटाएँ"
+
+#: templates/courses/training_calendar.html:69
+msgid "No training sessions scheduled for this month."
+msgstr "इस माह कोई सत्र निर्धारित नहीं है।"
+
+#: templates/errors/400.html:9
+msgid "Bad Request | SRMS DRONA"
+msgstr "गलत अनुरोध | SRMS DRONA"
+
+#: templates/errors/400.html:17
+msgid "Bad request"
+msgstr "गलत अनुरोध"
+
+#: templates/errors/400.html:18
+msgid "The request could not be processed. Please try again."
+msgstr "अनुरोध संसाधित नहीं किया जा सका। कृपया पुनः प्रयास करें।"
+
+#: templates/errors/403.html:9
+msgid "Access Denied | SRMS DRONA"
+msgstr "पहुँच अस्वीकृत | SRMS DRONA"
+
+#: templates/errors/403.html:17
+msgid "Access denied"
+msgstr "पहुँच अस्वीकृत"
+
+#: templates/errors/403.html:18
+msgid ""
+"You don't have permission to view this page. If you believe this is a "
+"mistake, please contact your administrator."
+msgstr "आपको यह पृष्ठ देखने की अनुमति नहीं है। यदि आपको लगता है कि यह गलती है, तो कृपया अपने प्रशासक से संपर्क करें।"
+
+#: templates/errors/404.html:9
+msgid "Page Not Found | SRMS DRONA"
+msgstr "पृष्ठ नहीं मिला | SRMS DRONA"
+
+#: templates/errors/404.html:17
+msgid "Page not found"
+msgstr "पृष्ठ नहीं मिला"
+
+#: templates/errors/404.html:18
+msgid "The page you're looking for doesn't exist or has been moved."
+msgstr "आप जिस पृष्ठ की तलाश कर रहे हैं वह मौजूद नहीं है या स्थानांतरित कर दिया गया है।"
+
+#: templates/errors/500.html:9
+msgid "Server Error | SRMS DRONA"
+msgstr "सर्वर त्रुटि | SRMS DRONA"
+
+#: templates/errors/500.html:17
+msgid "Something went wrong"
+msgstr "कुछ गड़बड़ हो गई"
+
+#: templates/errors/500.html:18
+msgid "An unexpected error occurred. Please try again in a moment."
+msgstr "एक अप्रत्याशित त्रुटि हुई। कृपया थोड़ी देर बाद पुनः प्रयास करें।"
+
+#: templates/management/assign_staff.html:3
+msgid "Assign Course | SRMS DRONA"
+msgstr "पाठ्यक्रम सौंपें | SRMS DRONA"
+
+#: templates/management/assign_staff.html:6
+#: templates/management/console_home.html:41
+msgid "Assign Course to Employee"
+msgstr "कर्मचारी को पाठ्यक्रम सौंपें"
+
+#: templates/management/assign_staff.html:7
+msgid "Enroll a specific employee into a course (per-student assignment)."
+msgstr "किसी विशेष कर्मचारी को पाठ्यक्रम में नामांकित करें (व्यक्तिगत सौंपवटी)।"
+
+#: templates/management/assign_staff.html:21
+msgid "Assign"
+msgstr "सौंपें"
+
+#: templates/management/assign_staff.html:22
+#: templates/management/bulk_enroll.html:22
+#: templates/management/course_form.html:27
+#: templates/management/lesson_form.html:27
+#: templates/management/module_form.html:21
+#: templates/management/session_form.html:24
+#: templates/management/user_create.html:21
+msgid "Cancel"
+msgstr "रद्द करें"
+
+#: templates/management/bulk_enroll.html:3
+msgid "Bulk Enroll Staff | SRMS DRONA"
+msgstr "सामूहिक नामांकन | SRMS DRONA"
+
+#: templates/management/bulk_enroll.html:6
+#: templates/management/console_home.html:40
+msgid "Bulk Enroll Staff"
+msgstr "सामूहिक नामांकन"
+
+#: templates/management/bulk_enroll.html:7
+msgid ""
+"Assign a course to all active staff in a department (or everyone) in one "
+"step."
+msgstr "किसी विभाग के सभी सक्रिय कर्मचारियों (या सभी) को एक ही चरण में पाठ्यक्रम सौंपें।"
+
+#: templates/management/bulk_enroll.html:21
+#: templates/management/course_detail.html:11
+msgid "Enroll Staff"
+msgstr "कर्मचारी नामांकित करें"
+
+#: templates/management/console_home.html:3
+msgid "Management Console | SRMS DRONA"
+msgstr "प्रबंधन कंसोल | SRMS DRONA"
+
+#: templates/management/console_home.html:7
+msgid ""
+"Create courses, upload modules &amp; lessons, and assign training to "
+"departments."
+msgstr "पाठ्यक्रम बनाएँ, मॉड्यूल और पाठ अपलोड करें, तथा विभागों को प्रशिक्षण सौंपें।"
+
+#: templates/management/console_home.html:16
+#: templates/management/course_list.html:22
+msgid "Modules"
+msgstr "मॉड्यूल"
+
+#: templates/management/console_home.html:28
+msgid "Quizzes"
+msgstr "क्विज़"
+
+#: templates/management/console_home.html:36
+msgid "Quick Actions"
+msgstr "त्वरित क्रियाएँ"
+
+#: templates/management/console_home.html:39
+#: templates/management/course_list.html:6
+msgid "Manage Courses"
+msgstr "पाठ्यक्रम प्रबंधित करें"
+
+#: templates/management/console_home.html:47
+#: templates/management/session_list.html:6
+msgid "Training Sessions"
+msgstr "प्रशिक्षण सत्र"
+
+#: templates/management/console_home.html:48
+msgid "Import Staff (CSV)"
+msgstr "कर्मचारी आयात करें (CSV)"
+
+#: templates/management/console_home.html:50
+msgid "Create HR/HOD Account"
+msgstr "एचआर/अध्यक्ष खाता बनाएँ"
+
+#: templates/management/course_detail.html:12
+msgid "View as learner"
+msgstr "शिक्षार्थी के रूप में देखें"
+
+#: templates/management/course_detail.html:16
+msgid "Structure"
+msgstr "संरचना"
+
+#: templates/management/course_detail.html:27
+msgid "+ Lesson"
+msgstr "+ पाठ"
+
+#: templates/management/course_detail.html:39
+msgid "Duration"
+msgstr "अवधि"
+
+#: templates/management/course_detail.html:47
+msgid "Video"
+msgstr "वीडियो"
+
+#: templates/management/course_detail.html:66
+msgid "No lessons in this module yet."
+msgstr "इस मॉड्यूल में अभी कोई पाठ नहीं।"
+
+#: templates/management/course_detail.html:70
+msgid "This course has no modules yet. Add your first module below."
+msgstr "इस पाठ्यक्रम में अभी कोई मॉड्यूल नहीं है। नीचे अपना पहला मॉड्यूल जोड़ें।"
+
+#: templates/management/course_detail.html:73
+msgid "Add a Module"
+msgstr "मॉड्यूल जोड़ें"
+
+#: templates/management/course_detail.html:84
+msgid "＋ Add Module"
+msgstr "＋ मॉड्यूल जोड़ें"
+
+#: templates/management/course_form.html:26
+msgid "Save Course"
+msgstr "पाठ्यक्रम सहेजें"
+
+#: templates/management/course_list.html:3
+msgid "Manage Courses | SRMS DRONA"
+msgstr "पाठ्यक्रम प्रबंधित करें | SRMS DRONA"
+
+#: templates/management/course_list.html:7
+msgid "Edit course structure, add modules and lessons, and track enrollments."
+msgstr "पाठ्यक्रम संरचना संपादित करें, मॉड्यूल और पाठ जोड़ें, तथा नामांकन देखें।"
+
+#: templates/management/course_list.html:10
+msgid "New Course"
+msgstr "नया पाठ्यक्रम"
+
+#: templates/management/course_list.html:12
+#: templates/management/session_list.html:11
+msgid "Back"
+msgstr "वापस"
+
+#: templates/management/course_list.html:20
+msgid "Category"
+msgstr "श्रेणी"
+
+#: templates/management/course_list.html:48
+msgid "Open"
+msgstr "खुला"
+
+#: templates/management/course_list.html:53
+msgid "Delete"
+msgstr "हटाएँ"
+
+#: templates/management/course_list.html:59
+msgid "No courses yet."
+msgstr "अभी कोई पाठ्यक्रम नहीं।"
+
+#: templates/management/course_list.html:59
+msgid "Create your first course."
+msgstr "अपना पहला पाठ्यक्रम बनाएँ।"
+
+#: templates/management/lesson_form.html:7
+#: templates/management/module_form.html:7
+msgid "Course:"
+msgstr "पाठ्यक्रम:"
+
+#: templates/management/lesson_form.html:7
+msgid "· Module:"
+msgstr "· मॉड्यूल:"
+
+#: templates/management/lesson_form.html:26
+msgid "Save Lesson"
+msgstr "पाठ सहेजें"
+
+#: templates/management/module_form.html:3
+msgid "Edit Module | SRMS DRONA"
+msgstr "मॉड्यूल संपादित करें | SRMS DRONA"
+
+#: templates/management/module_form.html:6
+msgid "Edit Module"
+msgstr "मॉड्यूल संपादित करें"
+
+#: templates/management/module_form.html:20
+msgid "Save Module"
+msgstr "मॉड्यूल सहेजें"
+
+#: templates/management/session_form.html:23
+msgid "Save Session"
+msgstr "सत्र सहेजें"
+
+#: templates/management/session_list.html:3
+msgid "Training Sessions | SRMS DRONA"
+msgstr "प्रशिक्षण सत्र | SRMS DRONA"
+
+#: templates/management/session_list.html:7
+msgid "Schedule workshops, drills, and live training for staff."
+msgstr "कर्मचारियों के लिए कार्यशालाएँ, अभ्यास और लाइव प्रशिक्षण निर्धारित करें।"
+
+#: templates/management/session_list.html:22
+msgid "Linked Course"
+msgstr "संबद्ध पाठ्यक्रम"
+
+#: templates/management/session_list.html:53
+msgid "No sessions scheduled yet."
+msgstr "अभी कोई सत्र निर्धारित नहीं है।"
+
+#: templates/management/staff_import.html:3
+msgid "Import Staff (CSV) | SRMS DRONA"
+msgstr "कर्मचारी आयात (CSV) | SRMS DRONA"
+
+#: templates/management/staff_import.html:6
+msgid "Bulk Import Staff (CSV)"
+msgstr "कर्मचारी सामूहिक आयात (CSV)"
+
+#: templates/management/staff_import.html:7
+msgid ""
+"Upload a CSV to create staff accounts in one step. Imported staff get an "
+"initial password equal to their Employee ID."
+msgstr "एक ही चरण में कर्मचारी खाते बनाने के लिए CSV अपलोड करें। आयातित कर्मचारियों का प्रारंभिक पासवर्ड उनकी कर्मचारी आईडी के बराबर होगा।"
+
+#: templates/management/staff_import.html:13
+msgid "CSV File"
+msgstr "CSV फ़ाइल"
+
+#: templates/management/staff_import.html:16
+msgid "Import Staff"
+msgstr "कर्मचारी आयात करें"
+
+#: templates/management/staff_import.html:20
+msgid "Required CSV format"
+msgstr "आवश्यक CSV प्रारूप"
+
+#: templates/management/staff_import.html:31
+msgid "Import Result"
+msgstr "आयात परिणाम"
+
+#: templates/management/user_create.html:3
+msgid "Create Account | SRMS DRONA"
+msgstr "खाता बनाएँ | SRMS DRONA"
+
+#: templates/management/user_create.html:6
+msgid "Create HR / HOD / Staff Account"
+msgstr "एचआर / अध्यक्ष / कर्मचारी खाता बनाएँ"
+
+#: templates/management/user_create.html:7
+msgid ""
+"Provision a new account manually. The new user can then manage training and "
+"approve signup requests."
+msgstr "नया खाता स्वतः बनाएँ। नया उपयोगकर्ता फिर प्रशिक्षण प्रबंधित कर सकेगा और पंजीकरण अनुरोध स्वीकृत कर सकेगा।"
+
+#: templates/quizzes/ai_quiz_generator.html:3
+msgid "Quiz Builder | SRMS DRONA"
+msgstr "प्रश्न बैंक निर्माता | SRMS DRONA"
+
+#: templates/quizzes/ai_quiz_generator.html:8
+msgid "Upload an SOP PDF or paste text to generate MCQs automatically."
+msgstr "SOP पीडीएफ या टेक्स्ट अपलोड करें, MCQs स्वचालित रूप से उत्पन्न करें।"
+
+#: templates/quizzes/ai_quiz_generator.html:16
+#: templates/quizzes/ai_quiz_generator.html:18
+msgid "Select Module"
+msgstr "मॉड्यूल चुनें"
+
+#: templates/quizzes/ai_quiz_generator.html:26
+msgid "SOP PDF (Optional)"
+msgstr "SOP पीडीएफ (वैकल्पिक)"
+
+#: templates/quizzes/ai_quiz_generator.html:31
+msgid "Or Paste SOP Text"
+msgstr "या SOP टेक्स्ट पेस्ट करें"
+
+#: templates/quizzes/ai_quiz_generator.html:33
+msgid "Paste SOP content to generate questions..."
+msgstr "प्रश्न उत्पन्न करने के लिए SOP सामग्री पेस्ट करें..."
+
+#: templates/quizzes/ai_quiz_generator.html:37
+msgid "Number of Questions"
+msgstr "प्रश्नों की संख्या"
+
+#: templates/quizzes/ai_quiz_generator.html:45
+msgid "Generate Questions"
+msgstr "प्रश्न उत्पन्न करें"
+
+#: templates/quizzes/quiz_result.html:3
+msgid "Quiz Result | SRMS DRONA"
+msgstr "प्रश्न परिणाम | SRMS DRONA"
+
+#: templates/quizzes/quiz_result.html:9
+msgid "PASSED"
+msgstr "उत्तीर्ण"
+
+#: templates/quizzes/quiz_result.html:9
+msgid "FAILED"
+msgstr "अनुत्तीर्ण"
+
+#: templates/quizzes/quiz_result.html:14
+msgid "Congratulations!"
+msgstr "बधाई हो!"
+
+#: templates/quizzes/quiz_result.html:16
+msgid "Keep Trying!"
+msgstr "फिर से प्रयास करें"
+
+#: templates/quizzes/quiz_result.html:21
+msgid "You answered correctly:"
+msgstr "आपने सही उत्तर दिए:"
+
+#: templates/quizzes/quiz_result.html:22 templates/quizzes/take_quiz.html:12
+msgid "Passing Score:"
+msgstr "उत्तीर्ण अंक:"
+
+#: templates/quizzes/quiz_result.html:26
+msgid "You passed this assessment!"
+msgstr "आपने यह मूल्यांकन उत्तीर्ण किया है!"
+
+#: templates/quizzes/quiz_result.html:29
+msgid "View Certificates"
+msgstr "प्रमाणपत्र देखें"
+
+#: templates/quizzes/quiz_result.html:33
+#, python-format
+msgid ""
+"You need at least %(quiz.passing_score)s%% to pass. Please review the SOP "
+"and retry."
+msgstr "उत्तीर्ण होने के लिए आपको कम से कम %(quiz.passing_score)s%% अंक चाहिए। कृपया SOP दोबारा पढ़ें और पुनः प्रयास करें।"
+
+#: templates/quizzes/quiz_result.html:36
+msgid "Retry Quiz"
+msgstr "पुनः प्रयास करें"
+
+#: templates/quizzes/take_quiz.html:13
+msgid "questions"
+msgstr "प्रश्न"
+
+#: templates/quizzes/take_quiz.html:21
+msgid "Question"
+msgstr "प्रश्न"
+
+#: templates/quizzes/take_quiz.html:35
+msgid "No questions available for this quiz yet."
+msgstr "इस प्रश्नोत्तरी के लिए अभी कोई प्रश्न नहीं हैं।"
+
+#: templates/quizzes/take_quiz.html:41
+msgid "Submit Answers"
+msgstr "उत्तर जमा करें"
+
+#: templates/users/login.html:9
+msgid "Sign In | SRMS DRONA Learning App"
+msgstr "साइन इन करें | SRMS DRONA लर्निंग ऐप"
+
+#: templates/users/login.html:26
+msgid "Skill Learning &amp; Performance Tracking for Non-Teaching Staff"
+msgstr "गैर-शिक्षण कर्मचारियों के लिए कौशल सीखना और प्रदर्शन पर नज़र"
+
+#: templates/users/login.html:38
+msgid "Staff / Trainee"
+msgstr "कर्मचारी / प्रशिक्षु"
+
+#: templates/users/login.html:39
+msgid "Admin / Management"
+msgstr "एडमिन / प्रबंधन"
+
+#: templates/users/login.html:54
+msgid "Sign In"
+msgstr "साइन इन करें"
+
+#: templates/users/login.html:55
+msgid "Forgot password?"
+msgstr "पासवर्ड भूल गए?"
+
+#: templates/users/login.html:71
+msgid "Sign In to Management"
+msgstr "प्रबंधन के लिए साइन इन करें"
+
+#: templates/users/login.html:72
+msgid "Admins &amp; Trainers land in the Management Console."
+msgstr "एडमिन और प्रशिक्षक सीधे प्रबंधन कंसोल में पहुँचते हैं।"
+
+#: templates/users/login.html:76
+msgid "Don't have an account?"
+msgstr "खाता नहीं है?"
+
+#: templates/users/login.html:81
+msgid "Demo Credentials"
+msgstr "डेमो क्रेडेंशियल"
+
+#: templates/users/password_reset_complete.html:8
+msgid "Password Updated | SRMS DRONA"
+msgstr "पासवर्ड अपडेट हो गया | SRMS DRONA"
+
+#: templates/users/password_reset_complete.html:17
+msgid "Password Updated"
+msgstr "पासवर्ड अपडेट हो गया"
+
+#: templates/users/password_reset_complete.html:19
+msgid "Your password has been changed. You can now sign in."
+msgstr "आपका पासवर्ड बदल गया है। अब आप साइन इन कर सकते हैं।"
+
+#: templates/users/password_reset_complete.html:20
+msgid "Go to Sign In"
+msgstr "साइन इन पर जाएँ"
+
+#: templates/users/password_reset_confirm.html:8
+msgid "Set New Password | SRMS DRONA"
+msgstr "नया पासवर्ड तय करें | SRMS DRONA"
+
+#: templates/users/password_reset_confirm.html:17
+msgid "Set a New Password"
+msgstr "नया पासवर्ड तय करें"
+
+#: templates/users/password_reset_confirm.html:22
+msgid "New Password"
+msgstr "नया पासवर्ड"
+
+#: templates/users/password_reset_confirm.html:31
+msgid "Change Password"
+msgstr "पासवर्ड बदलें"
+
+#: templates/users/password_reset_confirm.html:33
+#: templates/users/password_reset_done.html:22
+#: templates/users/password_reset_form.html:42
+msgid "Back to Sign In"
+msgstr "साइन इन पर वापस जाएँ"
+
+#: templates/users/password_reset_done.html:8
+msgid "Check Your Email | SRMS DRONA"
+msgstr "अपना ईमेल देखें | SRMS DRONA"
+
+#: templates/users/password_reset_done.html:17
+msgid "Check Your Email"
+msgstr "अपना ईमेल देखें"
+
+#: templates/users/password_reset_done.html:20
+msgid ""
+"If an account exists for that email, we've sent a password reset link. Check "
+"your inbox (and spam)."
+msgstr "यदि उस ईमेल से कोई खाता मौजूद है, तो हमने पासवर्ड रीसेट लिंक भेजा है। अपना इनबॉक्स (और स्पैम) देखें।"
+
+#: templates/users/password_reset_form.html:8
+msgid "Reset Password | SRMS DRONA"
+msgstr "पासवर्ड रीसेट करें | SRMS DRONA"
+
+#: templates/users/password_reset_form.html:18
+msgid "Forgot Password"
+msgstr "पासवर्ड भूल गए"
+
+#: templates/users/password_reset_form.html:19
+msgid "Enter the email linked to your account and we'll send a reset link."
+msgstr "अपने खाते से जुड़ा ईमेल दर्ज करें, हम रीसेट लिंक भेजेंगे।"
+
+#: templates/users/password_reset_form.html:31
+msgid "Email Address"
+msgstr "ईमेल पता"
+
+#: templates/users/password_reset_form.html:38
+msgid "Send Reset Link"
+msgstr "रीसेट लिंक भेजें"
+
+#: templates/users/password_reset_form.html:42
+msgid "Remembered it?"
+msgstr "याद आ गया?"
+
+#: templates/users/profile.html:3
+msgid "Profile | SRMS DRONA"
+msgstr "प्रोफ़ाइल | SRMS DRONA"
+
+#: templates/users/profile.html:11
+msgid "Your account details and management overview."
+msgstr "आपका खाता विवरण और प्रबंधन अवलोकन।"
+
+#: templates/users/profile.html:13
+msgid "Your work details and learning progress."
+msgstr "आपके कार्य विवरण और सीखने की प्रगति।"
+
+#: templates/users/profile.html:19
+msgid "Employee Information"
+msgstr "कर्मचारी जानकारी"
+
+#: templates/users/profile.html:28
+msgid "Employee ID:"
+msgstr "कर्मचारी आईडी:"
+
+#: templates/users/profile.html:32
+msgid "Department:"
+msgstr "विभाग:"
+
+#: templates/users/profile.html:36
+msgid "Designation:"
+msgstr "पद:"
+
+#: templates/users/profile.html:40
+msgid "Role:"
+msgstr "भूमिका:"
+
+#: templates/users/profile.html:50
+msgid "Badges"
+msgstr "बैज"
+
+#: templates/users/profile.html:50
+msgid "hrs"
+msgstr "घंटे"
+
+#: templates/users/profile.html:60
+msgid "✓ Earned"
+msgstr "✓ प्राप्त"
+
+#: templates/users/profile.html:60
+msgid "Locked"
+msgstr "लॉक"
+
+#: templates/users/profile.html:66
+msgid "My Enrollments"
+msgstr "मेरे नामांकन"
+
+#: templates/users/profile.html:105
+msgid "Issued"
+msgstr "जारी"
+
+#: templates/users/profile.html:117
+msgid "No certificates yet."
+msgstr "कोई प्रमाणपत्र नहीं।"
+
+#: templates/users/profile.html:126
+msgid "Management Overview"
+msgstr "प्रबंधन अवलोकन"
+
+#: templates/users/profile.html:158
+msgid "Command Center"
+msgstr "डैशबोर्ड"
+
+#: templates/users/register.html:9
+msgid "Create Account | SRMS DRONA Learning App"
+msgstr "खाता बनाएँ | SRMS DRONA लर्निंग ऐप"
+
+#: templates/users/register.html:26
+msgid ""
+"Register to join the SRMS DRONA Learning Platform. Your account must be "
+"approved by an admin before you can sign in."
+msgstr "SRMS DRONA लर्निंग प्लेटफ़ॉर्म में शामिल होने के लिए पंजीकरण करें। साइन इन करने से पहले एक प्रशासक को आपके खाते को अनुमोदित करना होगा।"
+
+#: templates/users/register.html:60
+msgid "Already have an account?"
+msgstr "पहले से खाता है?"
+
+#: templates/users/register.html:60
+msgid "Sign in"
+msgstr "साइन इन करें"

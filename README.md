@@ -41,7 +41,11 @@ through an HR analytics console — all under strict role-based access control (
 - **QR-verifiable certificates** — ReportLab renders the PDF; the QR code resolves to a public
   `/verify/<id>/` page that confirms authenticity while masking the holder's surname.
 - **HR analytics dashboard** — Chart.js visualizations + **CSV export**.
-- **Hindi / English UI toggle**.
+- **Bilingual UI (English / हिन्दी)** — the whole interface is translated: navigation, buttons,
+  form labels, validation messages, email subjects, the management console and every error page.
+  347 catalogued strings. Content (course/module/lesson/quiz titles and descriptions) is
+  bilingual via `_hi` model fields and switches with the UI. See
+  [Localisation](#localisation--adding-or-changing-a-translation)..
 - **PWA** — manifest + service worker, installable to home screen, works as an app.
 - **Email reminders** — APScheduler nudges staff with pending training (single-worker safe).
   The scheduler is **on** in production; actual delivery awaits SMTP credentials (see
@@ -267,6 +271,47 @@ Seed password values come from `SEED_ADMIN_PASSWORD` (env, default `Admin12345`)
 for staff. Override `SEED_ADMIN_PASSWORD` for your own seed. The live deployment uses a rotated
 admin password from `DJANGO_ADMIN_PASSWORD` (see Production below) — never reuse the seed admin
 password in production.
+
+---
+
+## 🌐 Localisation — adding or changing a translation
+
+The UI is bilingual. **English → Hindi** is wired through Django's own i18n, not ad-hoc
+conditionals.
+
+| Piece | Where | Notes |
+|---|---|---|
+| Enabled languages | `LANGUAGES` in `settings.py` | `en` + `hi` |
+| Catalog location | `LOCALE_PATHS` → `locale/hi/LC_MESSAGES/` | `django.po` is the source, `django.mo` is the compiled binary |
+| Markup | `{% trans "…" %}` / `{% blocktranslate %}` for text with `{{ variables }}` | every template does `{% load i18n %}` |
+| Backend strings | `gettext_lazy as _` in Python | module-level constants must use the lazy form |
+| Which language | `UserLanguageMiddleware` | session `django_language` first, then `StaffUser.preferred_language` |
+
+**`django.mo` is committed on purpose.** Render's Python image has no `msgfmt`, so a
+build-time `compilemessages` would fail or be skipped. If you edit `django.po`, recompile
+and commit both:
+
+```bash
+python manage.py makemessages -l hi -a --ignore=venv --ignore=staticfiles --ignore=media
+msgfmt -o locale/hi/LC_MESSAGES/django.mo locale/hi/LC_MESSAGES/django.po
+```
+
+`msgfmt --check` is worth running — a malformed catalog fails at runtime, not at build.
+
+**Two things never to translate**, both of which caused real breakage here:
+
+1. **A language code inside a URL.** The toggle is `?lang={% if is_hindi %}en{% else %}hi{% endif %}`.
+   Wrapping `hi` in `{% trans %}` sends the translated *word* as the code and silently breaks the switch.
+2. **A value, not display text** — Employee IDs, passwords, department codes, `pk_test_…` keys.
+
+**Bilingual content** is separate and pre-existing: `Category.name_hi`, `Course.title_hi`,
+`Lesson.title_hi`, `Quiz.title_hi` etc. Templates pick the `_hi` field when `is_hindi` is set
+and fall back to the English one. Anything typed into a `_hi` field in the admin shows only
+in Hindi mode.
+
+`HindiCatalogTests` (in `apps/users/tests.py`) fails if `LOCALE_PATHS` is empty, if `django.mo`
+is missing, if a known string stops translating, or if the session/user preference stops
+reaching `{% trans %}`.
 
 ---
 

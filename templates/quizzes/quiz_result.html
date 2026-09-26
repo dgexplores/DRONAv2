@@ -1,38 +1,39 @@
 {% extends 'base.html' %}
-{% block title %}Quiz Result | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Quiz Result | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
 <div class="result-box">
     <div class="result-circle {% if passed %}pass{% else %}fail{% endif %}">
         <div class="result-score">{{ score_percent }}%</div>
-        <div class="result-passlabel">{% if passed %}{% if is_hindi %}उत्तीर्ण{% else %}PASSED{% endif %}{% else %}{% if is_hindi %}अनुत्तीर्ण{% else %}FAILED{% endif %}{% endif %}</div>
+        <div class="result-passlabel">{% if passed %}{% trans "PASSED" %}{% else %}{% trans "FAILED" %}{% endif %}</div>
     </div>
 
     <h2 style="color: var(--srms-navy); margin-bottom: 0.5rem;">
         {% if passed %}
-            {% if is_hindi %}बधाई हो!{% else %}Congratulations!{% endif %}
+            {% trans "Congratulations!" %}
         {% else %}
-            {% if is_hindi %}फिर से प्रयास करें{% else %}Keep Trying!{% endif %}
+            {% trans "Keep Trying!" %}
         {% endif %}
     </h2>
 
     <p style="color: var(--muted); margin-bottom: 1.5rem;">
-        {% if is_hindi %}आपने सही उत्तर दिए:{% else %}You answered correctly:{% endif %} <strong>{{ correct_count }} / {{ total_q }}</strong>
-        &middot; {% if is_hindi %}उत्तीर्ण अंक:{% else %}Passing Score:{% endif %} <strong>{{ quiz.passing_score }}%</strong>
+        {% trans "You answered correctly:" %} <strong>{{ correct_count }} / {{ total_q }}</strong>
+        &middot; {% trans "Passing Score:" %} <strong>{{ quiz.passing_score }}%</strong>
     </p>
 
     {% if passed %}
-        <p style="margin-bottom: 1.5rem;">🎉 {% if is_hindi %}आपने यह मूल्यांकन उत्तीर्ण किया है!{% else %}You passed this assessment!{% endif %}</p>
+        <p style="margin-bottom: 1.5rem;">🎉 {% trans "You passed this assessment!" %}</p>
         {% if course %}
-        <a href="{% url 'course_detail' course.id %}" class="btn btn-primary btn-block">{% if is_hindi %}कोर्स पर वापस{% else %}Back to Course{% endif %}</a>
-        <a href="{% url 'my_certificates' %}" class="btn btn-success btn-block" style="margin-top: 0.75rem;">{% if is_hindi %}प्रमाणपत्र देखें{% else %}View Certificates{% endif %}</a>
+        <a href="{% url 'course_detail' course.id %}" class="btn btn-primary btn-block">{% trans "Back to Course" %}</a>
+        <a href="{% url 'my_certificates' %}" class="btn btn-success btn-block" style="margin-top: 0.75rem;">{% trans "View Certificates" %}</a>
         {% endif %}
     {% else %}
         <p style="margin-bottom: 1.5rem;">
-            {% if is_hindi %}आपको उत्तीर्ण होने के लिए कम से कम {{ quiz.passing_score }}% चाहिए। कृपया SOP की समीक्षा करें और पुनः प्रयास करें।{% else %}You need at least {{ quiz.passing_score }}% to pass. Please review the SOP and retry.{% endif %}
+            {% blocktranslate %}You need at least {{ quiz.passing_score }}% to pass. Please review the SOP and retry.{% endblocktranslate %}
         </p>
         {% if course %}
-        <a href="{% url 'take_quiz' course.id %}" class="btn btn-gold btn-block">{% if is_hindi %}पुनः प्रयास करें{% else %}Retry Quiz{% endif %}</a>
+        <a href="{% url 'take_quiz' course.id %}" class="btn btn-gold btn-block">{% trans "Retry Quiz" %}</a>
         {% endif %}
     {% endif %}
 </div>

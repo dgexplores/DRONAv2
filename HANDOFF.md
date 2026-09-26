@@ -241,6 +241,9 @@ simply **absent**. Nothing reports this, because each one has a harmless-looking
 |---|---|---|
 | `DJANGO_EMAIL_BACKEND` | **absent** → `console.EmailBackend` | **No email is ever delivered.** Password-reset and staff setup links are printed to stdout (Render logs) instead of sent. `send_mail()` still returns `1`, so the UI reports success. |
 | `SMTP_USER` / `SMTP_PASSWORD` | **absent** | Same as above — no SMTP credentials configured. |
+| `LANGUAGES` / `LOCALE_PATHS` | **now set** in `settings.py` (`en` + `hi`, catalog at `locale/`). Previously `LOCALE_PATHS` was empty, so the Hindi toggle only flipped `html lang` and every string stayed English. |
+| `UserLanguageMiddleware` | **new**, after `AuthenticationMiddleware`. Bridges two gaps: `LocaleMiddleware` never reads `request.session['django_language']` (it only reads the language cookie and `Accept-Language`), and the old `is_hindi` context variable used to fall back to `StaffUser.preferred_language`. |
+| `locale/hi/LC_MESSAGES/django.mo` | **committed binary**, 347 strings. Committed because Render's Python image has no `msgfmt`; a build-time `compilemessages` would silently not run. |
 | `SRMS_RUN_SCHEDULER` | **present = `1`** (set 2026-09-23) | **APScheduler starts.** Reminders generate and are sent through the console backend, i.e. they land in Render logs until SMTP delivery is configured below. |
 | `GEMINI_MODEL` | **present = `gemini-3.5-flash`** (set 2026-09-23) | Quiz generation pinned to a stable model; the fallback pool also reorders stable-before-preview (`f8d12c0`). |
 

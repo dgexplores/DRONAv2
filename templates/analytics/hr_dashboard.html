@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}HR Analytics Dashboard | SRMS DRONA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "HR Analytics Dashboard | SRMS DRONA" %}{% endblock %}
 
 {% block content %}
-<div class="page-title">📊 {% if is_hindi %}एचआर एनालिटिक्स डैशबोर्ड{% else %}HR Analytics Dashboard{% endif %}</div>
+<div class="page-title">📊 {% trans "HR Analytics Dashboard" %}</div>
 <p class="page-subtitle">
-    {% if is_hindi %}विभागवार सीखने की प्रगति और अनुपालन आँकड़े।{% else %}Department-wise learning progress and compliance metrics.{% endif %}
+    {% trans "Department-wise learning progress and compliance metrics." %}
 </p>
 
 <div class="stats-grid">
@@ -12,7 +13,7 @@
         <div class="stat-icon blue">👥</div>
         <div>
             <div class="stat-value" data-count="{{ total_staff_count }}">{{ total_staff_count }}</div>
-            <div class="stat-label">{% if is_hindi %}कुल कर्मचारी{% else %}Total Staff{% endif %}</div>
+            <div class="stat-label">{% trans "Total Staff" %}</div>
         </div>
     </div>
     {% if is_admin %}
@@ -20,7 +21,7 @@
         <div class="stat-icon violet">⏳</div>
         <div>
             <div class="stat-value" data-count="{{ pending_users|length }}">{{ pending_users|length }}</div>
-            <div class="stat-label">{% if is_hindi %}लंबित अनुमोदन{% else %}Pending Approvals{% endif %}</div>
+            <div class="stat-label">{% trans "Pending Approvals" %}</div>
         </div>
     </div>
     {% endif %}
@@ -28,54 +29,54 @@
         <div class="stat-icon green">📚</div>
         <div>
             <div class="stat-value" data-count="{{ total_courses_count }}">{{ total_courses_count }}</div>
-            <div class="stat-label">{% if is_hindi %}कुल पाठ्यक्रम{% else %}Total Courses{% endif %}</div>
+            <div class="stat-label">{% trans "Total Courses" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon gold">🏆</div>
         <div>
             <div class="stat-value" data-count="{{ total_cert_count }}">{{ total_cert_count }}</div>
-            <div class="stat-label">{% if is_hindi %}प्रमाणपत्र{% else %}Certificates{% endif %}</div>
+            <div class="stat-label">{% trans "Certificates" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon violet">🏁</div>
         <div>
             <div class="stat-value" data-count="{{ total_completed_enrollments }}">{{ total_completed_enrollments }}</div>
-            <div class="stat-label">{% if is_hindi %}पूर्ण नामांकन{% else %}Completed Enrollments{% endif %}</div>
+            <div class="stat-label">{% trans "Completed Enrollments" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon crimson">🎯</div>
         <div>
             <div class="stat-value" data-count="{{ avg_quiz_score }}">{{ avg_quiz_score }}%</div>
-            <div class="stat-label">{% if is_hindi %}औसत क्विज़ स्कोर{% else %}Avg Quiz Score{% endif %}</div>
+            <div class="stat-label">{% trans "Avg Quiz Score" %}</div>
         </div>
     </div>
     <div class="stat-card reveal">
         <div class="stat-icon teal">⏱️</div>
         <div>
             <div class="stat-value" data-count="{{ total_learning_hours }}">{{ total_learning_hours }}h</div>
-            <div class="stat-label">{% if is_hindi %}कुल सीखने के घंटे{% else %}Total Learning Hours{% endif %}</div>
+            <div class="stat-label">{% trans "Total Learning Hours" %}</div>
         </div>
     </div>
 </div>
 
-<div class="section-title">{% if is_hindi %}विभागवार समापन दर{% else %}Department Completion Rates{% endif %}</div>
+<div class="section-title">{% trans "Department Completion Rates" %}</div>
 <div class="module-block" style="padding: 1rem;">
     <canvas id="completionChart" height="100"></canvas>
 </div>
 
-<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}विभाग सांख्यिकी{% else %}Department Statistics{% endif %}</div>
+<div class="section-title" style="margin-top: 1.5rem;">{% trans "Department Statistics" %}</div>
 <div class="table-wrap">
     <table class="data">
         <thead>
             <tr>
-                <th>{% if is_hindi %}विभाग{% else %}Department{% endif %}</th>
-                <th>{% if is_hindi %}कर्मचारी{% else %}Staff{% endif %}</th>
-                <th>{% if is_hindi %}नामांकन{% else %}Enrollments{% endif %}</th>
-                <th>{% if is_hindi %}पूर्ण{% else %}Completed{% endif %}</th>
-                <th>{% if is_hindi %}समापन दर{% else %}Completion Rate{% endif %}</th>
+                <th>{% trans "Department" %}</th>
+                <th>{% trans "Staff" %}</th>
+                <th>{% trans "Enrollments" %}</th>
+                <th>{% trans "Completed" %}</th>
+                <th>{% trans "Completion Rate" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -95,22 +96,22 @@
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" style="text-align: center; color: var(--muted);">{% if is_hindi %}कोई विभाग नहीं।{% else %}No departments found.{% endif %}</td></tr>
+            <tr><td colspan="5" style="text-align: center; color: var(--muted);">{% trans "No departments found." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}हाल के प्रयास{% else %}Recent Quiz Attempts{% endif %}</div>
+<div class="section-title" style="margin-top: 1.5rem;">{% trans "Recent Quiz Attempts" %}</div>
 <div class="table-wrap">
     <table class="data">
         <thead>
             <tr>
-                <th>{% if is_hindi %}कर्मचारी{% else %}Employee{% endif %}</th>
-                <th>{% if is_hindi %}प्रश्नोत्तरी{% else %}Quiz{% endif %}</th>
-                <th>{% if is_hindi %}स्कोर{% else %}Score{% endif %}</th>
-                <th>{% if is_hindi %}स्थिति{% else %}Status{% endif %}</th>
-                <th>{% if is_hindi %}दिनांक{% else %}Date{% endif %}</th>
+                <th>{% trans "Employee" %}</th>
+                <th>{% trans "Quiz" %}</th>
+                <th>{% trans "Score" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Date" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -121,33 +122,33 @@
                 <td>{{ attempt.score }}%</td>
                 <td>
                     {% if attempt.passed %}
-                    <span class="badge badge-elective">✓ {% if is_hindi %}उत्तीर्ण{% else %}Passed{% endif %}</span>
+                    <span class="badge badge-elective">✓ {% trans "Passed" %}</span>
                     {% else %}
-                    <span class="badge badge-mandatory">✗ {% if is_hindi %}अनुत्तीर्ण{% else %}Failed{% endif %}</span>
+                    <span class="badge badge-mandatory">✗ {% trans "Failed" %}</span>
                     {% endif %}
                 </td>
                 <td>{{ attempt.attempted_at|date:"d M Y H:i" }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" style="text-align: center; color: var(--muted);">{% if is_hindi %}कोई प्रयास नहीं।{% else %}No attempts yet.{% endif %}</td></tr>
+            <tr><td colspan="5" style="text-align: center; color: var(--muted);">{% trans "No attempts yet." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 {% if is_admin %}
-<div class="section-title" style="margin-top: 1.5rem;">{% if is_hindi %}लंबित खाता अनुमोदन{% else %}Pending Account Approvals{% endif %}</div>
+<div class="section-title" style="margin-top: 1.5rem;">{% trans "Pending Account Approvals" %}</div>
 <div class="table-wrap">
     <table class="data">
         <thead>
             <tr>
-                <th>{% if is_hindi %}कर्मचारी आईडी{% else %}Employee ID{% endif %}</th>
-                <th>{% if is_hindi %}नाम{% else %}Name{% endif %}</th>
-                <th>{% if is_hindi %}विभाग{% else %}Department{% endif %}</th>
-                <th>{% if is_hindi %}ईमेल{% else %}Email{% endif %}</th>
-                <th>{% if is_hindi %}पदनाम{% else %}Designation{% endif %}</th>
-                <th>{% if is_hindi %}पंजीकरण{% else %}Registered{% endif %}</th>
-                <th>{% if is_hindi %}कार्रवाई{% else %}Actions{% endif %}</th>
+                <th>{% trans "Employee ID" %}</th>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Department" %}</th>
+                <th>{% trans "Email" %}</th>
+                <th>{% trans "Designation" %}</th>
+                <th>{% trans "Registered" %}</th>
+                <th>{% trans "Actions" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -163,18 +164,18 @@
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <form method="POST" action="{% url 'approve_user' user.id %}" style="display:inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-success btn-sm">✓ {% if is_hindi %}अनुमोदन{% else %}Approve{% endif %}</button>
+                            <button type="submit" class="btn btn-success btn-sm">✓ {% trans "Approve" %}</button>
                         </form>
                         <form method="POST" action="{% url 'reject_user' user.id %}" style="display:inline;"
                               onsubmit="return confirm('Reject and remove this registration request?');">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">✗ {% if is_hindi %}अस्वीकार{% else %}Reject{% endif %}</button>
+                            <button type="submit" class="btn btn-danger btn-sm">✗ {% trans "Reject" %}</button>
                         </form>
                     </div>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" style="text-align: center; color: var(--muted);">{% if is_hindi %}कोई लंबित अनुमोदन नहीं।{% else %}No pending approvals.{% endif %}</td></tr>
+            <tr><td colspan="7" style="text-align: center; color: var(--muted);">{% trans "No pending approvals." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -182,17 +183,17 @@
 {% if pending_page and pending_page.paginator.num_pages > 1 %}
 <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.75rem;">
     {% if pending_page.has_previous %}
-    <a class="btn btn-secondary btn-sm" href="?pending_page={{ pending_page.previous_page_number }}">← Prev</a>
+    <a class="btn btn-secondary btn-sm" href="?pending_page={{ pending_page.previous_page_number }}">{% trans "← Prev" %}</a>
     {% endif %}
     <span style="color:var(--muted); font-size:0.9rem;">Page {{ pending_page.number }} of {{ pending_page.paginator.num_pages }}</span>
     {% if pending_page.has_next %}
-    <a class="btn btn-secondary btn-sm" href="?pending_page={{ pending_page.next_page_number }}">Next →</a>
+    <a class="btn btn-secondary btn-sm" href="?pending_page={{ pending_page.next_page_number }}">{% trans "Next →" %}</a>
     {% endif %}
 </div>
 {% endif %}
 {% endif %}
 
-<a href="{% url 'export_staff_csv' %}" class="btn btn-primary">⬇️ {% if is_hindi %}CSV रिपोर्ट निर्यात करें{% else %}Export CSV Report{% endif %}</a>
+<a href="{% url 'export_staff_csv' %}" class="btn btn-primary">⬇️ {% trans "Export CSV Report" %}</a>
 
 {% endblock %}
 
@@ -216,7 +217,7 @@
         data: {
             labels: departments,
             datasets: [{
-                label: '{% if is_hindi %}समापन दर (%){% else %}Completion Rate (%){% endif %}',
+                label: '{% trans "Completion Rate (%)" %}',
                 data: rates,
                 backgroundColor: [
                     '#1e3a8a', '#2563eb', '#065f46', '#d97706',
